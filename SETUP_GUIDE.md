@@ -166,29 +166,36 @@ In Android Studio:
 
 ---
 
-## Step 5: Capgo Over-The-Air (OTA) Live Updates Setup
+## Step 5: Normal Bundled Over-The-Air (OTA) Updates & GitHub Actions APK
 
-Capgo (`@capgo/capacitor-updater`) allows you to push instant UI tweaks, seasonal campaign themes, and bug fixes directly to users' phones **without waiting days for Google Play Store review approval**.
+Instead of proprietary or paid cloud services, SafarNama uses **clean, self-hosted bundled OTA updates** with `@capacitor/preferences`.
 
-### 1. Create a Capgo Account
-1. Visit [capgo.app](https://capgo.app) and sign in with GitHub.
-2. Create an app with App ID `com.safarnama.travel`.
-3. Install the Capgo CLI globally:
+### 1. How the Normal OTA Works:
+1. Whenever you change code, run:
    ```bash
-   npm install -g @capgo/cli
+   npm run ota:bundle
    ```
-4. Login to Capgo CLI:
+   This automatically:
+   - Compiles the React/Vite app into `dist/`.
+   - Compresses the assets into `ota/bundle.zip`.
+   - Bumps the version number in `ota/manifest.json`.
+2. Commit and push your changes to GitHub:
    ```bash
-   npx @capgo/cli login your_capgo_api_key
+   git add .
+   git commit -m "feat: new travel updates"
+   git push origin main
    ```
+3. When users open the app, SafarNama checks `ota/manifest.json` on app start. If an update is detected, it shows a seamless update pill and automatically bundles & reloads the new version!
 
-### 2. Push an Instant Live Update
-Whenever you change your React code, deploy immediately via:
-```bash
-npm run build
-npx @capgo/cli bundle upload -a com.safarnama.travel -c production
-```
-Users will automatically receive the update on their next app open!
+### 2. GitHub Actions Automated Android APK Build
+We have pre-configured a complete CI workflow in `.github/workflows/build-android.yml`.
+
+Whenever you push to `main` (or click **Run workflow** in the GitHub Actions tab):
+1. GitHub spins up a clean Ubuntu runner.
+2. It sets up Node 20, Java 17 (Zulu), and the Android SDK.
+3. It compiles the web build and builds the Android APK (`./gradlew assembleDebug`).
+4. It uploads `SafarNama-Android-Debug-APK` as a downloadable artifact.
+5. You can download the `.apk` directly from the Actions tab and install it on any Android phone!
 
 ---
 

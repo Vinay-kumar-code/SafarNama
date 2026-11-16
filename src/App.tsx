@@ -11,6 +11,7 @@ import { ProfileView } from './components/profile/ProfileView';
 import { TravelNoteModal } from './components/feed/TravelNoteModal';
 import { GearShopModal } from './components/common/GearShopModal';
 import { DestinationHubModal } from './components/destinations/DestinationHubModal';
+import { OTABanner } from './components/common/OTABanner';
 
 const MainScreen: React.FC = () => {
   const { activeTab } = useApp();
@@ -19,6 +20,9 @@ const MainScreen: React.FC = () => {
     <div className="relative w-full h-full min-h-screen bg-[#090a0f] text-slate-100 flex flex-col overflow-hidden select-none">
       {/* Top Header */}
       <TopHeader />
+
+      {/* Auto OTA Update Banner */}
+      <OTABanner />
 
       {/* Main View Area */}
       <main className="flex-1 w-full overflow-hidden">

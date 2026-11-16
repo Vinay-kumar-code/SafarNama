@@ -1,0 +1,7 @@
+{
+  "version": "1.0.1",
+  "bundleUrl": "https://raw.githubusercontent.com/Vinay-kumar-code/SafarNama/main/ota/bundle.zip",
+  "releaseNotes": "Initial production bundle: Spiti, Varanasi, Meghalaya, Old Delhi & Hampi travel circuits with live map clustering and trip builder.",
+  "releasedAt": "2026-11-16T18:31:13.813Z",
+  "mandatory": false
+}
