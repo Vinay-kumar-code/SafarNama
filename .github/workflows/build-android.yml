@@ -31,18 +31,19 @@ jobs:
       - name: Build Web App (Vite + React)
         run: npm run build
 
-      - name: Setup Java 17 (Zulu)
+      - name: Setup Java 21 (Zulu)
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Accept Android SDK Licenses
+      - name: Accept Android SDK Licenses & Install Platforms
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" || true
 
       - name: Sync Capacitor Android
         run: npx cap sync android
