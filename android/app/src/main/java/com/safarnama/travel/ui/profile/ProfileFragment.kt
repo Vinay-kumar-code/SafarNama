@@ -100,10 +100,10 @@ class ProfileFragment : Fragment() {
 
         if (profile.isVerifiedGuide) {
             val circuits = profile.guideCircuits.joinToString(" • ")
-            binding.tvProfileRole_badge.text = "🛡️ Verified Guide • $circuits"
+            binding.tvProfileRoleBadge.text = "🛡️ Verified Guide • $circuits"
             binding.btnSwitchPersona.text = "Switch Traveler Mode"
         } else {
-            binding.tvProfileRole_badge.text = "🛂 Indian Explorer • Traveler Passport"
+            binding.tvProfileRoleBadge.text = "🛂 Indian Explorer • Traveler Passport"
             binding.btnSwitchPersona.text = "Switch Guide Mode"
         }
 
