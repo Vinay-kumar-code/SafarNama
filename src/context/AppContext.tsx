@@ -10,6 +10,7 @@ import {
   INITIAL_USER_TRIP 
 } from '../data/mockData';
 import { getStoredData, setStoredData } from '../lib/utils';
+import { useAuth } from './AuthContext';
 
 export type NavTab = 'feed' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile';
 
@@ -47,12 +48,21 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { profile, updateProfile: authUpdateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTab>('feed');
   const [activeRole, setActiveRole] = useState<UserRole>(() => 
-    getStoredData<UserRole>('active_role', 'traveler')
+    profile?.activeRole || getStoredData<UserRole>('active_role', 'traveler')
   );
 
-  const currentUser = activeRole === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE;
+  // Keep activeRole in sync if profile changes
+  useEffect(() => {
+    if (profile?.activeRole && profile.activeRole !== activeRole) {
+      setActiveRole(profile.activeRole);
+    }
+  }, [profile?.activeRole]);
+
+  // Authenticated Supabase profile takes precedence; fallback to mock traveler / guide
+  const currentUser: Profile = profile || (activeRole === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE);
 
   const [posts, setPosts] = useState<Post[]>(() => 
     getStoredData<Post[]>('posts_cache', MOCK_POSTS)
@@ -90,6 +100,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const switchRole = (newRole: UserRole) => {
     setActiveRole(newRole);
     setStoredData('active_role', newRole);
+    if (profile) {
+      authUpdateProfile({ activeRole: newRole });
+    }
   };
 
   const toggleLikePost = (postId: string) => {
