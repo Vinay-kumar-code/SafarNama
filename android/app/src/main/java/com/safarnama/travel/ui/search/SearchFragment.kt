@@ -39,14 +39,13 @@ class SearchFragment : Fragment() {
 
         // Setup Guides
         guidesAdapter = GuidesAdapter(repository.guides.value) { guide ->
-            Toast.makeText(requireContext(), "Opening profile for ${guide.fullName} (${guide.homeCity})", Toast.LENGTH_SHORT).show()
+            com.safarnama.travel.ui.journeys.TravelerSheet.newInstance(guide.id).show(parentFragmentManager, "traveler")
         }
         binding.rvGuidesSpotlight.adapter = guidesAdapter
 
         // Setup Destinations Grid
         destAdapter = DestinationGridAdapter(repository.destinations.value) { dest ->
-            val mappedPosts = repository.getPostsForDestination(dest.name)
-            Toast.makeText(requireContext(), "📍 ${dest.name} Hub (${dest.state}) • ${mappedPosts.size} tweets & posts mapped", Toast.LENGTH_SHORT).show()
+            com.safarnama.travel.ui.journeys.DestinationSheet.newInstance(dest.id).show(parentFragmentManager, "destination")
         }
         binding.rvDestinationsGrid.adapter = destAdapter
 
@@ -80,12 +79,13 @@ class SearchFragment : Fragment() {
         }
 
         // Category Filter Chips
-        binding.chipAll.setOnClickListener { filterDestinations("") }
-        binding.chipHimalayas.setOnClickListener { filterDestinations("Himalaya") }
-        binding.chipHeritage.setOnClickListener { filterDestinations("Heritage") }
-        binding.chipMonsoons.setOnClickListener { filterDestinations("Meghalaya") }
+        binding.chipAll.setOnClickListener { binding.etSearch.setText("") }
+        binding.chipHimalayas.setOnClickListener { binding.etSearch.setText("Himalaya") }
+        binding.chipHeritage.setOnClickListener { binding.etSearch.setText("Heritage") }
+        binding.chipMonsoons.setOnClickListener { binding.etSearch.setText("Meghalaya") }
         binding.chipGuides.setOnClickListener {
-            Toast.makeText(requireContext(), "Showing ${repository.guides.value.size} active verified guides", Toast.LENGTH_SHORT).show()
+            binding.rvGuidesSpotlight.requestFocus()
+            binding.rvGuidesSpotlight.parent.requestChildFocus(binding.rvGuidesSpotlight, binding.rvGuidesSpotlight)
         }
     }
 

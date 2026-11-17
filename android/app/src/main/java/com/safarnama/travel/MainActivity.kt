@@ -8,6 +8,9 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.navigation.ui.NavigationUI
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.navigation.NavigationBarView
 import com.safarnama.travel.databinding.ActivityMainBinding
 
@@ -23,6 +26,11 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -34,15 +42,12 @@ class MainActivity : AppCompatActivity() {
 
         // Custom Navigation Listener to handle top bar and tab transitions
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-            if (item.itemId != navController.currentDestination?.id) {
-                navController.navigate(item.itemId)
-            }
-            true
+            NavigationUI.onNavDestinationSelected(item, navController)
         }
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.nav_reels -> {
+                R.id.nav_reels, R.id.nav_home -> {
                     // Hide top bar for immersive Instagram Reels experience
                     binding.topBar.visibility = View.GONE
                     binding.headerDivider.visibility = View.GONE
@@ -57,11 +62,11 @@ class MainActivity : AppCompatActivity() {
 
         // Top bar action clicks
         binding.btnTopActivity.setOnClickListener {
-            Toast.makeText(this, "Activity Feed: 14 travelers saved your Spiti itinerary", Toast.LENGTH_SHORT).show()
+            com.safarnama.travel.ui.home.CreateContentBottomSheetDialogFragment.newInstance().show(supportFragmentManager, "create_story")
         }
 
         binding.btnTopMessages.setOnClickListener {
-            Toast.makeText(this, "Direct Messages: Inquiries from Verified Local Guides", Toast.LENGTH_SHORT).show()
+            com.safarnama.travel.ui.home.DirectMessagesDialogFragment.newInstance().show(supportFragmentManager, "messages")
         }
 
         binding.headerTitle.setOnClickListener {

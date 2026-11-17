@@ -76,7 +76,7 @@ class ProfileFragment : Fragment() {
         binding.rvProfileMentions.adapter = mentionsAdapter
 
         // Setup Saved Spots Grid
-        val savedList = repository.posts.value.filter { it.isSaved } + repository.reels.value.filter { it.isSaved }
+        val savedList = repository.allContent().filter { it.isSaved }
         savedAdapter = SavedSpotsAdapter(savedList)
         binding.rvSavedSpots.adapter = savedAdapter
 
@@ -107,20 +107,15 @@ class ProfileFragment : Fragment() {
             settingsDialog.show(parentFragmentManager, "settings_dialog")
         }
 
-        // Follow / Unfollow Profile Button
-        binding.btnFollowProfile.setOnClickListener {
-            val current = repository.currentUser.value
-            val isFollowing = repository.toggleFollow(current)
-            updateFollowButtonUi(isFollowing)
-            val msg = if (isFollowing) "You are now following ${current.fullName} for journey updates" else "Unfollowed ${current.fullName}"
-            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-        }
-
-        // 1-on-1 Direct Message Button
+        // This is your own journal; offer editing and planning instead of following yourself.
+        binding.btnFollowProfile.text = "Edit profile"
+        binding.btnFollowProfile.setOnClickListener { editProfile() }
+        binding.btnMessageProfile.text = "My journey"
         binding.btnMessageProfile.setOnClickListener {
-            val current = repository.currentUser.value
-            val chatDialog = ChatDialogFragment.newInstance(current)
-            chatDialog.show(parentFragmentManager, "chat_dialog")
+            com.safarnama.travel.ui.journeys.JourneySheet().show(parentFragmentManager, "my_journey")
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repository.reels.collectLatest { refreshProfileFeeds(repository.currentUser.value) }
         }
 
         // Switch Persona Mode (Traveler vs Local Guide Demo)
@@ -144,10 +139,10 @@ class ProfileFragment : Fragment() {
 
         binding.tvStatTrips.text = "${profile.stats.tripsCompleted}"
 
-        val authoredPosts = repository.posts.value.filter { it.author.id == profile.id }
+        val authoredPosts = repository.allContent().filter { it.author.id == profile.id }
         binding.tvStatPostsCount.text = "${authoredPosts.size}"
 
-        val savedCount = (repository.posts.value.filter { it.isSaved } + repository.reels.value.filter { it.isSaved }).size
+        val savedCount = repository.allContent().filter { it.isSaved }.size
         binding.tvStatSaved.text = "$savedCount"
 
         if (profile.isVerifiedGuide) {
@@ -165,7 +160,7 @@ class ProfileFragment : Fragment() {
             placeholder(R.drawable.ic_profile)
         }
 
-        updateFollowButtonUi(repository.isFollowing(profile.id))
+        binding.btnFollowProfile.text = "Edit profile"
     }
 
     private fun updateFollowButtonUi(isFollowing: Boolean) {
@@ -182,14 +177,14 @@ class ProfileFragment : Fragment() {
     }
 
     private fun refreshProfileFeeds(profile: Profile) {
-        val authoredPosts = repository.posts.value.filter { it.author.id == profile.id }
+        val authoredPosts = repository.allContent().filter { it.author.id == profile.id }
         userPostsAdapter.updatePosts(authoredPosts)
         binding.tvStatPostsCount.text = "${authoredPosts.size}"
 
         val mentions = repository.getMentionsForUser(profile.username)
         mentionsAdapter.updatePosts(mentions)
 
-        val saved = repository.posts.value.filter { it.isSaved } + repository.reels.value.filter { it.isSaved }
+        val saved = repository.allContent().filter { it.isSaved }
         savedAdapter.updatePosts(saved)
         binding.tvStatSaved.text = "${saved.size}"
 
@@ -199,9 +194,9 @@ class ProfileFragment : Fragment() {
     private fun switchTab(tab: Int) {
         activeTab = tab
         val profile = repository.currentUser.value
-        val authoredCount = repository.posts.value.count { it.author.id == profile.id }
+        val authoredCount = repository.allContent().count { it.author.id == profile.id }
         val mentionsCount = repository.getMentionsForUser(profile.username).size
-        val savedCount = (repository.posts.value.filter { it.isSaved } + repository.reels.value.filter { it.isSaved }).size
+        val savedCount = repository.allContent().filter { it.isSaved }.size
 
         updateTabVisibility(tab, authoredCount, mentionsCount, savedCount)
     }
@@ -257,6 +252,21 @@ class ProfileFragment : Fragment() {
                 binding.tvTabSavedLabel.setTextColor(textDark)
             }
         }
+    }
+
+    private fun editProfile() {
+        val current = repository.currentUser.value
+        val layout = android.widget.LinearLayout(requireContext()).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(40, 20, 40, 20)
+        }
+        val name = android.widget.EditText(requireContext()).apply { hint = "Your name"; setText(current.fullName); maxLines = 1 }
+        val city = android.widget.EditText(requireContext()).apply { hint = "Home city"; setText(current.homeCity); maxLines = 1 }
+        val bio = android.widget.EditText(requireContext()).apply { hint = "Your travel story"; setText(current.bio); minLines = 3 }
+        layout.addView(name); layout.addView(city); layout.addView(bio)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext()).setTitle("Make this journal yours")
+            .setView(layout).setPositiveButton("Save") { _, _ -> repository.updateProfile(name.text.toString(), bio.text.toString(), city.text.toString()) }
+            .setNegativeButton("Cancel", null).show()
     }
 
     override fun onDestroyView() {

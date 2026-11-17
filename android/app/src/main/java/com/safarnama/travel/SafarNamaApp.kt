@@ -14,6 +14,9 @@ class SafarNamaApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        com.safarnama.travel.data.TravelRepository.instance.attachStore(
+            com.safarnama.travel.data.PreferencesRepositoryStore(this)
+        )
     }
 
     override fun newImageLoader(): ImageLoader {

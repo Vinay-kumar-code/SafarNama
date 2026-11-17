@@ -6,7 +6,59 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
-class TravelRepository private constructor() {
+class TravelRepository internal constructor() {
+    private var store: RepositoryStore? = null
+    private val _journey = MutableStateFlow<List<JourneyStop>>(emptyList())
+    val journey: StateFlow<List<JourneyStop>> = _journey.asStateFlow()
+    private val _journeyTitle = MutableStateFlow("My next Indian adventure")
+    val journeyTitle: StateFlow<String> = _journeyTitle.asStateFlow()
+
+    fun attachStore(newStore: RepositoryStore) {
+        store = newStore
+        val snapshot = newStore.read() ?: return
+        runCatching {
+            _posts.value = snapshot.posts
+            _reels.value = snapshot.reels
+            _destinations.value = snapshot.destinations
+            _followedAccounts.value = snapshot.followedAccounts
+            _comments.value = snapshot.comments
+            _directMessages.value = snapshot.directMessages
+            _currentUser.value = snapshot.currentUser
+            _journey.value = snapshot.journey
+            _journeyTitle.value = snapshot.journeyTitle
+        }
+    }
+
+    private fun persist() {
+        store?.write(RepositorySnapshot(posts = _posts.value, reels = _reels.value,
+            destinations = _destinations.value, followedAccounts = _followedAccounts.value,
+            comments = _comments.value, directMessages = _directMessages.value,
+            currentUser = _currentUser.value, journey = _journey.value, journeyTitle = _journeyTitle.value))
+    }
+
+    fun allContent(): List<Post> = (_posts.value + _reels.value).distinctBy { it.id }
+
+    fun addJourneyStop(stop: JourneyStop) {
+        if (_journey.value.any { it.id == stop.id }) return
+        _journey.value = _journey.value + stop.copy(day = (_journey.value.size / 2) + 1)
+        persist()
+    }
+
+    fun updateJourneyStop(id: String, day: Int, notes: String) {
+        _journey.value = _journey.value.map { if (it.id == id) it.copy(day = day.coerceIn(1, 99), notes = notes.take(1000)) else it }
+        persist()
+    }
+
+    fun removeJourneyStop(id: String) { _journey.value = _journey.value.filterNot { it.id == id }; persist() }
+    fun renameJourney(title: String) { if (title.isNotBlank()) { _journeyTitle.value = title.trim().take(100); persist() } }
+    fun updateProfile(name: String, bio: String, city: String) {
+        if (name.isBlank()) return
+        val profile = _currentUser.value.copy(fullName = name.trim().take(80), bio = bio.trim().take(300), homeCity = city.trim().take(100))
+        _currentUser.value = profile
+        _posts.value = _posts.value.map { if (it.author.id == profile.id) it.copy(author = profile) else it }
+        _reels.value = _reels.value.map { if (it.author.id == profile.id) it.copy(author = profile) else it }
+        persist()
+    }
 
     private val _posts = MutableStateFlow<List<Post>>(SeedData.FEED_POSTS)
     val posts: StateFlow<List<Post>> = _posts.asStateFlow()
@@ -40,17 +92,27 @@ class TravelRepository private constructor() {
     suspend fun refreshData() {
         val remotePosts = SupabaseClient.getPosts()
         if (remotePosts.isNotEmpty()) {
-            _posts.value = remotePosts
+            val existing = allContent().associateBy { it.id }
+            val merged = remotePosts.map { remote -> existing[remote.id]?.let {
+                remote.copy(isLiked = it.isLiked, isSaved = it.isSaved, likesCount = it.likesCount,
+                    savesCount = it.savesCount, commentsCount = it.commentsCount)
+            } ?: remote }
+            _posts.value = (_posts.value.filter { local -> remotePosts.none { it.id == local.id } } + merged).distinctBy { it.id }
+            _reels.value = (_posts.value.filter { it.format == PostFormat.REEL } + _reels.value).distinctBy { it.id }
         }
         val remoteDestinations = SupabaseClient.getDestinations()
         if (remoteDestinations.isNotEmpty()) {
-            _destinations.value = remoteDestinations
+            _destinations.value = (_destinations.value.filter { local -> remoteDestinations.none { it.id == local.id } } + remoteDestinations)
         }
+        persist()
     }
 
     // --- Content Creation (+ Button) ---
     fun addPost(post: Post) {
-        _posts.value = listOf(post) + _posts.value
+        require(post.caption.isNotBlank()) { "Write a story before sharing" }
+        _posts.value = listOf(post) + _posts.value.filterNot { it.id == post.id }
+        if (post.format == PostFormat.REEL) _reels.value = listOf(post) + _reels.value.filterNot { it.id == post.id }
+        persist()
     }
 
     fun addTweet(
@@ -59,11 +121,15 @@ class TravelRepository private constructor() {
         destinationId: String? = null,
         mentionedUsernames: List<String> = emptyList()
     ): Post {
+        require(content.isNotBlank() && content.length <= 500) { "Travel notes need 1–500 characters" }
+        val destination = _destinations.value.find { it.id == destinationId }
         val newTweet = Post(
             id = "tweet-${UUID.randomUUID().toString().take(8)}",
             author = _currentUser.value,
             spotName = destinationName ?: "India Travel Trail",
-            state = "India",
+            state = destination?.state ?: "India",
+            latitude = destination?.latitude ?: 20.5937,
+            longitude = destination?.longitude ?: 78.9629,
             region = destinationName ?: "Traveler Note",
             caption = content,
             format = PostFormat.TWEET,
@@ -88,11 +154,16 @@ class TravelRepository private constructor() {
         destinationId: String? = null,
         mentionedUsernames: List<String> = emptyList()
     ): Post {
+        require(videoUrl.isNotBlank()) { "Choose a video" }
+        val destination = _destinations.value.find { it.id == destinationId }
         val newReel = Post(
             id = "reel-${UUID.randomUUID().toString().take(8)}",
             author = _currentUser.value,
             spotName = spotName,
-            state = "India",
+            state = destination?.state ?: "India",
+            latitude = destination?.latitude ?: 20.5937,
+            longitude = destination?.longitude ?: 78.9629,
+            thumbnailUrl = destination?.coverImage,
             region = destinationName ?: spotName,
             caption = caption,
             format = PostFormat.REEL,
@@ -105,13 +176,14 @@ class TravelRepository private constructor() {
             commentsCount = 0,
             createdAt = "Just now"
         )
-        _reels.value = listOf(newReel) + _reels.value
+        addPost(newReel)
         return newReel
     }
 
     // --- Destination Management (Admin) ---
     fun addDestination(destination: DestinationHub) {
-        _destinations.value = _destinations.value + destination
+        _destinations.value = _destinations.value.filterNot { it.id == destination.id } + destination
+        persist()
     }
 
     // --- Like & Save Toggles ---
@@ -136,6 +208,7 @@ class TravelRepository private constructor() {
                 )
             } else reel
         }
+        persist()
         return newLikedState
     }
 
@@ -160,11 +233,13 @@ class TravelRepository private constructor() {
                 )
             } else reel
         }
+        persist()
         return newSaveState
     }
 
     // --- Following & Notifications ---
     fun toggleFollow(targetProfile: Profile): Boolean {
+        if (targetProfile.id == _currentUser.value.id) return false
         val currentList = _followedAccounts.value.toMutableList()
         val existingIndex = currentList.indexOfFirst { it.profile.id == targetProfile.id }
         val isNowFollowing: Boolean
@@ -178,6 +253,7 @@ class TravelRepository private constructor() {
         }
 
         _followedAccounts.value = currentList
+        persist()
         return isNowFollowing
     }
 
@@ -194,6 +270,7 @@ class TravelRepository private constructor() {
             } else setting
         }
         _followedAccounts.value = updated
+        persist()
         return newState
     }
 
@@ -203,6 +280,7 @@ class TravelRepository private constructor() {
     }
 
     fun addComment(postId: String, text: String, parentCommentId: String? = null): Comment {
+        require(text.isNotBlank() && text.length <= 1000) { "Comments need 1–1000 characters" }
         val newComment = Comment(
             id = "c-${UUID.randomUUID().toString().take(8)}",
             postId = postId,
@@ -233,6 +311,7 @@ class TravelRepository private constructor() {
             } else r
         }
 
+        persist()
         return newComment
     }
 
@@ -242,6 +321,8 @@ class TravelRepository private constructor() {
     }
 
     fun sendDirectMessage(receiverId: String, text: String): DirectMessage {
+        require(text.isNotBlank() && text.length <= 2000) { "Messages need 1–2000 characters" }
+        require(receiverId != _currentUser.value.id) { "Choose another traveler" }
         val newMsg = DirectMessage(
             id = "msg-${UUID.randomUUID().toString().take(8)}",
             senderId = _currentUser.value.id,
@@ -254,6 +335,7 @@ class TravelRepository private constructor() {
         val list = (currentMap[receiverId] ?: emptyList()) + newMsg
         currentMap[receiverId] = list
         _directMessages.value = currentMap
+        persist()
         return newMsg
     }
 
@@ -266,12 +348,12 @@ class TravelRepository private constructor() {
         val matchedReels = _reels.value.filter { r ->
             r.mentionedUsernames.any { it.trimStart('@').lowercase() == cleanName }
         }
-        return matchedPosts + matchedReels
+        return (matchedPosts + matchedReels).distinctBy { it.id }
     }
 
     fun getPostsForDestination(destinationNameOrId: String): List<Post> {
         val query = destinationNameOrId.lowercase()
-        return _posts.value.filter {
+        return allContent().filter {
             (it.destinationName?.lowercase()?.contains(query) == true) ||
             (it.destinationId?.lowercase() == query) ||
             (it.spotName.lowercase().contains(query)) ||
@@ -286,6 +368,7 @@ class TravelRepository private constructor() {
         } else {
             _currentUser.value = SeedData.CURRENT_USER
         }
+        persist()
     }
 
     companion object {

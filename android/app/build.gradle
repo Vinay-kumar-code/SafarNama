@@ -111,6 +111,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.code.gson:gson:2.11.0'
     // AndroidX & UI
     implementation "androidx.core:core-ktx:$rootProject.ext.androidXCoreVersion"
     implementation "androidx.appcompat:appcompat:$rootProject.ext.androidXAppCompatVersion"

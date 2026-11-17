@@ -34,6 +34,7 @@ object SupabaseClient {
     }
 
     suspend fun getPosts(): List<Post> = withContext(Dispatchers.IO) {
+        if (SUPABASE_URL.contains("your-project") || SUPABASE_ANON_KEY == "your-anon-key") return@withContext emptyList()
         try {
             val request = buildRequest("posts?select=*&order=created_at.desc")
             httpClient.newCall(request).execute().use { response ->
@@ -53,10 +54,11 @@ object SupabaseClient {
         } catch (e: Exception) {
             Log.w(TAG, "Supabase getPosts failed or offline, using rich seed posts", e)
         }
-        return@withContext SeedData.FEED_POSTS
+        return@withContext emptyList()
     }
 
     suspend fun getDestinations(): List<DestinationHub> = withContext(Dispatchers.IO) {
+        if (SUPABASE_URL.contains("your-project") || SUPABASE_ANON_KEY == "your-anon-key") return@withContext emptyList()
         try {
             val request = buildRequest("destinations?select=*")
             httpClient.newCall(request).execute().use { response ->
@@ -76,7 +78,7 @@ object SupabaseClient {
         } catch (e: Exception) {
             Log.w(TAG, "Supabase getDestinations failed or offline, using seed hubs", e)
         }
-        return@withContext SeedData.DESTINATION_HUBS
+        return@withContext emptyList()
     }
 
     private fun parsePostJson(json: JSONObject): Post {

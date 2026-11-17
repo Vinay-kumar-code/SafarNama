@@ -5,7 +5,7 @@ export const CURRENT_USER_TRAVELER: Profile = {
   id: 'user-001',
   username: 'aarav_journeys',
   fullName: 'Aarav Sharma',
-  avatarUrl: getR2AvatarUrl('avatars/aarav_journeys.jpg', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'),
+  avatarUrl: '/media/avatar-aarav.svg',
   bio: 'Chasing Himalayan sunsets & South Indian filter coffee ☕ | 8 Indian States & counting | Next: Ziro Music Fest 🏕️',
   activeRole: 'traveler',
   homeCity: 'Bengaluru, Karnataka',
@@ -26,7 +26,7 @@ export const CURRENT_USER_GUIDE: Profile = {
   id: 'user-002',
   username: 'tenzin_spitilocal',
   fullName: 'Tenzin Norbu',
-  avatarUrl: getR2AvatarUrl('avatars/tenzin_spitilocal.jpg', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80'),
+  avatarUrl: '/media/avatar-tenzin.svg',
   bio: 'Born & raised in Kibber (4,270m) 🏔️ | Certified High-Altitude Guide & Snow Leopard Tracker | Spiti & Kinnaur Circuit Expert',
   activeRole: 'local_guide',
   homeCity: 'Kaza, Himachal Pradesh',
@@ -68,7 +68,7 @@ export const CURRENT_USER_ADMIN: Profile = {
   },
 };
 
-export const DESTINATION_HUBS: DestinationHub[] = [
+const SEED_DESTINATIONS: DestinationHub[] = [
   {
     id: 'dest-spiti',
     slug: 'spiti-valley',
@@ -271,15 +271,23 @@ export const DESTINATION_HUBS: DestinationHub[] = [
   },
 ];
 
-export const MOCK_POSTS: Post[] = [
+const placeImages: Record<string, string> = {
+  'dest-spiti': '/media/spiti.jpg', 'dest-varanasi': '/media/varanasi.jpg',
+  'dest-meghalaya': '/media/meghalaya.jpg', 'dest-old-delhi': '/media/delhi.jpg', 'dest-hampi': '/media/hampi.jpg',
+};
+export const DESTINATION_HUBS: DestinationHub[] = SEED_DESTINATIONS.map(place => ({
+  ...place, coverImage: placeImages[place.id] || place.coverImage,
+  galleryImages: placeImages[place.id] ? [placeImages[place.id]] : place.galleryImages,
+}));
+const SEED_POSTS: Post[] = [
   {
     id: 'post-001',
     author: CURRENT_USER_GUIDE,
     destinationId: 'dest-spiti',
-    spotName: 'Chicham Bridge (Highest in Asia)',
+    spotName: 'Chicham Bridge',
     state: 'Himachal Pradesh',
     region: 'Spiti Valley',
-    caption: 'Suspended 1,350 feet over a terrifying gorge! 🌉 Crossing between Kibber and Chicham village. When winds howl through this chasm, you feel the raw pulse of the Himalayas. Do not rush—stop your bike right in the middle for this view.',
+    caption: 'A ribbon of yellow across the vast silence of Spiti. The road between Kibber and Chicham is the kind of journey that stays with you long after you get home. Mountains, prayer flags, and a little perspective.',
     format: 'reel',
     videoUrl: getR2VideoUrl('videos/spiti_chicham_bridge.mp4', 'https://assets.mixkit.co/videos/preview/mixkit-curvy-road-on-a-mountain-slope-41545-large.mp4'),
     thumbnailUrl: getR2ImageUrl('images/spiti_chicham_bridge.jpg', 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop&q=80'),
@@ -529,6 +537,16 @@ export const MOCK_POSTS: Post[] = [
     createdAt: new Date(Date.now() - 3600000 * 50).toISOString(),
   },
 ];
+
+export const MOCK_POSTS: Post[] = SEED_POSTS.map(post => ({
+  ...post, thumbnailUrl: placeImages[post.destinationId || ''] || post.thumbnailUrl,
+  carouselImages: post.format === 'carousel_note' ? [placeImages[post.destinationId || ''] || post.thumbnailUrl || ''] : post.carouselImages,
+}));
+MOCK_POSTS.splice(1, 0, {
+  ...MOCK_POSTS[1], id: 'note-delhi-001', format: 'quick_tip', thumbnailUrl: undefined, carouselImages: undefined,
+  caption: 'My favourite part of a food walk? The conversation that comes with the chai. Leave a little room in your itinerary for the unplanned.',
+  likesCount: 28, savesCount: 0, commentsCount: 0, isLiked: false, isSaved: false,
+});
 
 export const MOCK_QA_THREADS: QAThread[] = [
   {

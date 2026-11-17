@@ -14,7 +14,7 @@ import { getStoredData, setStoredData } from '../lib/utils';
 import { useAuth } from './AuthContext';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-export type NavTab = 'feed' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile';
+export type NavTab = 'feed' | 'explore' | 'reels' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile';
 
 interface AppContextType {
   activeTab: NavTab;
@@ -23,6 +23,7 @@ interface AppContextType {
   activeRole: UserRole;
   switchRole: (role: UserRole) => void;
   posts: Post[];
+  createPost: (post: Post) => void;
   toggleLikePost: (postId: string) => void;
   toggleSavePost: (postId: string) => void;
   activeTravelNote: Post | null;
@@ -85,9 +86,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Authenticated Supabase profile takes precedence; fallback to mock traveler / guide / admin
   const currentUser: Profile = profile || (activeRole === 'admin' ? CURRENT_USER_ADMIN : activeRole === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE);
 
-  const [posts, setPosts] = useState<Post[]>(() => 
-    getStoredData<Post[]>('posts_cache', MOCK_POSTS)
-  );
+  const [posts, setPosts] = useState<Post[]>(() => {
+    const cached = getStoredData<Post[]>('posts_cache', MOCK_POSTS);
+    // Refresh only bundled demo media; preserve created posts and saved/liked state.
+    const restored = cached.map(post => {
+      const seed = MOCK_POSTS.find(item => item.id === post.id);
+      return seed ? { ...post, thumbnailUrl: seed.thumbnailUrl, carouselImages: seed.carouselImages,
+        caption: seed.caption, spotName: seed.spotName, author: seed.author } : post;
+    });
+    return [...restored, ...MOCK_POSTS.filter(seed => !restored.some(post => post.id === seed.id))];
+  });
 
   const [qaThreads, setQaThreads] = useState<QAThread[]>(() => 
     getStoredData<QAThread[]>('qa_cache', MOCK_QA_THREADS)
@@ -168,11 +176,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    // Also auto-add to smart trip planner if saving
-    const targetPost = posts.find(p => p.id === postId);
-    if (targetPost && !targetPost.isSaved) {
-      addSpotToTrip(targetPost);
-    }
   };
 
   const openSpotOnMap = (lat: number, lng: number, spotName: string) => {
@@ -453,6 +456,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeRole,
         switchRole,
         posts,
+        createPost: (post: Post) => {
+          const updated = [post, ...posts];
+          localStorage.setItem('safarnama_posts_cache', JSON.stringify(updated));
+          setPosts(updated);
+        },
         toggleLikePost,
         toggleSavePost,
         activeTravelNote,

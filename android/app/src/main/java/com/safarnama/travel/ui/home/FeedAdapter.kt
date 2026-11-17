@@ -1,5 +1,6 @@
 package com.safarnama.travel.ui.home
 
+import com.safarnama.travel.util.TravelActions
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -33,7 +34,7 @@ class FeedAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val post = posts[position]
-        return if (post.format == PostFormat.TWEET) {
+        return if (post.format == PostFormat.TWEET || post.format == PostFormat.QUICK_TIP) {
             VIEW_TYPE_TWEET
         } else {
             VIEW_TYPE_POST
@@ -67,7 +68,7 @@ class FeedAdapter(
 
         binding.tvTweetFullname.text = post.author.fullName
         binding.tvTweetUsername.text = "@${post.author.username}"
-        binding.tvTweetTimestamp.text = post.createdAt
+        binding.tvTweetTimestamp.text = TravelActions.timeLabel(post.createdAt)
         binding.tvTweetContent.text = post.caption
         binding.ivTweetVerified.visibility = if (post.author.isVerifiedGuide) View.VISIBLE else View.GONE
 
@@ -76,6 +77,9 @@ class FeedAdapter(
             transformations(CircleCropTransformation())
             placeholder(R.drawable.ic_profile)
         }
+
+        binding.ivTweetAvatar.setOnClickListener { TravelActions.traveler(context, post) }
+        binding.layoutTweetDestination.setOnClickListener { TravelActions.destination(context, post) }
 
         // Attached Destination Tag
         if (!post.destinationName.isNullOrBlank()) {
@@ -113,7 +117,7 @@ class FeedAdapter(
         }
 
         binding.btnTweetShare.setOnClickListener {
-            Toast.makeText(context, "Link copied for tweet by @${post.author.username}", Toast.LENGTH_SHORT).show()
+            TravelActions.share(context, post)
         }
     }
 
@@ -155,6 +159,10 @@ class FeedAdapter(
             placeholder(R.drawable.ic_profile)
         }
 
+        binding.ivAuthorAvatar.setOnClickListener { TravelActions.traveler(context, post) }
+        binding.tvPostLocation.setOnClickListener { TravelActions.destination(context, post) }
+        binding.layoutPostDestination.setOnClickListener { TravelActions.destination(context, post) }
+
         // Carousel Images
         val imageList = if (post.carouselImages.isNotEmpty()) {
             post.carouselImages
@@ -167,15 +175,20 @@ class FeedAdapter(
         val carouselAdapter = CarouselImageAdapter(imageList)
         binding.viewpagerCarousel.adapter = carouselAdapter
 
+        holder.pageCallback?.let { binding.viewpagerCarousel.unregisterOnPageChangeCallback(it) }
+        holder.pageCallback = null
+        binding.viewpagerCarousel.setCurrentItem(0, false)
         // Slide Counter Pill
         if (imageList.size > 1) {
             binding.tvSlideCounter.visibility = View.VISIBLE
             binding.tvSlideCounter.text = "1/${imageList.size}"
-            binding.viewpagerCarousel.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            val pageCallback = object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageSelected(pagePos: Int) {
                     binding.tvSlideCounter.text = "${pagePos + 1}/${imageList.size}"
                 }
-            })
+            }
+            holder.pageCallback = pageCallback
+            binding.viewpagerCarousel.registerOnPageChangeCallback(pageCallback)
         } else {
             binding.tvSlideCounter.visibility = View.GONE
         }
@@ -221,10 +234,22 @@ class FeedAdapter(
         }
 
         binding.btnShare.setOnClickListener {
-            Toast.makeText(context, "Sharing link to ${post.spotName}", Toast.LENGTH_SHORT).show()
+            TravelActions.share(context, post)
         }
         binding.tvOptionsMenu.setOnClickListener {
-            Toast.makeText(context, "Options: Save Spot, Copy Link, Report", Toast.LENGTH_SHORT).show()
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(context).setTitle(post.spotName)
+                .setItems(arrayOf("Add to my journey", "View traveler", "Share story")) { _, item ->
+                    when (item) {
+                        0 -> {
+                            com.safarnama.travel.data.TravelRepository.instance.addJourneyStop(com.safarnama.travel.data.JourneyStop(
+                                post.id, post.spotName, post.state, post.latitude, post.longitude,
+                                post.thumbnailUrl ?: post.carouselImages.firstOrNull().orEmpty(), post.costInInr))
+                            Toast.makeText(context, "Added to your journey", Toast.LENGTH_SHORT).show()
+                        }
+                        1 -> TravelActions.traveler(context, post)
+                        2 -> TravelActions.share(context, post)
+                    }
+                }.show()
         }
 
         // Travel Chips
@@ -250,7 +275,7 @@ class FeedAdapter(
         // Caption & Micro-Blog
         binding.tvCaption.text = post.caption
         binding.tvCommentsSummary.text = "View all ${post.commentsCount} comments"
-        binding.tvTimestamp.text = post.createdAt
+        binding.tvTimestamp.text = TravelActions.timeLabel(post.createdAt)
     }
 
     private fun updateLikeView(holder: PostViewHolder, post: Post) {

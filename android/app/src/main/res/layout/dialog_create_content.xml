@@ -172,6 +172,15 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_pick_media"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Choose photos"
+                    android:backgroundTint="@color/brand_coral"
+                    app:cornerRadius="10dp" />
+                <TextView android:id="@+id/tv_selected_media" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="No media selected" android:textSize="12sp" android:padding="8dp" android:textColor="@color/text_zinc_500" />
+                <ImageView android:id="@+id/iv_media_preview" android:layout_width="match_parent" android:layout_height="140dp" android:scaleType="centerCrop" android:contentDescription="Selected media preview" android:visibility="gone" />
                 <EditText
                     android:id="@+id/et_create_spot_name"
                     android:layout_width="match_parent"
