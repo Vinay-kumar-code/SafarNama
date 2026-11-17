@@ -64,7 +64,7 @@ export const TopHeader: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#090a0f]/95 backdrop-blur-md border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
+    <header className="md:hidden sticky top-0 z-40 bg-[#090a0f]/95 backdrop-blur-md border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
       {/* Brand Logo & Hindi Typography */}
       <div 
         onClick={() => setActiveTab('feed')} 

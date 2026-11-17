@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { DesktopNav } from './components/layout/DesktopNav';
 import { TopHeader } from './components/layout/TopHeader';
 import { BottomNav } from './components/layout/BottomNav';
 import { ReelsFeed } from './components/feed/ReelsFeed';
@@ -16,13 +17,94 @@ import { WriteReviewModal } from './components/destinations/WriteReviewModal';
 import { OTABanner } from './components/common/OTABanner';
 import { AuthModal } from './components/auth/AuthModal';
 import { OnboardingModal } from './components/auth/OnboardingModal';
+import { initMobileApp } from './lib/device';
 
 const MainScreen: React.FC = () => {
-  const { activeTab } = useApp();
+  const { 
+    activeTab, 
+    setActiveTab,
+    activeTravelNote,
+    setActiveTravelNote,
+    activeGearModal,
+    setActiveGearModal,
+    activeDestination,
+    setActiveDestination,
+    isWriteReviewModalOpen,
+    closeWriteReviewModal,
+  } = useApp();
+
+  const {
+    isAuthModalOpen,
+    closeAuthModal,
+    isOnboardingOpen,
+    closeOnboarding,
+  } = useAuth();
+
+  // Hardware back-button & native status bar handling for Android
+  useEffect(() => {
+    initMobileApp({
+      hasOpenModal: () => {
+        return !!(
+          activeTravelNote ||
+          activeGearModal ||
+          activeDestination ||
+          isWriteReviewModalOpen ||
+          isAuthModalOpen ||
+          isOnboardingOpen
+        );
+      },
+      closeActiveModal: () => {
+        if (isWriteReviewModalOpen) {
+          closeWriteReviewModal();
+          return;
+        }
+        if (activeGearModal) {
+          setActiveGearModal(null);
+          return;
+        }
+        if (activeTravelNote) {
+          setActiveTravelNote(null);
+          return;
+        }
+        if (activeDestination) {
+          setActiveDestination(null);
+          return;
+        }
+        if (isOnboardingOpen) {
+          closeOnboarding();
+          return;
+        }
+        if (isAuthModalOpen) {
+          closeAuthModal();
+          return;
+        }
+      },
+      activeTab,
+      setActiveTab,
+    });
+  }, [
+    activeTab,
+    activeTravelNote,
+    activeGearModal,
+    activeDestination,
+    isWriteReviewModalOpen,
+    isAuthModalOpen,
+    isOnboardingOpen,
+    setActiveTab,
+    setActiveTravelNote,
+    setActiveGearModal,
+    setActiveDestination,
+    closeWriteReviewModal,
+    closeAuthModal,
+    closeOnboarding,
+  ]);
 
   return (
     <div className="relative w-full h-full min-h-screen bg-[#090a0f] text-slate-100 flex flex-col overflow-hidden select-none">
-      {/* Top Header */}
+      {/* Desktop Navigation (visible on md+ screens, hidden on mobile) */}
+      <DesktopNav />
+
+      {/* Mobile Top Header (hidden on md+ screens, visible on mobile) */}
       <TopHeader />
 
       {/* Auto OTA Update Banner */}
@@ -46,7 +128,7 @@ const MainScreen: React.FC = () => {
       <OnboardingModal />
       <WriteReviewModal />
 
-      {/* Instagram-Simple Bottom Navigation */}
+      {/* Instagram-Simple Bottom Navigation (mobile only) */}
       <BottomNav />
     </div>
   );

@@ -38,39 +38,47 @@ export const CampaignHub: React.FC = () => {
   const progressPercent = Math.round((completedCount / activeCampaign.checkpoints.length) * 100);
 
   return (
-    <div className="w-full h-[calc(100dvh-57px-60px)] overflow-y-auto bg-[#090a0f] p-4 no-scrollbar">
-      <div className="max-w-xl mx-auto space-y-5 pb-12">
+    <div className="w-full h-[calc(100dvh-57px-60px)] md:h-[calc(100vh-65px)] overflow-y-auto bg-[#090a0f] p-4 sm:p-6 lg:p-8 no-scrollbar">
+      <div className="max-w-xl md:max-w-6xl mx-auto space-y-6 pb-20">
         
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-orange-400 uppercase tracking-wider">
-            <Flame className="w-4 h-4 text-orange-400 fill-current" />
-            <span>Time-Bound Influencer & Tourism Campaigns</span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-orange-400 uppercase tracking-wider">
+              <Flame className="w-4 h-4 text-orange-400 fill-current" />
+              <span>Time-Bound Influencer & Tourism Campaigns</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white mt-1">
+              Flash Destination Trends
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400">
+              Visit geofenced checkpoints, log authentic notes, and unlock limited-edition passport badges!
+            </p>
           </div>
-          <h1 className="text-xl font-extrabold text-white mt-1">
-            Flash Destination Trends
-          </h1>
-          <p className="text-xs text-slate-400">
-            Visit geofenced checkpoints, log authentic notes, and unlock limited-edition passport badges!
-          </p>
+
+          {/* Campaign Switcher Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            {campaigns.map(camp => (
+              <button
+                key={camp.id}
+                onClick={() => setSelectedCampaignId(camp.id)}
+                className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border shrink-0 ${
+                  activeCampaign.id === camp.id
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 shadow-lg shadow-orange-500/25 scale-105'
+                    : 'bg-slate-900 text-slate-400 border-white/10 hover:border-white/20'
+                }`}
+              >
+                {camp.title}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Campaign Switcher Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-          {campaigns.map(camp => (
-            <button
-              key={camp.id}
-              onClick={() => setSelectedCampaignId(camp.id)}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all border shrink-0 ${
-                activeCampaign.id === camp.id
-                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 shadow-lg shadow-orange-500/25 scale-105'
-                  : 'bg-slate-900 text-slate-400 border-white/10 hover:border-white/20'
-              }`}
-            >
-              {camp.title}
-            </button>
-          ))}
-        </div>
+        {/* Responsive Grid: Left Column for Campaign & Checkpoints, Right Column for Reward & Leaderboard */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+          {/* Left Column (7 cols on desktop) */}
+          <div className="md:col-span-7 space-y-6">
 
         {/* Hero Card */}
         <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900">
@@ -103,20 +111,7 @@ export const CampaignHub: React.FC = () => {
               {activeCampaign.description}
             </p>
 
-            {/* Reward Card */}
-            <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                <Trophy className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block">
-                  Campaign Reward & Badge
-                </span>
-                <p className="text-xs font-bold text-amber-200 mt-0.5">
-                  {activeCampaign.rewardDescription}
-                </p>
-              </div>
-            </div>
+
 
             {/* Progress Bar */}
             <div className="space-y-1.5">
@@ -193,69 +188,90 @@ export const CampaignHub: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Live Leaderboard */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>Live Leaderboard</span>
-            </h3>
-            <span className="text-[11px] text-slate-400 flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span>{activeCampaign.participantsCount} Joined</span>
-            </span>
+      {/* Right Column (5 cols on desktop): Reward Details & Live Leaderboard */}
+      <div className="md:col-span-5 space-y-6">
+          {/* Reward Card */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-3.5 shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+              <Trophy className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 block">
+                Campaign Reward & Badge
+              </span>
+              <p className="text-xs sm:text-sm font-bold text-amber-200 mt-1 leading-relaxed">
+                {activeCampaign.rewardDescription}
+              </p>
+            </div>
           </div>
 
-          <div className="rounded-3xl bg-slate-900 border border-white/10 p-2 space-y-1 shadow-lg">
-            {activeCampaign.leaderboard.map(entry => (
-              <div
-                key={entry.rank}
-                className={`flex items-center justify-between p-2.5 rounded-2xl transition-all ${
-                  entry.rank === 1
-                    ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30'
-                    : 'hover:bg-slate-800/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`w-6 text-center text-xs font-extrabold ${
-                    entry.rank === 1 ? 'text-amber-400 text-sm' :
-                    entry.rank === 2 ? 'text-slate-300' :
-                    entry.rank === 3 ? 'text-amber-600' : 'text-slate-500'
-                  }`}>
-                    #{entry.rank}
-                  </span>
+          {/* Live Leaderboard */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>Live Leaderboard</span>
+              </h3>
+              <span className="text-xs text-slate-400 flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" />
+                <span>{activeCampaign.participantsCount} Joined</span>
+              </span>
+            </div>
 
-                  <img
-                    src={entry.avatarUrl}
-                    alt={entry.fullName}
-                    className="w-9 h-9 rounded-full object-cover border border-white/20"
-                  />
+            <div className="rounded-3xl bg-slate-900 border border-white/10 p-2 sm:p-3 space-y-1.5 shadow-xl">
+              {activeCampaign.leaderboard.map(entry => (
+                <div
+                  key={entry.rank}
+                  className={`flex items-center justify-between p-3 rounded-2xl transition-all ${
+                    entry.rank === 1
+                      ? 'bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30'
+                      : 'hover:bg-slate-800/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`w-6 text-center text-xs font-extrabold ${
+                      entry.rank === 1 ? 'text-amber-400 text-sm' :
+                      entry.rank === 2 ? 'text-slate-300' :
+                      entry.rank === 3 ? 'text-amber-600' : 'text-slate-500'
+                    }`}>
+                      #{entry.rank}
+                    </span>
 
-                  <div>
-                    <h5 className="text-xs font-bold text-white leading-tight">
-                      {entry.fullName}
-                    </h5>
-                    <p className="text-[10px] text-slate-400 font-medium">
-                      @{entry.username} • <span className="text-amber-400 font-semibold">{entry.badgeTier}</span>
-                    </p>
+                    <img
+                      src={entry.avatarUrl}
+                      alt={entry.fullName}
+                      className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0"
+                    />
+
+                    <div className="min-w-0">
+                      <h5 className="text-xs sm:text-sm font-bold text-white leading-tight truncate">
+                        {entry.fullName}
+                      </h5>
+                      <p className="text-[11px] text-slate-400 font-medium truncate">
+                        @{entry.username} • <span className="text-amber-400 font-semibold">{entry.badgeTier}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0 pl-2">
+                    <span className="text-xs sm:text-sm font-black text-orange-400 block">
+                      {entry.points} pts
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {entry.badgesUnlocked} badges
+                    </span>
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <span className="text-xs font-black text-orange-400 block">
-                    {entry.points} pts
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {entry.badgesUnlocked} badges
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
       </div>
+
     </div>
+  </div>
   );
 };

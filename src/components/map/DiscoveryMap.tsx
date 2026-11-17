@@ -1,17 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, 
-  Layers, 
   Search, 
-  Navigation2, 
-  Filter, 
-  Sparkles, 
-  Compass,
-  Info,
-  Star
+  Compass, 
+  Info, 
+  Bookmark, 
+  Navigation, 
+  IndianRupee, 
+  ShieldCheck, 
+  ExternalLink,
+  Sparkles,
+  Check
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { DESTINATION_HUBS } from '../../data/mockData';
+import { formatINR } from '../../lib/utils';
 import { SpotDetailsDrawer } from './SpotDetailsDrawer';
 
 export const DiscoveryMap: React.FC = () => {
@@ -20,6 +22,8 @@ export const DiscoveryMap: React.FC = () => {
     selectedMapSpot, 
     clearSelectedMapSpot, 
     openSpotOnMap,
+    toggleSavePost,
+    setActiveTravelNote,
     setActiveDestination
   } = useApp();
 
@@ -42,9 +46,10 @@ export const DiscoveryMap: React.FC = () => {
     }
   }, [selectedMapSpot]);
 
-  // Unique list of pins from posts and destination hubs
+  // Unique list of pins from posts
   const allPins = posts.map(post => ({
     id: post.id,
+    post,
     spotName: post.spotName,
     state: post.state,
     region: post.region,
@@ -54,6 +59,10 @@ export const DiscoveryMap: React.FC = () => {
     savesCount: post.savesCount,
     author: post.author,
     thumbnailUrl: post.thumbnailUrl,
+    costInInr: post.costInInr,
+    safetyTips: post.safetyTips,
+    caption: post.caption,
+    isSaved: post.isSaved,
   }));
 
   // Filter pins
@@ -88,12 +97,136 @@ export const DiscoveryMap: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-[calc(100dvh-57px-60px)] overflow-hidden bg-[#07080c] select-none flex flex-col">
+    <div className="relative w-full h-[calc(100dvh-57px-60px)] md:h-[calc(100vh-65px)] overflow-hidden bg-[#07080c] select-none flex flex-col md:flex-row">
       
-      {/* Top Floating Controls: Search & Region Filters */}
-      <div className="absolute top-3 inset-x-3 z-20 space-y-2 pointer-events-none">
+      {/* =========================================================================
+          DESKTOP LEFT SIDEBAR: Search, Regions, and Scrollable Spot Cards (md:flex)
+         ========================================================================= */}
+      <div className="hidden md:flex flex-col w-[420px] h-full bg-[#0d0f17] border-r border-white/10 shrink-0 z-20">
         
-        {/* Search Bar */}
+        {/* Search & Regions */}
+        <div className="p-4 border-b border-white/10 space-y-3 shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search spots, valleys, ghats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900 border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 shadow-inner"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {[
+              { id: 'all', label: 'All India' },
+              { id: 'himachal', label: 'Spiti' },
+              { id: 'delhi', label: 'Old Delhi' },
+              { id: 'uttar pradesh', label: 'Varanasi' },
+              { id: 'meghalaya', label: 'Meghalaya' },
+              { id: 'karnataka', label: 'Hampi' },
+            ].map(r => (
+              <button
+                key={r.id}
+                onClick={() => setSelectedRegion(r.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
+                  selectedRegion === r.id
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 shadow-md'
+                    : 'bg-slate-900 text-slate-300 border-white/10 hover:border-white/20'
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+            <span>Showing {filteredPins.length} Geotagged Pins</span>
+            <span className="text-[10px] text-orange-400 font-semibold">Click to fly on map</span>
+          </div>
+        </div>
+
+        {/* Scrollable Spots List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
+          {filteredPins.map(pin => {
+            const isSelected = activePin?.spotName === pin.spotName;
+            return (
+              <div
+                key={pin.id}
+                onClick={() => {
+                  setActivePin({
+                    spotName: pin.spotName,
+                    latitude: pin.latitude,
+                    longitude: pin.longitude,
+                  });
+                }}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer group flex gap-3 ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/50 shadow-xl'
+                    : 'bg-slate-900/80 hover:bg-slate-900 border-white/5 hover:border-white/20'
+                }`}
+              >
+                <img
+                  src={pin.thumbnailUrl}
+                  alt={pin.spotName}
+                  className="w-20 h-20 rounded-xl object-cover shrink-0 border border-white/10"
+                />
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] font-bold text-orange-400 truncate">
+                      {pin.region}, {pin.state}
+                    </span>
+                    {pin.costInInr !== undefined && (
+                      <span className="text-[10px] font-bold text-emerald-400 shrink-0">
+                        {formatINR(pin.costInInr)}
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="text-xs font-bold text-white group-hover:text-orange-400 transition-colors truncate mt-0.5">
+                    {pin.spotName}
+                  </h4>
+
+                  <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
+                    {pin.caption}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-2 pt-1 border-t border-white/5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSavePost(pin.id);
+                      }}
+                      className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 transition-all ${
+                        pin.isSaved ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      {pin.isSaved ? <Check className="w-2.5 h-2.5" /> : <Bookmark className="w-2.5 h-2.5" />}
+                      <span>{pin.isSaved ? 'Saved' : 'Save'}</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTravelNote(pin.post);
+                      }}
+                      className="text-[10px] text-slate-400 hover:text-white"
+                    >
+                      Travel Notes →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* =========================================================================
+          MOBILE TOP FLOATING CONTROLS (md:hidden)
+         ========================================================================= */}
+      <div className="md:hidden absolute top-3 inset-x-3 z-20 space-y-2 pointer-events-none">
         <div className="relative pointer-events-auto">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -105,11 +238,10 @@ export const DiscoveryMap: React.FC = () => {
           />
         </div>
 
-        {/* Region Filter Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto py-0.5">
           {[
             { id: 'all', label: 'All India' },
-            { id: 'himachal', label: 'Spiti Valley' },
+            { id: 'himachal', label: 'Spiti' },
             { id: 'delhi', label: 'Old Delhi' },
             { id: 'uttar pradesh', label: 'Varanasi' },
             { id: 'meghalaya', label: 'Meghalaya' },
@@ -128,60 +260,37 @@ export const DiscoveryMap: React.FC = () => {
             </button>
           ))}
         </div>
-
-        {/* Master Destination Hubs with Reviews */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto py-0.5">
-          <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider shrink-0 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
-            <Sparkles className="w-3 h-3" />
-            <span>Master Hubs:</span>
-          </span>
-          {DESTINATION_HUBS.map(hub => (
-            <button
-              key={hub.id}
-              onClick={() => setActiveDestination(hub)}
-              className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-orange-500/30 hover:border-orange-500 flex items-center gap-1 transition-all shadow-sm"
-              title={`View ${hub.name} Heritage, Reviews & Permits`}
-            >
-              <span>{hub.name}</span>
-              <span className="text-amber-400 flex items-center gap-0.5 font-mono">
-                <Star className="w-2.5 h-2.5 fill-current" />
-                {hub.averageRating || 4.8}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Interactive Map Canvas / Vector View */}
-      <div className="relative w-full h-full flex items-center justify-center p-4">
+      {/* =========================================================================
+          INTERACTIVE MAP CANVAS (Full size on Desktop right, full on Mobile)
+         ========================================================================= */}
+      <div className="flex-1 h-full relative flex items-center justify-center p-4 overflow-hidden">
         {/* Decorative Grid Lines */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293710_1px,transparent_1px),linear-gradient(to_bottom,#1f293710_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-        
-        {/* Glow ambient circle */}
         <div className="absolute w-96 h-96 rounded-full bg-orange-600/5 blur-[120px] pointer-events-none" />
 
-        {/* Subcontinental Map Container */}
-        <div className="relative w-full max-w-lg aspect-[3/4] max-h-[85vh] rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c0e17] via-[#090b12] to-[#07080c] overflow-hidden shadow-2xl flex items-center justify-center">
+        {/* Map Container */}
+        <div className="relative w-full h-full max-w-4xl max-h-[90vh] rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c0e17] via-[#090b12] to-[#07080c] overflow-hidden shadow-2xl flex items-center justify-center">
           
-          {/* Subtle India Geographic Watermark Outline */}
+          {/* Subcontinent Watermark */}
           <svg
             viewBox="0 0 100 100"
-            className="absolute inset-0 w-full h-full opacity-15 text-slate-500 pointer-events-none stroke-current fill-none stroke-[0.4]"
+            className="absolute inset-0 w-full h-full opacity-20 text-slate-500 pointer-events-none stroke-current fill-none stroke-[0.4]"
           >
-            {/* Stylized subcontinent path */}
             <path d="M 45 10 Q 55 12 58 18 Q 65 25 72 28 Q 88 28 92 35 Q 92 45 80 48 Q 70 52 65 65 Q 55 85 50 92 Q 45 85 35 68 Q 28 58 20 52 Q 12 42 18 32 Q 28 28 35 22 Z" />
           </svg>
 
           {/* Compass Rose */}
-          <div className="absolute top-20 right-4 flex flex-col items-center opacity-40 pointer-events-none">
-            <Compass className="w-6 h-6 text-orange-400 animate-spin-slow" />
-            <span className="text-[9px] font-mono font-bold text-slate-300 mt-0.5">N</span>
+          <div className="absolute top-6 right-6 flex flex-col items-center opacity-40 pointer-events-none">
+            <Compass className="w-8 h-8 text-orange-400 animate-spin-slow" />
+            <span className="text-[10px] font-mono font-bold text-slate-300 mt-0.5">N</span>
           </div>
 
-          {/* Mapbox Token Notification Pill */}
-          <div className="absolute bottom-4 left-4 z-10 glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] text-slate-400 max-w-[280px]">
+          {/* Map Info Pill */}
+          <div className="absolute bottom-4 left-4 z-10 glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] text-slate-400">
             <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-            <span>Mapbox GL Vector Engine • Custom Dark Travel Theme</span>
+            <span>Mapbox GL Vector Engine • Custom India Dark Theme</span>
           </div>
 
           {/* Dynamic Content Cluster Pins */}
@@ -202,7 +311,6 @@ export const DiscoveryMap: React.FC = () => {
                   });
                 }}
               >
-                {/* Pin Pulse Animation */}
                 <div className={`relative flex items-center justify-center transition-transform duration-200 ${isSelected ? 'scale-125' : 'group-hover:scale-115'}`}>
                   
                   {/* Ping Ring */}
@@ -218,8 +326,8 @@ export const DiscoveryMap: React.FC = () => {
                   </div>
 
                   {/* Pin Tooltip Label */}
-                  <div className={`absolute top-9 whitespace-nowrap px-2 py-0.5 rounded-md glass-panel text-[10px] font-bold text-white shadow-md border border-white/10 transition-opacity ${
-                    isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'
+                  <div className={`absolute top-9 whitespace-nowrap px-2.5 py-1 rounded-md glass-panel text-[10px] font-bold text-white shadow-md border border-white/10 transition-opacity ${
+                    isSelected ? 'opacity-100 ring-1 ring-orange-500/50' : 'opacity-80 group-hover:opacity-100'
                   }`}>
                     {pin.spotName.split(' ')[0]}
                   </div>
@@ -231,7 +339,7 @@ export const DiscoveryMap: React.FC = () => {
         </div>
       </div>
 
-      {/* Spot Details Bottom Drawer */}
+      {/* Spot Details Drawer */}
       {activePin && (
         <SpotDetailsDrawer
           spotName={activePin.spotName}
