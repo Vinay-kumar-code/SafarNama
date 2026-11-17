@@ -1,7 +1,9 @@
 package com.safarnama.travel.api
 
+import com.safarnama.travel.BuildConfig
+
 object R2MediaResolver {
-    const val R2_PUBLIC_BASE_URL = "https://media.safarnama.travel"
+    val R2_PUBLIC_BASE_URL: String = BuildConfig.R2_PUBLIC_URL
 
     /**
      * Resolves a media key or URL against the Cloudflare R2 public bucket.

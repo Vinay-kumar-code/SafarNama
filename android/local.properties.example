@@ -1,0 +1,21 @@
+# ==============================================================================
+# SafarNama Android - Local Environment Configuration
+# ==============================================================================
+# Note: You DO NOT need this file if you already have your variables in the root .env!
+# The Android Gradle build automatically reads from your root .env file.
+#
+# If you prefer keeping Android-specific keys separate or are opening the android/
+# folder directly in Android Studio, you can copy this file to local.properties:
+#
+# cp local.properties.example local.properties
+
+# 1. Supabase Backend
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# 2. Google Maps Android API Key
+# (Requires 'Maps SDK for Android' enabled in Google Cloud Console)
+VITE_GOOGLE_MAPS_API_KEY=AIzaSyYourActualGoogleMapsAPIKey
+
+# 3. Cloudflare R2 Public CDN Base URL
+VITE_CLOUDFLARE_R2_PUBLIC_URL=https://pub-yourbucketid.r2.dev

@@ -9,12 +9,13 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import com.safarnama.travel.BuildConfig
 
 object SupabaseClient {
     private const val TAG = "SupabaseClient"
 
-    const val SUPABASE_URL = "https://sueucyokftxabgcqtsxe.supabase.co"
-    const val SUPABASE_ANON_KEY = "sb_publishable_TsMcXsK26DlPUDB7a3RvUA_lLAFgOGz"
+    val SUPABASE_URL: String = BuildConfig.SUPABASE_URL
+    val SUPABASE_ANON_KEY: String = BuildConfig.SUPABASE_ANON_KEY
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)

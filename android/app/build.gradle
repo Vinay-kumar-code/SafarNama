@@ -3,6 +3,49 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Helper to resolve env vars from: 1) System.env / CI secrets, 2) Root .env, 3) android/local.properties
+def getAppEnv(String key, String fallback = "") {
+    def sysVal = System.getenv(key)
+    if (sysVal != null && !sysVal.trim().isEmpty()) {
+        return sysVal.trim()
+    }
+    def altKey = key.startsWith("VITE_") ? key.substring(5) : "VITE_" + key
+    def altSysVal = System.getenv(altKey)
+    if (altSysVal != null && !altSysVal.trim().isEmpty()) {
+        return altSysVal.trim()
+    }
+
+    def envFile = rootProject.file("../.env")
+    if (envFile.exists()) {
+        def envProps = new Properties()
+        try {
+            envFile.withInputStream { envProps.load(it) }
+            if (envProps.containsKey(key) && !envProps.getProperty(key).trim().isEmpty()) {
+                return envProps.getProperty(key).trim()
+            }
+            if (envProps.containsKey(altKey) && !envProps.getProperty(altKey).trim().isEmpty()) {
+                return envProps.getProperty(altKey).trim()
+            }
+        } catch (Exception ignored) {}
+    }
+
+    def localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        def localProps = new Properties()
+        try {
+            localPropsFile.withInputStream { localProps.load(it) }
+            if (localProps.containsKey(key) && !localProps.getProperty(key).trim().isEmpty()) {
+                return localProps.getProperty(key).trim()
+            }
+            if (localProps.containsKey(altKey) && !localProps.getProperty(altKey).trim().isEmpty()) {
+                return localProps.getProperty(altKey).trim()
+            }
+        } catch (Exception ignored) {}
+    }
+
+    return fallback
+}
+
 android {
     namespace 'com.safarnama.travel'
     compileSdk rootProject.ext.compileSdkVersion
@@ -16,6 +59,20 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+
+        // Read Environment Variables seamlessly from root .env or local.properties or CI secrets
+        def supabaseUrl = getAppEnv("VITE_SUPABASE_URL", "https://your-project.supabase.co")
+        def supabaseKey = getAppEnv("VITE_SUPABASE_ANON_KEY", "your-anon-key")
+        def r2PublicUrl = getAppEnv("VITE_CLOUDFLARE_R2_PUBLIC_URL", "https://media.safarnama.travel")
+        def googleMapsKey = getAppEnv("VITE_GOOGLE_MAPS_API_KEY", "AIzaSyPlaceholderSafarnamaMapsKey")
+
+        buildConfigField "String", "SUPABASE_URL", "\"${supabaseUrl}\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${supabaseKey}\""
+        buildConfigField "String", "R2_PUBLIC_URL", "\"${r2PublicUrl}\""
+        buildConfigField "String", "GOOGLE_MAPS_KEY", "\"${googleMapsKey}\""
+
+        // Inject Google Maps API Key directly into AndroidManifest.xml
+        resValue "string", "google_maps_key", googleMapsKey
     }
 
     buildTypes {
@@ -44,6 +101,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
