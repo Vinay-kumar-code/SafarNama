@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { AuthProvider } from './context/AuthContext';
 import { TopHeader } from './components/layout/TopHeader';
 import { BottomNav } from './components/layout/BottomNav';
 import { ReelsFeed } from './components/feed/ReelsFeed';
@@ -12,6 +13,8 @@ import { TravelNoteModal } from './components/feed/TravelNoteModal';
 import { GearShopModal } from './components/common/GearShopModal';
 import { DestinationHubModal } from './components/destinations/DestinationHubModal';
 import { OTABanner } from './components/common/OTABanner';
+import { AuthModal } from './components/auth/AuthModal';
+import { OnboardingModal } from './components/auth/OnboardingModal';
 
 const MainScreen: React.FC = () => {
   const { activeTab } = useApp();
@@ -38,6 +41,8 @@ const MainScreen: React.FC = () => {
       <TravelNoteModal />
       <GearShopModal />
       <DestinationHubModal />
+      <AuthModal />
+      <OnboardingModal />
 
       {/* Instagram-Simple Bottom Navigation */}
       <BottomNav />
@@ -47,8 +52,10 @@ const MainScreen: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainScreen />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <MainScreen />
+      </AppProvider>
+    </AuthProvider>
   );
 }
