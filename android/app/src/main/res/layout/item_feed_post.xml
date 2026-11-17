@@ -229,6 +229,56 @@
             android:textSize="11sp" />
     </LinearLayout>
 
+    <!-- Attached Destination Pill & Group Travel Mentions -->
+    <LinearLayout
+        android:id="@+id/layout_post_tags"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="14dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/layout_post_destination"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_tag_pill"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="2dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="11dp"
+                android:layout_height="11dp"
+                android:src="@drawable/ic_location_pin"
+                app:tint="@color/brand_coral" />
+
+            <TextView
+                android:id="@+id/tv_post_destination_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/brand_coral"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_post_mentions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@color/text_zinc_500"
+            android:textSize="11sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
     <!-- Caption & Travel Micro-Blog -->
     <LinearLayout
         android:layout_width="match_parent"

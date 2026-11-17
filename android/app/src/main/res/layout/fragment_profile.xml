@@ -7,6 +7,7 @@
     android:background="@color/bg_white">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/profile_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
@@ -15,39 +16,79 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="32dp">
+            android:paddingBottom="72dp">
 
-            <!-- Profile Info Header -->
+            <!-- Profile Top Bar with Username and Settings Gear -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:id="@+id/tv_top_username"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-bold"
+                    android:textColor="@color/text_zinc_900"
+                    android:textSize="18sp"
+                    tools:text="aarav_journeys" />
+
+                <!-- Settings & Following Gear Icon -->
+                <ImageView
+                    android:id="@+id/btn_profile_settings"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Settings &amp; Following"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_settings"
+                    app:tint="@color/text_zinc_900" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_zinc_200" />
+
+            <!-- Profile Header Info (Avatar & Stats) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="16dp"
-                android:paddingTop="16dp"
+                android:paddingTop="14dp"
                 android:paddingEnd="16dp">
 
-                <!-- Avatar with Story Gradient Ring -->
+                <!-- Avatar with Ring -->
                 <FrameLayout
-                    android:layout_width="76dp"
-                    android:layout_height="76dp"
-                    android:background="@drawable/bg_story_ring"
-                    android:padding="2.5dp">
+                    android:layout_width="80dp"
+                    android:layout_height="80dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_story_ring" />
 
                     <ImageView
                         android:id="@+id/iv_profile_avatar"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@color/bg_white"
-                        android:padding="2dp"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Profile Picture"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/ic_profile" />
+                        tools:src="@drawable/ic_profile" />
                 </FrameLayout>
 
-                <!-- Stats Summary Row -->
+                <!-- Clean Stats (Trips, Posts, Saved - NO Karma, NO Stamps, NO Follower Count) -->
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="16dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -65,9 +106,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-black"
-                            android:text="14"
                             android:textColor="@color/text_zinc_900"
-                            android:textSize="17sp" />
+                            android:textSize="17sp"
+                            tools:text="14" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -77,7 +118,7 @@
                             android:textSize="11sp" />
                     </LinearLayout>
 
-                    <!-- Stamps -->
+                    <!-- Posts & Tweets -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -86,18 +127,18 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/tv_stat_stamps"
+                            android:id="@+id/tv_stat_posts_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-black"
-                            android:text="18"
                             android:textColor="@color/text_zinc_900"
-                            android:textSize="17sp" />
+                            android:textSize="17sp"
+                            tools:text="28" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Stamps"
+                            android:text="Posts"
                             android:textColor="@color/text_zinc_500"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -115,9 +156,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-black"
-                            android:text="42"
                             android:textColor="@color/text_zinc_900"
-                            android:textSize="17sp" />
+                            android:textSize="17sp"
+                            tools:text="42" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -127,61 +168,42 @@
                             android:textSize="11sp" />
                     </LinearLayout>
 
-                    <!-- Credibility -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center_horizontal"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tv_stat_credibility"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif-black"
-                            android:text="980"
-                            android:textColor="@color/brand_coral"
-                            android:textSize="17sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Karma"
-                            android:textColor="@color/text_zinc_500"
-                            android:textSize="11sp" />
-                    </LinearLayout>
                 </LinearLayout>
+
             </LinearLayout>
 
             <!-- Name, Role & Bio Details -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingTop="12dp"
-                android:paddingEnd="16dp">
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="16dp"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tv_profile_fullname"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
-                    android:text="Aarav Sharma"
                     android:textColor="@color/text_zinc_900"
-                    android:textSize="15sp" />
+                    android:textSize="15sp"
+                    tools:text="Aarav Sharma" />
 
+                <!-- Role Badge -->
                 <TextView
                     android:id="@+id/tv_profile_role_badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:background="@drawable/bg_chip_pill"
-                    android:text="🛂 Indian Explorer • Verified Guide"
-                    android:textColor="@color/text_zinc_700"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_tag_pill"
+                    android:paddingStart="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="3dp"
+                    android:textColor="@color/brand_primary"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    tools:text="🛡️ Verified Guide • Spiti Valley High Passes" />
 
                 <TextView
                     android:id="@+id/tv_profile_bio"
@@ -189,21 +211,21 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Chasing Himalayan sunsets &amp; South Indian filter coffee ☕ | 18 Indian States explored | Next: Ziro Festival 🏕️"
                     android:textColor="@color/text_zinc_900"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    tools:text="Chasing Himalayan sunsets &amp; South Indian filter coffee ☕ | 18 Indian States explored | Next: Ziro Festival 🏕️" />
 
                 <TextView
                     android:id="@+id/tv_profile_homecity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="📍 Bengaluru, Karnataka • Hindi, English, Kannada"
                     android:textColor="@color/text_zinc_500"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    tools:text="📍 Bengaluru, Karnataka • Hindi, English, Kannada" />
             </LinearLayout>
 
-            <!-- Action Buttons: Edit Profile / Switch Role Demo -->
+            <!-- Action Buttons: Follow, Message, Edit, Switch Persona -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -213,12 +235,28 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_edit_profile"
+                    android:id="@+id/btn_follow_profile"
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/brand_coral"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Following"
+                    android:textColor="@color/bg_white"
+                    android:textSize="12sp"
+                    app:cornerRadius="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_message_profile"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="Edit Passport"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Message"
                     android:textColor="@color/text_zinc_900"
                     android:textSize="12sp"
                     app:cornerRadius="8dp"
@@ -228,26 +266,29 @@
                     android:id="@+id/btn_switch_persona"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="Switch Guide Mode"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="Switch Mode"
                     android:textColor="@color/brand_coral"
                     android:textSize="12sp"
                     app:cornerRadius="8dp"
                     app:strokeColor="@color/brand_coral" />
             </LinearLayout>
 
-            <!-- Profile Segment Tabs (Passport Stamps vs Saved Spots) -->
+            <!-- Profile Segment Tabs (Posts & Tweets, Mentions, Saved) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
+                <!-- Tab 1: Posts & Tweets -->
                 <LinearLayout
-                    android:id="@+id/tab_stamps"
+                    android:id="@+id/tab_posts"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -256,22 +297,50 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tv_tab_stamps_label"
+                        android:id="@+id/tv_tab_posts_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-medium"
-                        android:text="🛂 Digital Passport"
+                        android:text="Posts &amp; Tweets"
                         android:textColor="@color/text_zinc_900"
                         android:textSize="13sp" />
 
                     <View
-                        android:id="@+id/indicator_stamps"
+                        android:id="@+id/indicator_posts"
                         android:layout_width="40dp"
                         android:layout_height="2dp"
                         android:layout_marginTop="4dp"
                         android:background="@color/brand_coral" />
                 </LinearLayout>
 
+                <!-- Tab 2: Mentions (Group Travel) -->
+                <LinearLayout
+                    android:id="@+id/tab_mentions"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_tab_mentions_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="👥 Mentions"
+                        android:textColor="@color/text_zinc_500"
+                        android:textSize="13sp" />
+
+                    <View
+                        android:id="@+id/indicator_mentions"
+                        android:layout_width="40dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@android:color/transparent" />
+                </LinearLayout>
+
+                <!-- Tab 3: Saved Spots -->
                 <LinearLayout
                     android:id="@+id/tab_saved"
                     android:layout_width="0dp"
@@ -286,7 +355,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-medium"
-                        android:text="🔖 Saved Spots"
+                        android:text="🔖 Saved"
                         android:textColor="@color/text_zinc_500"
                         android:textSize="13sp" />
 
@@ -304,18 +373,26 @@
                 android:layout_height="1dp"
                 android:background="@color/border_zinc_200" />
 
-            <!-- Digital Passport Stamps Grid -->
+            <!-- Posts & Tweets List / Grid -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_passport_stamps"
+                android:id="@+id/rv_profile_posts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="12dp"
+                android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
-                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                app:spanCount="2"
-                tools:listitem="@layout/item_passport_stamp" />
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_feed_tweet" />
+
+            <!-- Mentions Section List (Separately displayed for tagged group travels) -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_profile_mentions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_feed_tweet" />
 
             <!-- Saved Spots Grid (Toggled) -->
             <androidx.recyclerview.widget.RecyclerView
@@ -330,6 +407,17 @@
                 app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                 app:spanCount="3"
                 tools:listitem="@layout/item_saved_spot" />
+
+            <!-- Empty State for Mentions or Posts -->
+            <TextView
+                android:id="@+id/tv_profile_empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:gravity="center"
+                android:text="No content found in this section yet."
+                android:textColor="@color/text_zinc_400"
+                android:textSize="13sp"
+                android:visibility="gone" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

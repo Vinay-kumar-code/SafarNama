@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="6dp"
+    app:cardBackgroundColor="@color/bg_white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Author Header & Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/iv_tweet_avatar"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:contentDescription="Author Avatar"
+                android:scaleType="centerCrop"
+                tools:src="@drawable/ic_profile" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_tweet_fullname"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-bold"
+                        android:textColor="@color/text_zinc_900"
+                        android:textSize="14sp"
+                        tools:text="Tenzin Norbu" />
+
+                    <ImageView
+                        android:id="@+id/iv_tweet_verified"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="Verified"
+                        android:src="@drawable/ic_verified_guide"
+                        app:tint="@color/verified_blue" />
+
+                    <TextView
+                        android:id="@+id/tv_tweet_username"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:textColor="@color/text_zinc_500"
+                        android:textSize="12sp"
+                        tools:text="@tenzin_spitilocal" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:text="•"
+                        android:textColor="@color/text_zinc_400"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tv_tweet_timestamp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/text_zinc_400"
+                        android:textSize="12sp"
+                        tools:text="15m" />
+                </LinearLayout>
+
+                <!-- Attached Destination Pill -->
+                <LinearLayout
+                    android:id="@+id/layout_tweet_destination"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:background="@drawable/bg_tag_pill"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="2dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:contentDescription="Location"
+                        android:src="@drawable/ic_location_pin"
+                        app:tint="@color/brand_coral" />
+
+                    <TextView
+                        android:id="@+id/tv_tweet_destination_tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/brand_coral"
+                        android:textSize="11sp"
+                        tools:text="Spiti Valley" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_tweet_format_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_tag_pill"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="8dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="3dp"
+                android:text="Thread"
+                android:textColor="@color/brand_primary"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Group Travel Mentions Tag -->
+        <LinearLayout
+            android:id="@+id/layout_tweet_mentions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="Mentions"
+                android:src="@drawable/ic_user_group"
+                app:tint="@color/text_zinc_500" />
+
+            <TextView
+                android:id="@+id/tv_tweet_mentions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/text_zinc_700"
+                android:textSize="11sp"
+                tools:text="With: @aarav_journeys, @karan_banaras" />
+        </LinearLayout>
+
+        <!-- Tweet Body Text -->
+        <TextView
+            android:id="@+id/tv_tweet_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/text_zinc_900"
+            android:textSize="14sp"
+            tools:text="Kunzum Pass (4,551m) just received 4 inches of fresh snowfall. If you are riding through Kaza today with @aarav_journeys, make sure tire chains are prepped and check in at our Losar base camp. Butter tea is boiling hot at the mountain outpost! 🏔️☕❄️" />
+
+        <!-- Action Bar: Like, Thread / Reply, Save, Share -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Like Button -->
+            <LinearLayout
+                android:id="@+id/btn_tweet_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <ImageView
+                    android:id="@+id/iv_tweet_like"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="Like"
+                    android:src="@drawable/ic_heart_outline" />
+
+                <TextView
+                    android:id="@+id/tv_tweet_likes_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="@color/text_zinc_700"
+                    android:textSize="12sp"
+                    tools:text="892" />
+            </LinearLayout>
+
+            <!-- Threaded Reply Button -->
+            <LinearLayout
+                android:id="@+id/btn_tweet_thread"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="Thread Replies"
+                    android:src="@drawable/ic_thread" />
+
+                <TextView
+                    android:id="@+id/tv_tweet_replies_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="@color/text_zinc_700"
+                    android:textSize="12sp"
+                    tools:text="8 Replies" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <!-- Bookmark / Save -->
+            <ImageView
+                android:id="@+id/btn_tweet_save"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Save"
+                android:src="@drawable/ic_bookmark_outline" />
+
+            <!-- Share -->
+            <ImageView
+                android:id="@+id/btn_tweet_share"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Share"
+                android:src="@drawable/ic_share" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

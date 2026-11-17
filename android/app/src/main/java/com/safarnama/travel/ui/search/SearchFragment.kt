@@ -45,7 +45,8 @@ class SearchFragment : Fragment() {
 
         // Setup Destinations Grid
         destAdapter = DestinationGridAdapter(repository.destinations.value) { dest ->
-            Toast.makeText(requireContext(), "Opening ${dest.name} Hub • ${dest.state}", Toast.LENGTH_SHORT).show()
+            val mappedPosts = repository.getPostsForDestination(dest.name)
+            Toast.makeText(requireContext(), "📍 ${dest.name} Hub (${dest.state}) • ${mappedPosts.size} tweets & posts mapped", Toast.LENGTH_SHORT).show()
         }
         binding.rvDestinationsGrid.adapter = destAdapter
 

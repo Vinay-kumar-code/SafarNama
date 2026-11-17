@@ -1,61 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_white">
+    android:background="@color/bg_white"
+    android:orientation="vertical">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/home_scroll_view"
+    <!-- Top Instagram-Clean Header Bar with + (Create) & DM Buttons -->
+    <LinearLayout
+        android:id="@+id/layout_home_header"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="52dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- App Brand working title / logo styling -->
+        <TextView
+            android:id="@+id/tv_home_brand"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="-0.02"
+            android:text="SafarNama"
+            android:textColor="@color/text_zinc_900"
+            android:textSize="21sp" />
 
-            <!-- Stories / Indian Circuits Carousel -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_stories"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="10dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_story_circle" />
+        <!-- + Button (Create New Tweet / Post / Reel) -->
+        <ImageView
+            android:id="@+id/btn_create_content"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Create New Tweet, Post or Reel"
+            android:padding="7dp"
+            android:src="@drawable/ic_add"
+            app:tint="@color/text_zinc_900" />
 
+        <!-- 1-on-1 Direct Messaging (DM) Button -->
+        <FrameLayout
+            android:id="@+id/btn_direct_messages"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Direct Messages">
+
+            <ImageView
+                android:layout_width=" match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:src="@drawable/ic_message"
+                app:tint="@color/text_zinc_900" />
+
+            <!-- Red Unread Badge Dot -->
             <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/border_zinc_200" />
+                android:id="@+id/badge_unread_dms"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_badge_inr"
+                android:backgroundTint="@color/heart_red" />
+        </FrameLayout>
 
-            <!-- Feed Posts (Carousels, Micro-Blogs, Notes) -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_feed"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_feed_post" />
+    </LinearLayout>
 
-            <ProgressBar
-                android:id="@+id/home_progress_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="24dp"
-                android:indeterminateTint="@color/brand_coral"
-                android:visibility="gone" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_zinc_200" />
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+    <!-- Unified Feed (Tweets, Threads, Photos, Carousels) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_feed"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="72dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_feed_post" />
+
+        <ProgressBar
+            android:id="@+id/home_progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/brand_coral"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+</LinearLayout>

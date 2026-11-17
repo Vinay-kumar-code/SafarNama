@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_white"
+    android:orientation="vertical">
+
+    <!-- Handle Bar -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_chip_pill" />
+
+    <!-- Sheet Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-bold"
+            android:text="Thread Discussion"
+            android:textColor="@color/text_zinc_900"
+            android:textSize="16sp" />
+
+        <ImageView
+            android:id="@+id/btn_close_thread"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close"
+            android:padding="4dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/text_zinc_500" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_zinc_200" />
+
+    <!-- Scrollable Parent Tweet & Thread Replies -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Parent Tweet Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Left Column: Avatar + Thread Connector Line -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/iv_thread_parent_avatar"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="Parent Author"
+                        android:scaleType="centerCrop"
+                        tools:src="@drawable/ic_profile" />
+
+                    <!-- Vertical thread line connecting parent to replies -->
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="6dp"
+                        android:background="@color/border_zinc_300" />
+                </LinearLayout>
+
+                <!-- Right Column: Tweet Details -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_thread_parent_fullname"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
+                            android:textColor="@color/text_zinc_900"
+                            android:textSize="14sp"
+                            tools:text="Tenzin Norbu" />
+
+                        <TextView
+                            android:id="@+id/tv_thread_parent_username"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:textColor="@color/text_zinc_500"
+                            android:textSize="12sp"
+                            tools:text="@tenzin_spitilocal" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:text="•"
+                            android:textColor="@color/text_zinc_400"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tv_thread_parent_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_zinc_400"
+                            android:textSize="12sp"
+                            tools:text="15m" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_thread_parent_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:lineSpacingExtra="3dp"
+                        android:textColor="@color/text_zinc_900"
+                        android:textSize="14sp"
+                        tools:text="Kunzum Pass (4,551m) just received 4 inches of fresh snowfall. If you are riding through Kaza today with @aarav_journeys, make sure tire chains are prepped!" />
+
+                    <TextView
+                        android:id="@+id/tv_thread_parent_dest_tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_tag_pill"
+                        android:paddingStart="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="2dp"
+                        android:textColor="@color/brand_coral"
+                        android:textSize="11sp"
+                        tools:text="📍 Spiti Valley" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Thread Replies List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_thread_replies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_comment" />
+
+            <TextView
+                android:id="@+id/tv_no_thread_replies"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:gravity="center"
+                android:text="No replies yet. Be the first to reply to this thread! 🧵"
+                android:textColor="@color/text_zinc_400"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_zinc_200" />
+
+    <!-- Sticky Bottom Reply Input Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="12dp">
+
+        <ImageView
+            android:id="@+id/iv_thread_reply_user_avatar"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:contentDescription="Your Avatar"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/ic_profile" />
+
+        <EditText
+            android:id="@+id/et_thread_reply_input"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_tag_pill"
+            android:hint="Reply to thread..."
+            android:imeOptions="actionSend"
+            android:inputType="textCapSentences"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="@color/text_zinc_900"
+            android:textColorHint="@color/text_zinc_400"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/btn_submit_thread_reply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:fontFamily="sans-serif-bold"
+            android:padding="8dp"
+            android:text="Reply"
+            android:textColor="@color/brand_coral"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

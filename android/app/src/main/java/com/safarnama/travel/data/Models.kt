@@ -17,13 +17,16 @@ data class Profile(
     val homeCity: String = "India",
     val isVerifiedGuide: Boolean = false,
     val guideCircuits: List<String> = emptyList(),
-    val credibilityScore: Int = 100,
-    val passportStampsCount: Int = 0,
+    val credibilityScore: Int = 100, // Kept for model compatibility
+    val passportStampsCount: Int = 0, // Kept for model compatibility
     val languagesSpoken: List<String> = listOf("Hindi", "English"),
-    val stats: ProfileStats = ProfileStats()
+    val stats: ProfileStats = ProfileStats(),
+    val isFollowing: Boolean = false
 )
 
 enum class PostFormat {
+    PHOTO_POST,
+    TWEET,
     REEL,
     CAROUSEL_NOTE,
     QUICK_TIP
@@ -36,10 +39,13 @@ data class Post(
     val state: String,
     val region: String,
     val caption: String,
-    val format: PostFormat = PostFormat.CAROUSEL_NOTE,
+    val format: PostFormat = PostFormat.PHOTO_POST,
     val videoUrl: String? = null,
     val thumbnailUrl: String? = null,
     val carouselImages: List<String> = emptyList(),
+    val destinationId: String? = null,
+    val destinationName: String? = null,
+    val mentionedUsernames: List<String> = emptyList(),
     val costInInr: Int = 0,
     val bestTimeToVisit: String = "Year-round",
     val safetyTips: String = "",
@@ -50,9 +56,34 @@ data class Post(
     var likesCount: Int = 0,
     var savesCount: Int = 0,
     var commentsCount: Int = 0,
+    var threadRepliesCount: Int = 0,
     var isLiked: Boolean = false,
     var isSaved: Boolean = false,
     val createdAt: String = "Just now"
+)
+
+data class Comment(
+    val id: String,
+    val postId: String,
+    val author: Profile,
+    val text: String,
+    val createdAt: String = "Just now",
+    val parentCommentId: String? = null,
+    val likesCount: Int = 0
+)
+
+data class DirectMessage(
+    val id: String,
+    val senderId: String,
+    val receiverId: String,
+    val text: String,
+    val timestamp: String = "Just now",
+    val isFromMe: Boolean = false
+)
+
+data class FollowedAccountSetting(
+    val profile: Profile,
+    var notificationsEnabled: Boolean = true
 )
 
 data class DestinationHub(

@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.safarnama.travel.data.TravelRepository
 import com.safarnama.travel.databinding.FragmentReelsBinding
+import com.safarnama.travel.ui.home.CommentsBottomSheetDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -44,6 +45,10 @@ class ReelsFragment : Fragment() {
                 val isSaved = repository.toggleSave(reel.id)
                 val msg = if (isSaved) "Saved to your Passport" else "Removed from saved"
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            },
+            onOpenComments = { reel ->
+                val commentsSheet = CommentsBottomSheetDialogFragment.newInstance(reel.id, reel.spotName)
+                commentsSheet.show(parentFragmentManager, "reel_comments_sheet")
             }
         )
 

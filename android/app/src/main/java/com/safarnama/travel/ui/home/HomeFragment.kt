@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.safarnama.travel.data.SeedData
 import com.safarnama.travel.data.TravelRepository
 import com.safarnama.travel.databinding.FragmentHomeBinding
 import kotlinx.coroutines.flow.collectLatest
@@ -20,7 +19,6 @@ class HomeFragment : Fragment() {
 
     private val repository = TravelRepository.instance
     private lateinit var feedAdapter: FeedAdapter
-    private lateinit var storiesAdapter: StoriesAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,13 +32,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup Stories Carousel
-        storiesAdapter = StoriesAdapter(SeedData.STORY_HIGHLIGHTS) { story ->
-            Toast.makeText(requireContext(), "Viewing highlight: ${story.title}", Toast.LENGTH_SHORT).show()
-        }
-        binding.rvStories.adapter = storiesAdapter
-
-        // Setup Feed Adapter
+        // Setup Feed Adapter supporting both Posts (Photos) and Tweets (Threads)
         feedAdapter = FeedAdapter(
             posts = repository.posts.value,
             onLikeToggle = { post ->
@@ -52,11 +44,31 @@ class HomeFragment : Fragment() {
                 val isSaved = repository.toggleSave(post.id)
                 val msg = if (isSaved) "Saved to your Travel Passport" else "Removed from saved"
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            },
+            onOpenComments = { post ->
+                val commentsSheet = CommentsBottomSheetDialogFragment.newInstance(post.id, post.spotName)
+                commentsSheet.show(parentFragmentManager, "comments_sheet")
+            },
+            onOpenThread = { post ->
+                val threadSheet = ThreadBottomSheetDialogFragment.newInstance(post.id)
+                threadSheet.show(parentFragmentManager, "thread_sheet")
             }
         )
         binding.rvFeed.adapter = feedAdapter
 
-        // Observe Flow Updates
+        // + Button for creating new Tweet, Post or Reel
+        binding.btnCreateContent.setOnClickListener {
+            val createSheet = CreateContentBottomSheetDialogFragment.newInstance()
+            createSheet.show(parentFragmentManager, "create_content_sheet")
+        }
+
+        // Direct Messages (1-on-1 messaging)
+        binding.btnDirectMessages.setOnClickListener {
+            val dmDialog = DirectMessagesDialogFragment.newInstance()
+            dmDialog.show(parentFragmentManager, "dm_dialog")
+        }
+
+        // Observe Feed Posts Flow
         viewLifecycleOwner.lifecycleScope.launch {
             repository.posts.collectLatest { updatedList ->
                 feedAdapter.updatePosts(updatedList)

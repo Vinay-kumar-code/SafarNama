@@ -23,7 +23,8 @@ import com.safarnama.travel.util.HeartAnimationUtil
 class ReelVideoAdapter(
     private var reels: List<Post>,
     private val onLikeToggle: (Post) -> Unit,
-    private val onSaveToggle: (Post) -> Unit
+    private val onSaveToggle: (Post) -> Unit,
+    private val onOpenComments: ((Post) -> Unit)? = null
 ) : RecyclerView.Adapter<ReelVideoAdapter.ReelViewHolder>() {
 
     private val playersMap = mutableMapOf<Int, ExoPlayer>()
@@ -131,7 +132,7 @@ class ReelVideoAdapter(
         }
 
         binding.btnReelComment.setOnClickListener {
-            Toast.makeText(context, "Opening comments for ${reel.spotName}", Toast.LENGTH_SHORT).show()
+            onOpenComments?.invoke(reel)
         }
         binding.btnReelShare.setOnClickListener {
             Toast.makeText(context, "Sharing reel ${reel.spotName}", Toast.LENGTH_SHORT).show()
