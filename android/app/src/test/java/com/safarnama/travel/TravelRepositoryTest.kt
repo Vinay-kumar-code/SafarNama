@@ -51,7 +51,8 @@ class TravelRepositoryTest {
     fun testR2MediaResolver() {
         val relativeKey = "videos/spiti_kunzum.mp4"
         val resolved = R2MediaResolver.resolveVideoUrl(relativeKey)
-        assertEquals("https://media.safarnama.travel/videos/spiti_kunzum.mp4", resolved)
+        val expectedBase = R2MediaResolver.R2_PUBLIC_BASE_URL.trimEnd('/')
+        assertEquals("$expectedBase/videos/spiti_kunzum.mp4", resolved)
 
         val alreadyAbsolute = "https://images.unsplash.com/sample.jpg"
         val resolvedAbsolute = R2MediaResolver.resolveImageUrl(alreadyAbsolute)

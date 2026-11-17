@@ -259,7 +259,7 @@
                 android:shadowDx="1"
                 android:shadowDy="1"
                 android:shadowRadius="2"
-                android:text="🎵 Original Audio - Himalayan Wind & Prayer Bells"
+                android:text="🎵 Original Audio - Himalayan Wind &amp; Prayer Bells"
                 android:textColor="#E0E0E0"
                 android:textSize="11sp" />
         </LinearLayout>

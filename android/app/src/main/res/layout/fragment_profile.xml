@@ -189,7 +189,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="Chasing Himalayan sunsets & South Indian filter coffee ☕ | 18 Indian States explored | Next: Ziro Festival 🏕️"
+                    android:text="Chasing Himalayan sunsets &amp; South Indian filter coffee ☕ | 18 Indian States explored | Next: Ziro Festival 🏕️"
                     android:textColor="@color/text_zinc_900"
                     android:textSize="13sp" />
 

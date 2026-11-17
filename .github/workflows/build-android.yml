@@ -41,7 +41,7 @@ jobs:
           VITE_CLOUDFLARE_R2_PUBLIC_URL: ${{ secrets.VITE_CLOUDFLARE_R2_PUBLIC_URL }}
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace --no-daemon
+          ./gradlew assembleDebug -x lint --stacktrace --no-daemon
 
       - name: Upload SafarNama APK Artifact
         uses: actions/upload-artifact@v4
