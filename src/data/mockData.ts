@@ -1,4 +1,4 @@
-import { Profile, Post, DestinationHub, QAThread, Campaign, SponsoredStay, Trip, DestinationReview } from '../types';
+import { Profile, Post, DestinationHub, QAThread, Campaign, SponsoredStay, Trip, DestinationReview, GuideVerificationRequest, FlaggedContentItem } from '../types';
 import { getR2AvatarUrl, getR2ImageUrl, getR2VideoUrl } from '../lib/r2';
 
 export const CURRENT_USER_TRAVELER: Profile = {
@@ -42,6 +42,29 @@ export const CURRENT_USER_GUIDE: Profile = {
     spotsSaved: 62,
     contributions: 114,
     guideToursLed: 38,
+  },
+};
+
+export const CURRENT_USER_ADMIN: Profile = {
+  id: 'user-admin-001',
+  username: 'safarnama_hq',
+  fullName: 'Chief Operations Officer',
+  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+  bio: 'SafarNama Operations & Destination Verification Bureau • HQ Command Center',
+  activeRole: 'admin',
+  homeCity: 'New Delhi, India',
+  isVerifiedGuide: true,
+  guideCircuits: ['Pan-India Verification Desk', 'Destinations Master Bureau'],
+  credibilityScore: 9999,
+  passportStampsCount: 28,
+  languagesSpoken: ['Hindi', 'English', 'Sanskrit'],
+  contactPhone: '+91 11 2345 6789',
+  visitedStates: ['Pan-India Coverage'],
+  stats: {
+    tripsCompleted: 108,
+    spotsSaved: 420,
+    contributions: 560,
+    guideToursLed: 0,
   },
 };
 
@@ -1248,5 +1271,107 @@ export const MOCK_DESTINATION_REVIEWS: DestinationReview[] = [
     isHelpful: false,
     travelTips: 'Carry broad-spectrum SPF 50 sunscreen and a hydration backpack; granite rocks radiate intense heat by noon even in December.',
     createdAt: new Date(Date.now() - 86400000 * 70).toISOString(),
+  },
+];
+
+export const MOCK_GUIDE_APPLICATIONS: GuideVerificationRequest[] = [
+  {
+    id: 'req-guide-01',
+    guideName: 'Ramesh Bhatt',
+    username: 'ramesh_varanasi_heritage',
+    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80',
+    circuits: ['Varanasi Ancient Ghats', 'Sarnath Buddhist Heritage', 'Kashi Vishwanath Corridor'],
+    idProofType: 'UP State Tourism Certified Guide Badge',
+    idProofNumber: 'UP-VAR-88214',
+    experienceYears: 12,
+    status: 'pending',
+    requestedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    phone: '+91 98391 22410',
+    homeCity: 'Varanasi, Uttar Pradesh',
+    bio: 'Descendant of 4 generations of Kashi boatmasters. Certified cultural interpreter & evening Aarti specialist.',
+  },
+  {
+    id: 'req-guide-02',
+    guideName: 'Ananya Sengupta',
+    username: 'ananya_meghalaya_trails',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+    circuits: ['Nongriat Double Decker Root Bridge', 'Mawsmai & Krem Puri Caves', 'Dawki Umngot Waters'],
+    idProofType: 'Meghalaya Tourism Development Corp ID',
+    idProofNumber: 'MTDC-SHL-4109',
+    experienceYears: 6,
+    status: 'pending',
+    requestedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    phone: '+91 94361 77209',
+    homeCity: 'Shillong, Meghalaya',
+    bio: 'Speleologist & Khasi heritage curator. Leading zero-waste treks across East Khasi Hills since 2019.',
+  },
+  {
+    id: 'req-guide-03',
+    guideName: 'Rigzin Angchuk',
+    username: 'rigzin_ladakh_passes',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+    circuits: ['Khardung La & Nubra Valley', 'Markha Valley Trek', 'Chadar Frozen River Expedition'],
+    idProofType: 'Indian Mountaineering Foundation (IMF) Leader Cert',
+    idProofNumber: 'IMF-EXP-2022-941',
+    experienceYears: 9,
+    status: 'pending',
+    requestedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    phone: '+91 94191 55301',
+    homeCity: 'Leh, Ladakh',
+    bio: 'Certified wilderness first-responder & high-altitude trek leader with over 50 summits across the Zanskar range.',
+  },
+  {
+    id: 'req-guide-04',
+    guideName: 'Karma Wangdi',
+    username: 'karma_ziro_tours',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    circuits: ['Apatani Cultural Landscape', 'Ziro Music Festival Trail', 'Tale Wildlife Sanctuary'],
+    idProofType: 'Arunachal Pradesh Tourism Guide License',
+    idProofNumber: 'AR-ZIR-2024-12',
+    experienceYears: 5,
+    status: 'approved',
+    requestedAt: new Date(Date.now() - 86400000 * 18).toISOString(),
+    phone: '+91 94360 88123',
+    homeCity: 'Ziro, Arunachal Pradesh',
+    bio: 'Native Apatani guide preserving UNESCO candidate wet-rice agricultural landscapes and indigenous pine grove trails.',
+  },
+];
+
+export const MOCK_FLAGGED_CONTENT: FlaggedContentItem[] = [
+  {
+    id: 'flag-01',
+    contentType: 'reel',
+    contentId: 'post-001',
+    titleOrCaption: 'Secret cliff jump at Sanapur Lake into submerged boulders',
+    authorUsername: 'adventurous_vikram',
+    reportedBy: 'karnataka_safety_patrol',
+    reason: 'Safety Hazard: Encourages cliff jumping at unverified spot with underwater granite rocks & whirlpool currents.',
+    reportedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    status: 'pending',
+    destinationName: 'Hampi',
+  },
+  {
+    id: 'flag-02',
+    contentType: 'question',
+    contentId: 'qa-003',
+    titleOrCaption: 'Can foreigners enter protected areas without ILP/PAP if traveling on bike?',
+    authorUsername: 'traveler_sam',
+    reportedBy: 'arunachal_tourism_officer',
+    reason: 'Misleading Permit Guidance: Strict violation of Border Area Permit regulations punishable under Indian Law.',
+    reportedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    status: 'pending',
+    destinationName: 'Meghalaya',
+  },
+  {
+    id: 'flag-03',
+    contentType: 'reel',
+    contentId: 'post-004',
+    titleOrCaption: 'Drone flight over Manikarnika Cremation Ghat',
+    authorUsername: 'sky_lens_travels',
+    reportedBy: 'varanasi_heritage_police',
+    reason: 'Cultural Violation: Strict ban on drone photography and videography above sacred cremation ghats.',
+    reportedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    status: 'pending',
+    destinationName: 'Varanasi',
   },
 ];

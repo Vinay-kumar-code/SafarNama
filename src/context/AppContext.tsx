@@ -3,6 +3,7 @@ import { Post, Profile, DestinationHub, QAThread, Campaign, Trip, GearTag, UserR
 import { 
   CURRENT_USER_TRAVELER, 
   CURRENT_USER_GUIDE, 
+  CURRENT_USER_ADMIN,
   MOCK_POSTS, 
   MOCK_QA_THREADS, 
   MOCK_CAMPAIGNS, 
@@ -81,8 +82,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [profile?.activeRole]);
 
-  // Authenticated Supabase profile takes precedence; fallback to mock traveler / guide
-  const currentUser: Profile = profile || (activeRole === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE);
+  // Authenticated Supabase profile takes precedence; fallback to mock traveler / guide / admin
+  const currentUser: Profile = profile || (activeRole === 'admin' ? CURRENT_USER_ADMIN : activeRole === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE);
 
   const [posts, setPosts] = useState<Post[]>(() => 
     getStoredData<Post[]>('posts_cache', MOCK_POSTS)

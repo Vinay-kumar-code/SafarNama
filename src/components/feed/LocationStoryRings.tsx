@@ -77,11 +77,15 @@ export const POPULAR_STORY_DESTINATIONS: StoryDestination[] = [
 interface LocationStoryRingsProps {
   selectedDestinationId: string | null;
   onSelectDestination: (destinationId: string | null) => void;
+  className?: string;
+  isLightMode?: boolean;
 }
 
 export const LocationStoryRings: React.FC<LocationStoryRingsProps> = ({
   selectedDestinationId,
   onSelectDestination,
+  className = '',
+  isLightMode = false,
 }) => {
   const handleSelect = (id: string | null) => {
     triggerHaptic('light');
@@ -89,7 +93,7 @@ export const LocationStoryRings: React.FC<LocationStoryRingsProps> = ({
   };
 
   return (
-    <div className="w-full bg-gradient-to-b from-black/90 via-black/70 to-transparent backdrop-blur-md pt-2 pb-2.5 z-30 select-none">
+    <div className={`w-full select-none ${className || 'bg-gradient-to-b from-black/80 via-black/50 to-transparent backdrop-blur-md pt-2 pb-2.5 z-30'}`}>
       <div className="flex items-center gap-3 px-3.5 overflow-x-auto no-scrollbar scroll-smooth">
         {POPULAR_STORY_DESTINATIONS.map((dest) => {
           const isSelected = selectedDestinationId === dest.id;
@@ -105,15 +109,15 @@ export const LocationStoryRings: React.FC<LocationStoryRingsProps> = ({
               <div
                 className={`relative rounded-full transition-all duration-300 ${
                   isSelected
-                    ? 'p-[3px] bg-gradient-to-tr from-amber-400 via-orange-500 to-rose-600 shadow-lg shadow-orange-500/40 ring-2 ring-orange-400/80 scale-105'
+                    ? 'p-[3px] bg-gradient-to-tr from-amber-400 via-orange-500 to-rose-600 shadow-md shadow-orange-500/30 ring-2 ring-orange-400/80 scale-105'
                     : isAll
                     ? 'p-[2.5px] bg-gradient-to-tr from-amber-300 via-orange-400 to-yellow-500 group-hover:scale-105'
                     : 'p-[2.5px] bg-gradient-to-tr from-yellow-400 via-rose-500 to-purple-600 group-hover:scale-105'
                 }`}
               >
-                {/* Inner Dark Gap */}
-                <div className="bg-black p-[2px] rounded-full">
-                  <div className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full overflow-hidden flex items-center justify-center bg-slate-900">
+                {/* Inner Gap: white in light mode, black in dark mode */}
+                <div className={`${isLightMode ? 'bg-white' : 'bg-black'} p-[2px] rounded-full`}>
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden flex items-center justify-center bg-zinc-100">
                     <img
                       src={dest.imageUrl}
                       alt={dest.name}
@@ -123,16 +127,16 @@ export const LocationStoryRings: React.FC<LocationStoryRingsProps> = ({
 
                     {/* Gradient Overlay for All Spots */}
                     {isAll && (
-                      <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-                        <Compass className="w-6 h-6 text-amber-300 animate-spin-slow drop-shadow" />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <Compass className="w-5 h-5 text-amber-300 animate-spin-slow drop-shadow" />
                       </div>
                     )}
 
                     {/* Active Selected Check Badge */}
                     {isSelected && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
-                        <div className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-md">
+                          <Check className="w-3 h-3 stroke-[3]" />
                         </div>
                       </div>
                     )}
@@ -141,7 +145,7 @@ export const LocationStoryRings: React.FC<LocationStoryRingsProps> = ({
 
                 {/* Live or Count Pill */}
                 {dest.isLive && !isSelected && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 text-[8px] font-black text-white uppercase tracking-wider shadow-md border border-black/60">
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 text-[8px] font-black text-white uppercase tracking-wider shadow-md border border-white/60">
                     LIVE
                   </span>
                 )}
@@ -154,10 +158,10 @@ export const LocationStoryRings: React.FC<LocationStoryRingsProps> = ({
 
               {/* Destination Name Label */}
               <span
-                className={`text-[11px] mt-1.5 tracking-tight font-medium max-w-[68px] truncate transition-colors ${
+                className={`text-[11px] mt-1 tracking-tight font-medium max-w-[68px] truncate transition-colors ${
                   isSelected
-                    ? 'text-orange-400 font-bold drop-shadow-sm'
-                    : 'text-slate-200 group-hover:text-white'
+                    ? isLightMode ? 'text-orange-600 font-bold' : 'text-orange-400 font-bold'
+                    : isLightMode ? 'text-zinc-600 group-hover:text-zinc-900' : 'text-slate-200 group-hover:text-white'
                 }`}
               >
                 {dest.shortName}

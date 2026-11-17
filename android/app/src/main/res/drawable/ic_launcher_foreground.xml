@@ -1,0 +1,116 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="1.15"
+        android:scaleY="1.15"
+        android:translateX="-8.1"
+        android:translateY="-8.1">
+
+        <!-- Outer Ambient Glow -->
+        <path
+            android:pathData="M54,46m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
+            android:fillColor="#33FF5722" />
+
+        <!-- Compass Cardinal Stamp Marks (Dotted Outer Circle) -->
+        <path
+            android:pathData="M54,46m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"
+            android:strokeWidth="1.2"
+            android:strokeColor="#66FFA000"
+            android:strokeLineCap="round" />
+
+        <!-- Location Pin Silhouette with Saffron-Coral Gradient -->
+        <path
+            android:pathData="M54,22 C67.5,22 78,32.5 78,46 C78,57.5 65.5,69.5 54,80 C42.5,69.5 30,57.5 30,46 C30,32.5 40.5,22 54,22 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="30"
+                    android:startY="22"
+                    android:endX="78"
+                    android:endY="80"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#FFFFA000" />
+                    <item android:offset="0.35" android:color="#FFFF5722" />
+                    <item android:offset="0.75" android:color="#FFFF1744" />
+                    <item android:offset="1.0" android:color="#FFC2185B" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Pin Gold Rim Highlight -->
+        <path
+            android:pathData="M54,22 C67.5,22 78,32.5 78,46 C78,57.5 65.5,69.5 54,80 C42.5,69.5 30,57.5 30,46 C30,32.5 40.5,22 54,22 Z"
+            android:strokeWidth="1"
+            android:strokeColor="#80FFD54F" />
+
+        <!-- Inner Lens Aperture Circle -->
+        <path
+            android:pathData="M54,45m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0"
+            android:fillColor="#FF0C0E17"
+            android:strokeWidth="1.5"
+            android:strokeColor="#FFFFD54F" />
+
+        <!-- 4-Point Compass Rose Facets -->
+        <!-- North Point Light & Dark -->
+        <path
+            android:pathData="M54,45 L54,32 L51,45 Z"
+            android:fillColor="#FFFFFFFF" />
+        <path
+            android:pathData="M54,45 L54,32 L57,45 Z"
+            android:fillColor="#FFFF9100" />
+
+        <!-- South Point Light & Dark -->
+        <path
+            android:pathData="M54,45 L54,58 L57,45 Z"
+            android:fillColor="#FFF4511E" />
+        <path
+            android:pathData="M54,45 L54,58 L51,45 Z"
+            android:fillColor="#FF880E4F" />
+
+        <!-- East Point Light & Dark -->
+        <path
+            android:pathData="M54,45 L67,45 L54,42 Z"
+            android:fillColor="#FFFFE082" />
+        <path
+            android:pathData="M54,45 L67,45 L54,48 Z"
+            android:fillColor="#FFFF5252" />
+
+        <!-- West Point Light & Dark -->
+        <path
+            android:pathData="M54,45 L41,45 L54,48 Z"
+            android:fillColor="#FFFFD54F" />
+        <path
+            android:pathData="M54,45 L41,45 L54,42 Z"
+            android:fillColor="#FFFF3D00" />
+
+        <!-- Diagonal Star Accents (NE, SE, SW, NW) -->
+        <path
+            android:pathData="M54,45 L60,39 L55.5,43.5 Z"
+            android:fillColor="#CCFFF9C4" />
+        <path
+            android:pathData="M54,45 L60,51 L55.5,46.5 Z"
+            android:fillColor="#CCFF9800" />
+        <path
+            android:pathData="M54,45 L48,51 L52.5,46.5 Z"
+            android:fillColor="#CCF4511E" />
+        <path
+            android:pathData="M54,45 L48,39 L52.5,43.5 Z"
+            android:fillColor="#CCFFD54F" />
+
+        <!-- Center Golden Jewel Pivot -->
+        <path
+            android:pathData="M54,45m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0"
+            android:fillColor="#FFFFD54F" />
+        <path
+            android:pathData="M54,45m-1.5,0a1.5,1.5 0,1 1,3 0a1.5,1.5 0,1 1,-3 0"
+            android:fillColor="#FFFFFFFF" />
+
+        <!-- Pulse dot below pin tip -->
+        <path
+            android:pathData="M54,83m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+            android:fillColor="#FFFFD54F" />
+    </group>
+</vector>

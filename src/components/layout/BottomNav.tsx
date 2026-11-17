@@ -44,7 +44,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#090a0f]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-zinc-200 px-2 py-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-xs">
       <div className="max-w-md mx-auto flex items-center justify-around">
         {navItems.map(item => {
           const isActive = activeTab === item.id;
@@ -54,8 +54,8 @@ export const BottomNav: React.FC = () => {
               onClick={() => setActiveTab(item.id)}
               className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'text-orange-400 font-bold scale-105'
-                  : 'text-slate-400 hover:text-slate-200 font-medium'
+                  ? 'text-orange-500 font-bold scale-105'
+                  : 'text-zinc-500 hover:text-zinc-800 font-medium'
               }`}
             >
               <div className="relative">
@@ -66,12 +66,12 @@ export const BottomNav: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] mt-1 tracking-tight ${isActive ? 'text-orange-400 font-semibold' : 'text-slate-400'}`}>
+              <span className={`text-[10px] mt-1 tracking-tight ${isActive ? 'text-orange-600 font-semibold' : 'text-zinc-500'}`}>
                 {item.label}
               </span>
 
               {isActive && (
-                <span className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-orange-400 shadow-sm shadow-orange-400" />
+                <span className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-orange-500 shadow-xs shadow-orange-500" />
               )}
             </button>
           );

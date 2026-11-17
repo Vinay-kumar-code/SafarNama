@@ -1,7 +1,11 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SafarNama</string>
     <string name="title_activity_main">SafarNama</string>
-    <string name="package_name">com.safarnama.travel</string>
-    <string name="custom_url_scheme">com.safarnama.travel</string>
+    <string name="title_home">Home</string>
+    <string name="title_search">Search</string>
+    <string name="title_reels">Reels</string>
+    <string name="title_maps">Maps</string>
+    <string name="title_profile">Profile</string>
+    <string name="google_maps_key" translatable="false">AIzaSyPlaceholderSafarnamaMapsKey</string>
 </resources>

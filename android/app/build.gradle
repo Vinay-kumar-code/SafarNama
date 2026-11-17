@@ -1,58 +1,91 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
 android {
-    namespace = "com.safarnama.travel"
-    compileSdk = rootProject.ext.compileSdkVersion
+    namespace 'com.safarnama.travel'
+    compileSdk rootProject.ext.compileSdkVersion
+
     defaultConfig {
         applicationId "com.safarnama.travel"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdk rootProject.ext.minSdkVersion
+        targetSdk rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
-        }
+        vectorDrawables.useSupportLibrary = true
     }
+
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
-}
 
-repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    kotlinOptions {
+        jvmTarget = '21'
+        freeCompilerArgs += [
+            "-opt-in=kotlin.RequiresOptIn",
+            "-opt-in=androidx.media3.common.util.UnstableApi"
+        ]
+    }
+
+    buildFeatures {
+        viewBinding true
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
-    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-    implementation project(':capacitor-android')
-    testImplementation "junit:junit:$junitVersion"
-    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    implementation project(':capacitor-cordova-android-plugins')
-}
+    // AndroidX & UI
+    implementation "androidx.core:core-ktx:$rootProject.ext.androidXCoreVersion"
+    implementation "androidx.appcompat:appcompat:$rootProject.ext.androidXAppCompatVersion"
+    implementation "com.google.android.material:material:$rootProject.ext.materialVersion"
+    implementation "androidx.constraintlayout:constraintlayout:$rootProject.ext.constraintLayoutVersion"
+    implementation "androidx.recyclerview:recyclerview:1.4.0"
+    implementation "androidx.viewpager2:viewpager2:$rootProject.ext.viewPager2Version"
+    implementation "androidx.core:core-splashscreen:$rootProject.ext.coreSplashScreenVersion"
 
-apply from: 'capacitor.build.gradle'
+    // Navigation
+    implementation "androidx.navigation:navigation-fragment-ktx:$rootProject.ext.navigationVersion"
+    implementation "androidx.navigation:navigation-ui-ktx:$rootProject.ext.navigationVersion"
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    // Lifecycle & ViewModel
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.ext.lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$rootProject.ext.lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$rootProject.ext.lifecycleVersion"
+
+    // Coil Image Loading
+    implementation "io.coil-kt:coil:$rootProject.ext.coilVersion"
+
+    // Media3 / ExoPlayer for Reels
+    implementation "androidx.media3:media3-exoplayer:$rootProject.ext.media3Version"
+    implementation "androidx.media3:media3-ui:$rootProject.ext.media3Version"
+    implementation "androidx.media3:media3-common:$rootProject.ext.media3Version"
+
+    // Google Maps & Location
+    implementation "com.google.android.gms:play-services-maps:$rootProject.ext.playServicesMapsVersion"
+    implementation "com.google.android.gms:play-services-location:$rootProject.ext.playServicesLocationVersion"
+
+    // Networking (OkHttp) & Coroutines
+    implementation "com.squareup.okhttp3:okhttp:$rootProject.ext.okhttpVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.ext.okhttpVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$rootProject.ext.coroutinesVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$rootProject.ext.coroutinesVersion"
+
+    // Testing
+    testImplementation "junit:junit:4.13.2"
+    androidTestImplementation "androidx.test.ext:junit:1.2.1"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
 }

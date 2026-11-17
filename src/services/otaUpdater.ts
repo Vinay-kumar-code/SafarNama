@@ -1,5 +1,3 @@
-import { Preferences } from '@capacitor/preferences';
-
 export interface OTAManifest {
   version: string;
   bundleUrl: string;
@@ -20,18 +18,17 @@ export interface OTAUpdateStatus {
 
 export async function getInstalledVersion(): Promise<string> {
   try {
-    const { value } = await Preferences.get({ key: VERSION_PREF_KEY });
-    return value || CURRENT_APP_VERSION;
-  } catch {
     return localStorage.getItem(VERSION_PREF_KEY) || CURRENT_APP_VERSION;
+  } catch {
+    return CURRENT_APP_VERSION;
   }
 }
 
 export async function setInstalledVersion(version: string): Promise<void> {
   try {
-    await Preferences.set({ key: VERSION_PREF_KEY, value: version });
-  } catch {
     localStorage.setItem(VERSION_PREF_KEY, version);
+  } catch (err) {
+    console.warn('Could not persist installed OTA version to localStorage:', err);
   }
 }
 

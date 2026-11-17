@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base Application Theme: Instagram Clean White Theme -->
+    <style name="Theme.SafarNama" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/brand_coral</item>
+        <item name="colorOnPrimary">@color/bg_white</item>
+        <item name="colorSecondary">@color/brand_saffron</item>
+        <item name="colorOnSecondary">@color/bg_white</item>
+        <item name="android:statusBarColor">@color/bg_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/bg_white</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowBackground">@color/bg_white</item>
+    </style>
+
+    <!-- Legacy Style Aliases for AndroidManifest -->
+    <style name="AppTheme" parent="Theme.SafarNama" />
+    <style name="AppTheme.NoActionBar" parent="Theme.SafarNama" />
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SafarNama" />
+
+    <!-- Instagram Icon-Only Bottom Navigation Style -->
+    <style name="Widget.SafarNama.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="android:background">@color/bg_white</item>
+        <item name="itemIconTint">@color/text_zinc_900</item>
+        <item name="itemRippleColor">@color/border_zinc_200</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.SafarNama.BottomNavIndicator</item>
+        <item name="elevation">8dp</item>
+    </style>
+
+    <style name="Widget.SafarNama.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">#10FF5722</item>
+        <item name="android:width">44dp</item>
+        <item name="android:height">32dp</item>
+    </style>
+</resources>

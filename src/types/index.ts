@@ -1,4 +1,34 @@
-export type UserRole = 'traveler' | 'local_guide' | 'admin';
+export type UserRole = 'traveler' | 'creator' | 'local_guide' | 'admin';
+
+export interface GuideVerificationRequest {
+  id: string;
+  guideName: string;
+  username: string;
+  avatarUrl: string;
+  circuits: string[];
+  idProofType: string;
+  idProofNumber: string;
+  experienceYears: number;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  phone: string;
+  homeCity: string;
+  bio?: string;
+  rejectionReason?: string;
+}
+
+export interface FlaggedContentItem {
+  id: string;
+  contentType: 'reel' | 'question' | 'review';
+  contentId: string;
+  titleOrCaption: string;
+  authorUsername: string;
+  reportedBy: string;
+  reason: string;
+  reportedAt: string;
+  status: 'pending' | 'dismissed' | 'removed';
+  destinationName?: string;
+}
 
 export type ContentFormat = 'reel' | 'carousel_note' | 'quick_tip';
 

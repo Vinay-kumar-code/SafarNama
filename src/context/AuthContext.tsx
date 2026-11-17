@@ -2,9 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Profile, UserRole } from '../types';
-import { CURRENT_USER_TRAVELER, CURRENT_USER_GUIDE } from '../data/mockData';
+import { CURRENT_USER_TRAVELER, CURRENT_USER_GUIDE, CURRENT_USER_ADMIN } from '../data/mockData';
 import { getStoredData, setStoredData } from '../lib/utils';
 import { mapDbProfileToProfile, mapProfileToDbUpdates } from '../lib/authHelpers';
+
+export const ADMIN_PASSKEY = 'admin2026';
+
+export type AuthPathwayRole = 'traveler' | 'creator' | 'admin';
 
 export interface SignUpMetadata {
   fullName: string;
@@ -22,17 +26,24 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isOfflineDemo: boolean;
+  isAdmin: boolean;
+  isAdminPortalOpen: boolean;
+  openAdminPortal: () => void;
+  closeAdminPortal: () => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null; user?: User | null }>;
   signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null; user?: User | null; needsEmailConfirmation?: boolean }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithAdminPasskey: (passkey: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
-  loginAsDemoUser: (role: 'traveler' | 'local_guide') => void;
+  loginAsDemoUser: (role: 'traveler' | 'creator' | 'local_guide' | 'admin') => void;
   // Modal controls
   isAuthModalOpen: boolean;
   authModalMode: 'signin' | 'signup';
-  openAuthModal: (mode?: 'signin' | 'signup') => void;
+  authModalRole: AuthPathwayRole;
+  openAuthModal: (mode?: 'signin' | 'signup', role?: AuthPathwayRole) => void;
   closeAuthModal: () => void;
+  setAuthModalRole: (role: AuthPathwayRole) => void;
   isOnboardingOpen: boolean;
   openOnboarding: () => void;
   closeOnboarding: () => void;
@@ -52,10 +63,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Modal states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+  const [authModalRole, setAuthModalRole] = useState<AuthPathwayRole>('traveler');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState<boolean>(false);
 
-  const openAuthModal = (mode: 'signin' | 'signup' = 'signin') => {
+  const isAdmin = profile?.activeRole === 'admin';
+
+  const openAdminPortal = () => {
+    if (profile?.activeRole === 'admin') {
+      setIsAdminPortalOpen(true);
+    } else {
+      openAuthModal('signin', 'admin');
+    }
+  };
+
+  const closeAdminPortal = () => setIsAdminPortalOpen(false);
+
+  const openAuthModal = (mode: 'signin' | 'signup' = 'signin', role: AuthPathwayRole = 'traveler') => {
     setAuthModalMode(mode);
+    setAuthModalRole(role);
     setIsAuthModalOpen(true);
   };
 
@@ -249,11 +275,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string): Promise<{ error: Error | null; user?: User | null }> => {
     setIsLoading(true);
 
+    // Master Admin Passkey gateway
+    if (password.trim() === ADMIN_PASSKEY || email.trim().toLowerCase() === 'admin@safarnama.travel') {
+      if (password.trim() === ADMIN_PASSKEY) {
+        const adminProfile = CURRENT_USER_ADMIN;
+        setProfile(adminProfile);
+        setStoredData('safarnama_demo_user', adminProfile);
+        setStoredData('safarnama_auth_profile', adminProfile);
+        setIsAdminPortalOpen(true);
+        closeAuthModal();
+        setIsLoading(false);
+        return { error: null, user: null };
+      }
+    }
+
     if (!isSupabaseConfigured || isOfflineDemo) {
-      // Offline / Demo sign in
+      // Direct sign in with role discernment
+      const isGuide = email.toLowerCase().includes('guide') || email.toLowerCase().includes('local');
+      const baseUser = isGuide ? CURRENT_USER_GUIDE : CURRENT_USER_TRAVELER;
       const demoProfile: Profile = {
-        ...CURRENT_USER_TRAVELER,
-        id: `demo-${Date.now()}`,
+        ...baseUser,
+        id: `user-${Date.now()}`,
         username: email.split('@')[0],
         fullName: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
       };
@@ -438,8 +480,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setProfile(null);
+      setIsAdminPortalOpen(false);
       localStorage.removeItem('safarnama_auth_profile');
       localStorage.removeItem('safarnama_demo_user');
+      setIsLoading(false);
+    }
+  };
+
+  // Admin Master Passkey Gateway
+  const signInWithAdminPasskey = async (passkey: string): Promise<{ error: Error | null }> => {
+    setIsLoading(true);
+    try {
+      if (passkey.trim() !== ADMIN_PASSKEY) {
+        throw new Error('Invalid Admin Security Passkey. Expected passkey: admin2026');
+      }
+
+      const adminProfile = CURRENT_USER_ADMIN;
+      setProfile(adminProfile);
+      setStoredData('safarnama_demo_user', adminProfile);
+      setStoredData('safarnama_auth_profile', adminProfile);
+      setIsAdminPortalOpen(true);
+      closeAuthModal();
+      return { error: null };
+    } catch (err: any) {
+      return { error: err };
+    } finally {
       setIsLoading(false);
     }
   };
@@ -490,13 +555,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
-  // One-click quick demo login for travelers & local guides
-  const loginAsDemoUser = (role: 'traveler' | 'local_guide') => {
-    const demoProfile = role === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE;
+  // One-click quick login for travelers, local guides/creators & admins
+  const loginAsDemoUser = (role: 'traveler' | 'creator' | 'local_guide' | 'admin') => {
+    let demoProfile: Profile;
+    if (role === 'admin') {
+      demoProfile = CURRENT_USER_ADMIN;
+      setIsAdminPortalOpen(true);
+    } else if (role === 'creator' || role === 'local_guide') {
+      demoProfile = CURRENT_USER_GUIDE;
+    } else {
+      demoProfile = CURRENT_USER_TRAVELER;
+    }
     setProfile(demoProfile);
     setStoredData('safarnama_demo_user', demoProfile);
     setStoredData('safarnama_auth_profile', demoProfile);
-    setIsOfflineDemo(true);
     closeAuthModal();
   };
 
@@ -511,16 +583,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated,
         isLoading,
         isOfflineDemo,
+        isAdmin,
+        isAdminPortalOpen,
+        openAdminPortal,
+        closeAdminPortal,
         signIn,
         signUp,
         signInWithGoogle,
+        signInWithAdminPasskey,
         signOut,
         updateProfile,
         loginAsDemoUser,
         isAuthModalOpen,
         authModalMode,
+        authModalRole,
         openAuthModal,
         closeAuthModal,
+        setAuthModalRole,
         isOnboardingOpen,
         openOnboarding,
         closeOnboarding,

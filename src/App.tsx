@@ -14,9 +14,9 @@ import { TravelNoteModal } from './components/feed/TravelNoteModal';
 import { GearShopModal } from './components/common/GearShopModal';
 import { DestinationHubModal } from './components/destinations/DestinationHubModal';
 import { WriteReviewModal } from './components/destinations/WriteReviewModal';
-import { OTABanner } from './components/common/OTABanner';
 import { AuthModal } from './components/auth/AuthModal';
 import { OnboardingModal } from './components/auth/OnboardingModal';
+import { AdminPortal } from './components/admin/AdminPortal';
 import { initMobileApp } from './lib/device';
 
 const MainScreen: React.FC = () => {
@@ -38,6 +38,8 @@ const MainScreen: React.FC = () => {
     closeAuthModal,
     isOnboardingOpen,
     closeOnboarding,
+    isAdminPortalOpen,
+    closeAdminPortal,
   } = useAuth();
 
   // Hardware back-button & native status bar handling for Android
@@ -50,10 +52,15 @@ const MainScreen: React.FC = () => {
           activeDestination ||
           isWriteReviewModalOpen ||
           isAuthModalOpen ||
-          isOnboardingOpen
+          isOnboardingOpen ||
+          isAdminPortalOpen
         );
       },
       closeActiveModal: () => {
+        if (isAdminPortalOpen) {
+          closeAdminPortal();
+          return;
+        }
         if (isWriteReviewModalOpen) {
           closeWriteReviewModal();
           return;
@@ -90,6 +97,7 @@ const MainScreen: React.FC = () => {
     isWriteReviewModalOpen,
     isAuthModalOpen,
     isOnboardingOpen,
+    isAdminPortalOpen,
     setActiveTab,
     setActiveTravelNote,
     setActiveGearModal,
@@ -97,18 +105,16 @@ const MainScreen: React.FC = () => {
     closeWriteReviewModal,
     closeAuthModal,
     closeOnboarding,
+    closeAdminPortal,
   ]);
 
   return (
-    <div className="relative w-full h-full min-h-screen bg-[#090a0f] text-slate-100 flex flex-col overflow-hidden select-none">
+    <div className="relative w-full h-full min-h-screen bg-[#fafafa] text-zinc-900 flex flex-col overflow-hidden select-none">
       {/* Desktop Navigation (visible on md+ screens, hidden on mobile) */}
       <DesktopNav />
 
       {/* Mobile Top Header (hidden on md+ screens, visible on mobile) */}
       <TopHeader />
-
-      {/* Auto OTA Update Banner */}
-      <OTABanner />
 
       {/* Main View Area */}
       <main className="flex-1 w-full overflow-hidden">
@@ -127,6 +133,7 @@ const MainScreen: React.FC = () => {
       <AuthModal />
       <OnboardingModal />
       <WriteReviewModal />
+      <AdminPortal />
 
       {/* Instagram-Simple Bottom Navigation (mobile only) */}
       <BottomNav />
