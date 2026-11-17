@@ -49,7 +49,25 @@ export function haversineDistanceKm(
   return Math.round(R * c * 10) / 10;
 }
 
-// Offline LocalStorage helpers for low-connectivity Indian travel circuits
+// Haptic feedback pulse for mobile devices
+export function triggerHaptic(type: 'light' | 'medium' | 'heavy' | 'like' = 'light'): void {
+  if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
+    try {
+      if (type === 'like') {
+        navigator.vibrate([30, 45, 30]);
+      } else if (type === 'heavy') {
+        navigator.vibrate(40);
+      } else if (type === 'medium') {
+        navigator.vibrate(25);
+      } else {
+        navigator.vibrate(15);
+      }
+    } catch {
+      // Ignore vibration errors if blocked or unsupported
+    }
+  }
+}
+
 export function getStoredData<T>(key: string, defaultValue: T): T {
   try {
     const raw = localStorage.getItem(`safarnama_${key}`);
