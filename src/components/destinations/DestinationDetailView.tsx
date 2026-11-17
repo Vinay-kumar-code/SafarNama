@@ -943,7 +943,7 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
             </div>
           )}
 
-          {/* TAB 6: MAPBOX COORDINATES VIEW */}
+          {/* TAB 6: GOOGLE MAPS COORDINATES VIEW */}
           {activeTab === 'map' && (
             <div className="space-y-5 animate-in fade-in duration-200">
               
@@ -952,7 +952,7 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
                       <Compass className="w-4 h-4" />
-                      <span>Mapbox GL Vector Coordinates</span>
+                      <span>Google Maps Coordinates</span>
                     </h4>
                     <p className="text-xs text-slate-300 mt-0.5">
                       Accurate high-resolution geocoding for {destination.name}
@@ -984,10 +984,10 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Corner Mapbox Engine Watermark */}
+                  {/* Corner Google Maps Platform Watermark */}
                   <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[10px] text-slate-400 border border-white/10 flex items-center gap-1.5">
                     <Info className="w-3 h-3 text-orange-400" />
-                    <span>Mapbox GL Vector Engine • Custom Dark Travel Theme</span>
+                    <span>Google Maps Platform • Custom Dark Travel Theme</span>
                   </div>
                 </div>
 

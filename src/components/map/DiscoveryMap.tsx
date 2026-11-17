@@ -15,6 +15,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { formatINR } from '../../lib/utils';
 import { SpotDetailsDrawer } from './SpotDetailsDrawer';
+import { GoogleMapView, MapPinItem } from './GoogleMapView';
 
 export const DiscoveryMap: React.FC = () => {
   const { 
@@ -78,23 +79,6 @@ export const DiscoveryMap: React.FC = () => {
 
     return matchesRegion && matchesSearch;
   });
-
-  // Calculate coordinates to normalized viewport percentage for vector map representation
-  // India approx bounds: Lat 8° to 37° N, Lon 68° to 97° E
-  const projectToMapPercent = (lat: number, lng: number) => {
-    const minLat = 8.0;
-    const maxLat = 36.0;
-    const minLng = 69.0;
-    const maxLng = 96.0;
-
-    const x = ((lng - minLng) / (maxLng - minLng)) * 100;
-    const y = (1 - (lat - minLat) / (maxLat - minLat)) * 100;
-
-    return {
-      x: Math.max(8, Math.min(92, x)),
-      y: Math.max(8, Math.min(92, y)),
-    };
-  };
 
   return (
     <div className="relative w-full h-[calc(100dvh-57px-60px)] md:h-[calc(100vh-65px)] overflow-hidden bg-[#07080c] select-none flex flex-col md:flex-row">
@@ -263,80 +247,21 @@ export const DiscoveryMap: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          INTERACTIVE MAP CANVAS (Full size on Desktop right, full on Mobile)
+          INTERACTIVE MAP CANVAS (Powered by Google Maps Platform / Fallback)
          ========================================================================= */}
-      <div className="flex-1 h-full relative flex items-center justify-center p-4 overflow-hidden">
-        {/* Decorative Grid Lines */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293710_1px,transparent_1px),linear-gradient(to_bottom,#1f293710_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-        <div className="absolute w-96 h-96 rounded-full bg-orange-600/5 blur-[120px] pointer-events-none" />
-
-        {/* Map Container */}
-        <div className="relative w-full h-full max-w-4xl max-h-[90vh] rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c0e17] via-[#090b12] to-[#07080c] overflow-hidden shadow-2xl flex items-center justify-center">
-          
-          {/* Subcontinent Watermark */}
-          <svg
-            viewBox="0 0 100 100"
-            className="absolute inset-0 w-full h-full opacity-20 text-slate-500 pointer-events-none stroke-current fill-none stroke-[0.4]"
-          >
-            <path d="M 45 10 Q 55 12 58 18 Q 65 25 72 28 Q 88 28 92 35 Q 92 45 80 48 Q 70 52 65 65 Q 55 85 50 92 Q 45 85 35 68 Q 28 58 20 52 Q 12 42 18 32 Q 28 28 35 22 Z" />
-          </svg>
-
-          {/* Compass Rose */}
-          <div className="absolute top-6 right-6 flex flex-col items-center opacity-40 pointer-events-none">
-            <Compass className="w-8 h-8 text-orange-400 animate-spin-slow" />
-            <span className="text-[10px] font-mono font-bold text-slate-300 mt-0.5">N</span>
-          </div>
-
-          {/* Map Info Pill */}
-          <div className="absolute bottom-4 left-4 z-10 glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] text-slate-400">
-            <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-            <span>Mapbox GL Vector Engine • Custom India Dark Theme</span>
-          </div>
-
-          {/* Dynamic Content Cluster Pins */}
-          {filteredPins.map(pin => {
-            const pos = projectToMapPercent(pin.latitude, pin.longitude);
-            const isSelected = activePin?.spotName === pin.spotName;
-
-            return (
-              <div
-                key={pin.id}
-                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group"
-                onClick={() => {
-                  setActivePin({
-                    spotName: pin.spotName,
-                    latitude: pin.latitude,
-                    longitude: pin.longitude,
-                  });
-                }}
-              >
-                <div className={`relative flex items-center justify-center transition-transform duration-200 ${isSelected ? 'scale-125' : 'group-hover:scale-115'}`}>
-                  
-                  {/* Ping Ring */}
-                  <span className={`absolute w-8 h-8 rounded-full ${isSelected ? 'bg-orange-500/40 animate-ping' : 'bg-amber-500/20'}`} />
-
-                  {/* Marker Pin Icon */}
-                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center shadow-lg border transition-all ${
-                    isSelected
-                      ? 'bg-gradient-to-tr from-orange-600 to-amber-500 border-white text-white ring-4 ring-orange-500/40'
-                      : 'bg-slate-900 border-orange-500/60 text-orange-400 hover:border-orange-400'
-                  }`}>
-                    <MapPin className="w-4 h-4 fill-current" />
-                  </div>
-
-                  {/* Pin Tooltip Label */}
-                  <div className={`absolute top-9 whitespace-nowrap px-2.5 py-1 rounded-md glass-panel text-[10px] font-bold text-white shadow-md border border-white/10 transition-opacity ${
-                    isSelected ? 'opacity-100 ring-1 ring-orange-500/50' : 'opacity-80 group-hover:opacity-100'
-                  }`}>
-                    {pin.spotName.split(' ')[0]}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-        </div>
+      <div className="flex-1 h-full relative flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+        <GoogleMapView
+          pins={filteredPins}
+          activePin={activePin}
+          onSelectPin={(pin) => {
+            setActivePin({
+              spotName: pin.spotName,
+              latitude: pin.latitude,
+              longitude: pin.longitude,
+            });
+          }}
+          className="w-full h-full"
+        />
       </div>
 
       {/* Spot Details Drawer */}

@@ -1,10 +1,11 @@
 import { Profile, Post, DestinationHub, QAThread, Campaign, SponsoredStay, Trip, DestinationReview } from '../types';
+import { getR2AvatarUrl, getR2ImageUrl, getR2VideoUrl } from '../lib/r2';
 
 export const CURRENT_USER_TRAVELER: Profile = {
   id: 'user-001',
   username: 'aarav_journeys',
   fullName: 'Aarav Sharma',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+  avatarUrl: getR2AvatarUrl('avatars/aarav_journeys.jpg', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'),
   bio: 'Chasing Himalayan sunsets & South Indian filter coffee ☕ | 8 Indian States & counting | Next: Ziro Music Fest 🏕️',
   activeRole: 'traveler',
   homeCity: 'Bengaluru, Karnataka',
@@ -25,7 +26,7 @@ export const CURRENT_USER_GUIDE: Profile = {
   id: 'user-002',
   username: 'tenzin_spitilocal',
   fullName: 'Tenzin Norbu',
-  avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+  avatarUrl: getR2AvatarUrl('avatars/tenzin_spitilocal.jpg', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80'),
   bio: 'Born & raised in Kibber (4,270m) 🏔️ | Certified High-Altitude Guide & Snow Leopard Tracker | Spiti & Kinnaur Circuit Expert',
   activeRole: 'local_guide',
   homeCity: 'Kaza, Himachal Pradesh',
@@ -257,8 +258,8 @@ export const MOCK_POSTS: Post[] = [
     region: 'Spiti Valley',
     caption: 'Suspended 1,350 feet over a terrifying gorge! 🌉 Crossing between Kibber and Chicham village. When winds howl through this chasm, you feel the raw pulse of the Himalayas. Do not rush—stop your bike right in the middle for this view.',
     format: 'reel',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-curvy-road-on-a-mountain-slope-41545-large.mp4',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop&q=80',
+    videoUrl: getR2VideoUrl('videos/spiti_chicham_bridge.mp4', 'https://assets.mixkit.co/videos/preview/mixkit-curvy-road-on-a-mountain-slope-41545-large.mp4'),
+    thumbnailUrl: getR2ImageUrl('images/spiti_chicham_bridge.jpg', 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop&q=80'),
     costInInr: 350,
     bestTimeToVisit: 'Morning 8:00 AM (Zero crosswinds & crisp mountain light)',
     safetyTips: 'Gale-force gusts by afternoon; hold phones firmly! Acclimatize first in Kaza before riding up here.',
