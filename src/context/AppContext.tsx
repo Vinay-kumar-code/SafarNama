@@ -1,16 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Post, Profile, DestinationHub, QAThread, Campaign, Trip, GearTag, UserRole } from '../types';
+import { Post, Profile, DestinationHub, QAThread, Campaign, Trip, GearTag, UserRole, DestinationReview } from '../types';
 import { 
   CURRENT_USER_TRAVELER, 
   CURRENT_USER_GUIDE, 
   MOCK_POSTS, 
-  DESTINATION_HUBS, 
   MOCK_QA_THREADS, 
   MOCK_CAMPAIGNS, 
-  INITIAL_USER_TRIP 
+  INITIAL_USER_TRIP,
+  MOCK_DESTINATION_REVIEWS
 } from '../data/mockData';
 import { getStoredData, setStoredData } from '../lib/utils';
 import { useAuth } from './AuthContext';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export type NavTab = 'feed' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile';
 
@@ -29,6 +30,25 @@ interface AppContextType {
   setActiveGearModal: (gear: GearTag | null) => void;
   activeDestination: DestinationHub | null;
   setActiveDestination: (dest: DestinationHub | null) => void;
+  destinationReviews: DestinationReview[];
+  addDestinationReview: (reviewData: {
+    destinationId: string;
+    destinationName: string;
+    rating: number;
+    title: string;
+    reviewText: string;
+    photos?: string[];
+    visitMonth?: string;
+    travelType?: 'Solo' | 'Family' | 'Couple' | 'Friends';
+    travelTips?: string;
+  }) => Promise<DestinationReview>;
+  toggleReviewHelpful: (reviewId: string) => void;
+  getReviewsForDestination: (destinationId: string) => DestinationReview[];
+  isWriteReviewModalOpen: boolean;
+  setIsWriteReviewModalOpen: (open: boolean) => void;
+  reviewTargetDestination: DestinationHub | null;
+  openWriteReviewModal: (dest?: DestinationHub | null) => void;
+  closeWriteReviewModal: () => void;
   openSpotOnMap: (lat: number, lng: number, spotName: string) => void;
   selectedMapSpot: { lat: number; lng: number; spotName: string } | null;
   clearSelectedMapSpot: () => void;
@@ -85,6 +105,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeDestination, setActiveDestination] = useState<DestinationHub | null>(null);
   const [selectedMapSpot, setSelectedMapSpot] = useState<{ lat: number; lng: number; spotName: string } | null>(null);
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
+
+  // Reviews System State
+  const [destinationReviews, setDestinationReviews] = useState<DestinationReview[]>(() =>
+    getStoredData<DestinationReview[]>('destination_reviews_cache', MOCK_DESTINATION_REVIEWS)
+  );
+  const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
+  const [reviewTargetDestination, setReviewTargetDestination] = useState<DestinationHub | null>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -317,6 +344,105 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const openWriteReviewModal = (dest?: DestinationHub | null) => {
+    if (dest) {
+      setReviewTargetDestination(dest);
+    } else if (activeDestination) {
+      setReviewTargetDestination(activeDestination);
+    }
+    setIsWriteReviewModalOpen(true);
+  };
+
+  const closeWriteReviewModal = () => {
+    setIsWriteReviewModalOpen(false);
+    setReviewTargetDestination(null);
+  };
+
+  const getReviewsForDestination = (destinationId: string) => {
+    return destinationReviews.filter(r => r.destinationId === destinationId);
+  };
+
+  const addDestinationReview = async (reviewData: {
+    destinationId: string;
+    destinationName: string;
+    rating: number;
+    title: string;
+    reviewText: string;
+    photos?: string[];
+    visitMonth?: string;
+    travelType?: 'Solo' | 'Family' | 'Couple' | 'Friends';
+    travelTips?: string;
+  }): Promise<DestinationReview> => {
+    const newReview: DestinationReview = {
+      id: `rev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      destinationId: reviewData.destinationId,
+      destinationName: reviewData.destinationName,
+      author: currentUser,
+      rating: reviewData.rating,
+      title: reviewData.title,
+      reviewText: reviewData.reviewText,
+      photos: reviewData.photos && reviewData.photos.length > 0 ? reviewData.photos : undefined,
+      visitMonth: reviewData.visitMonth,
+      travelType: reviewData.travelType,
+      travelTips: reviewData.travelTips,
+      helpfulCount: 0,
+      isHelpful: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setDestinationReviews(prev => {
+      const updated = [newReview, ...prev];
+      setStoredData('destination_reviews_cache', updated);
+      return updated;
+    });
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('destination_reviews').insert({
+          id: newReview.id,
+          destination_id: newReview.destinationId,
+          destination_name: newReview.destinationName,
+          user_id: currentUser.id,
+          author_username: currentUser.username,
+          author_name: currentUser.fullName,
+          author_avatar: currentUser.avatarUrl,
+          author_role: currentUser.activeRole,
+          rating: newReview.rating,
+          title: newReview.title,
+          review_text: newReview.reviewText,
+          photos: newReview.photos || [],
+          visit_month: newReview.visitMonth,
+          travel_type: newReview.travelType,
+          travel_tips: newReview.travelTips,
+          helpful_count: 0,
+          created_at: newReview.createdAt,
+        });
+      } catch (err) {
+        console.warn('Supabase destination_reviews sync fallback:', err);
+      }
+    }
+
+    return newReview;
+  };
+
+  const toggleReviewHelpful = (reviewId: string) => {
+    setDestinationReviews(prev => {
+      const updated = prev.map(r => {
+        if (r.id === reviewId) {
+          const isHelpful = !r.isHelpful;
+          return {
+            ...r,
+            isHelpful,
+            helpfulCount: isHelpful ? r.helpfulCount + 1 : Math.max(0, r.helpfulCount - 1),
+          };
+        }
+        return r;
+      });
+      setStoredData('destination_reviews_cache', updated);
+      return updated;
+    });
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -334,6 +460,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveGearModal,
         activeDestination,
         setActiveDestination,
+        destinationReviews,
+        addDestinationReview,
+        toggleReviewHelpful,
+        getReviewsForDestination,
+        isWriteReviewModalOpen,
+        setIsWriteReviewModalOpen,
+        reviewTargetDestination,
+        openWriteReviewModal,
+        closeWriteReviewModal,
         openSpotOnMap,
         selectedMapSpot,
         clearSelectedMapSpot,

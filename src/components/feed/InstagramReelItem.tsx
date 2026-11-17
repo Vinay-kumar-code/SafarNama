@@ -20,7 +20,8 @@ import {
   Music,
   Sparkles
 } from 'lucide-react';
-import { Post, GearTag } from '../../types';
+import { Post, GearTag, DestinationHub } from '../../types';
+import { DESTINATION_HUBS } from '../../data/mockData';
 import { triggerHaptic } from '../../lib/utils';
 
 export interface InstagramReelItemProps {
@@ -35,6 +36,7 @@ export interface InstagramReelItemProps {
   onOpenGear: (gear: GearTag) => void;
   onOpenMap: (lat: number, lng: number, spotName: string) => void;
   onShare: (post: Post) => void;
+  onOpenDestination?: (dest: DestinationHub) => void;
 }
 
 interface FloatingHeart {
@@ -57,6 +59,7 @@ export const InstagramReelItem: React.FC<InstagramReelItemProps> = ({
   onOpenGear,
   onOpenMap,
   onShare,
+  onOpenDestination,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -80,6 +83,14 @@ export const InstagramReelItem: React.FC<InstagramReelItemProps> = ({
     : [post.thumbnailUrl || 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop&q=80'];
 
   const hasGear = post.taggedGear && post.taggedGear.length > 0;
+
+  // Matching master destination hub if any
+  const postDest = DESTINATION_HUBS.find(
+    (d) =>
+      (post.destinationId && d.id === post.destinationId) ||
+      post.state.toLowerCase().includes(d.state.toLowerCase()) ||
+      post.region.toLowerCase().includes(d.region.toLowerCase())
+  );
 
   // Handle active video playback
   useEffect(() => {
@@ -545,16 +556,33 @@ export const InstagramReelItem: React.FC<InstagramReelItemProps> = ({
         
         {/* Destination Location Pill & Price Tag */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenMap(post.latitude, post.longitude, post.spotName);
-            }}
-            className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1 active:scale-95 transition-transform"
-          >
-            <MapPin className="w-3 h-3 text-orange-400" />
-            <span>{post.region}, {post.state}</span>
-          </button>
+          {postDest && onOpenDestination ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerHaptic('light');
+                onOpenDestination(postDest);
+              }}
+              className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1 active:scale-95 transition-transform hover:border-orange-500/50 hover:text-orange-300 cursor-pointer shadow"
+              title={`Open ${postDest.name} Master Hub & Reviews`}
+            >
+              <MapPin className="w-3 h-3 text-orange-400" />
+              <span>{post.region}, {post.state}</span>
+              <span className="text-[10px] text-amber-400 font-bold ml-0.5">★ Hub</span>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerHaptic('light');
+                onOpenMap(post.latitude, post.longitude, post.spotName);
+              }}
+              className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1 active:scale-95 transition-transform"
+            >
+              <MapPin className="w-3 h-3 text-orange-400" />
+              <span>{post.region}, {post.state}</span>
+            </button>
+          )}
 
           {post.costInInr !== undefined && (
             <span className="glass-pill px-2.5 py-0.5 rounded-full text-emerald-400 text-[11px] font-bold flex items-center gap-0.5">

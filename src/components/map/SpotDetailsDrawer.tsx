@@ -9,11 +9,13 @@ import {
   IndianRupee, 
   ExternalLink,
   ShieldCheck,
-  Check
+  Check,
+  Sparkles,
+  Star
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Post, DestinationHub } from '../../types';
 import { formatINR } from '../../lib/utils';
+import { DESTINATION_HUBS } from '../../data/mockData';
 
 interface SpotDetailsDrawerProps {
   spotName: string;
@@ -43,6 +45,13 @@ export const SpotDetailsDrawer: React.FC<SpotDetailsDrawerProps> = ({
   );
 
   const primaryPost = matchedPosts[0] || posts[0];
+
+  const matchedHub = DESTINATION_HUBS.find(
+    d => (primaryPost.destinationId && d.id === primaryPost.destinationId) ||
+         primaryPost.spotName.toLowerCase().includes(d.name.toLowerCase()) ||
+         primaryPost.region.toLowerCase().includes(d.region.toLowerCase()) ||
+         primaryPost.state.toLowerCase().includes(d.state.toLowerCase())
+  );
 
   // Find relevant Q&A threads
   const matchedQA = qaThreads.filter(
@@ -119,6 +128,27 @@ export const SpotDetailsDrawer: React.FC<SpotDetailsDrawerProps> = ({
             <ExternalLink className="w-3 h-3 text-slate-400" />
           </button>
         </div>
+
+        {/* Master Destination Hub & Reviews CTA */}
+        {matchedHub && (
+          <button
+            onClick={() => {
+              onClose();
+              setActiveDestination(matchedHub);
+            }}
+            className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-orange-500/15 via-amber-500/15 to-orange-500/15 hover:from-orange-500/25 hover:to-amber-500/25 text-orange-300 text-xs font-bold flex items-center justify-between border border-orange-500/30 transition-all shadow-sm group"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-orange-400 group-hover:rotate-12 transition-transform" />
+              <span>Explore {matchedHub.name} Hub & Reviews</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-400">
+              <Star className="w-3 h-3 fill-current" />
+              <span>{matchedHub.averageRating || 4.8}</span>
+              <span className="text-slate-400">→</span>
+            </div>
+          </button>
+        )}
 
         {/* Micro-Blog / Travel Note Snapshot */}
         <div className="bg-slate-900/90 rounded-2xl p-3.5 border border-white/5 space-y-2.5">

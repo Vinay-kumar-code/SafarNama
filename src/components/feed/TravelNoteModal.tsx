@@ -14,10 +14,12 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Check
+  Check,
+  Star
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatINR } from '../../lib/utils';
+import { DESTINATION_HUBS } from '../../data/mockData';
 
 export const TravelNoteModal: React.FC = () => {
   const { 
@@ -26,7 +28,8 @@ export const TravelNoteModal: React.FC = () => {
     toggleSavePost, 
     toggleLikePost, 
     openSpotOnMap, 
-    setActiveGearModal 
+    setActiveGearModal,
+    setActiveDestination
   } = useApp();
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -247,6 +250,35 @@ export const TravelNoteModal: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Master Destination Hub & Reviews CTA */}
+          {(() => {
+            const matchedHub = DESTINATION_HUBS.find(
+              d => (activeTravelNote.destinationId && d.id === activeTravelNote.destinationId) ||
+                   activeTravelNote.state.toLowerCase().includes(d.state.toLowerCase()) ||
+                   activeTravelNote.region.toLowerCase().includes(d.region.toLowerCase())
+            );
+            if (!matchedHub) return null;
+            return (
+              <button
+                onClick={() => {
+                  setActiveTravelNote(null);
+                  setActiveDestination(matchedHub);
+                }}
+                className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-orange-500/15 via-amber-500/15 to-orange-500/15 hover:from-orange-500/25 hover:to-amber-500/25 text-orange-300 text-xs font-bold flex items-center justify-between border border-orange-500/30 transition-all shadow-sm group"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-orange-400 group-hover:rotate-12 transition-transform" />
+                  <span>View {matchedHub.name} Master Hub & Reviews</span>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-400">
+                  <Star className="w-3 h-3 fill-current" />
+                  <span>{matchedHub.averageRating || 4.8}</span>
+                  <span className="text-slate-400">→</span>
+                </div>
+              </button>
+            );
+          })()}
 
           {/* Actions Bar */}
           <div className="flex items-center gap-3 pt-2">

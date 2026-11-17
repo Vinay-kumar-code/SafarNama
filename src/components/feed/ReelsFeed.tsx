@@ -5,6 +5,7 @@ import { LocationStoryRings } from './LocationStoryRings';
 import { InstagramReelItem } from './InstagramReelItem';
 import { CommentsDrawer, ReelComment } from './CommentsDrawer';
 import { Compass, RotateCcw, Sparkles } from 'lucide-react';
+import { DESTINATION_HUBS } from '../../data/mockData';
 
 // Fallback enriched post for Ziro Valley to ensure all 6 destinations have rich reels
 const ZIRO_FALLBACK_POST: Post = {
@@ -69,7 +70,8 @@ export const ReelsFeed: React.FC = () => {
     toggleSavePost, 
     setActiveTravelNote, 
     setActiveGearModal, 
-    openSpotOnMap 
+    openSpotOnMap,
+    setActiveDestination
   } = useApp();
 
   // Destination filter state
@@ -249,6 +251,7 @@ export const ReelsFeed: React.FC = () => {
                   onOpenGear={setActiveGearModal}
                   onOpenMap={openSpotOnMap}
                   onShare={handleShare}
+                  onOpenDestination={setActiveDestination}
                 />
               );
             })}

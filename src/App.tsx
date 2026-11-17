@@ -12,6 +12,7 @@ import { ProfileView } from './components/profile/ProfileView';
 import { TravelNoteModal } from './components/feed/TravelNoteModal';
 import { GearShopModal } from './components/common/GearShopModal';
 import { DestinationHubModal } from './components/destinations/DestinationHubModal';
+import { WriteReviewModal } from './components/destinations/WriteReviewModal';
 import { OTABanner } from './components/common/OTABanner';
 import { AuthModal } from './components/auth/AuthModal';
 import { OnboardingModal } from './components/auth/OnboardingModal';
@@ -43,6 +44,7 @@ const MainScreen: React.FC = () => {
       <DestinationHubModal />
       <AuthModal />
       <OnboardingModal />
+      <WriteReviewModal />
 
       {/* Instagram-Simple Bottom Navigation */}
       <BottomNav />
