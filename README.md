@@ -1,68 +1,110 @@
 # 🇮🇳 SafarNama (सफ़रनामा) — Map-First Social Travel Ecosystem
 
+[![Android APK Build](https://github.com/Vinay-kumar-code/SafarNama/actions/workflows/build-android.yml/badge.svg)](https://github.com/Vinay-kumar-code/SafarNama/actions/workflows/build-android.yml)
 [![React 19](https://img.shields.io/badge/React-19.3-61dafb.svg?style=flat-square&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF.svg?style=flat-square&logo=kotlin)](https://kotlinlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646cff.svg?style=flat-square&logo=vite)](https://vite.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/TailwindCSS-v4.0-38bdf8.svg?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![Capacitor 6+](https://img.shields.io/badge/Capacitor-6%2B-119eff.svg?style=flat-square&logo=capacitor)](https://capacitorjs.com/)
 [![Supabase PostGIS](https://img.shields.io/badge/Supabase-PostGIS-3ecf8e.svg?style=flat-square&logo=supabase)](https://supabase.com/)
+[![Cloudflare R2](https://img.shields.io/badge/Cloudflare-R2_Storage-F38020.svg?style=flat-square&logo=cloudflare)](https://cloudflare.com/)
 
-> **Vision**: An Instagram-simple, map-first social travel ecosystem showcasing authentic India through the eyes of locals and travelers—eliminating trip-planning friction while turning personal journeys into living, crowdsourced travel guides for both domestic explorers and international tourists.
+> **Vision**: An Instagram-clean, map-first social travel ecosystem celebrating authentic India through the eyes of locals and travelers. Combines visual micro-blogging, travel tweets & threads, full-screen vertical reels, 1-on-1 direct messaging, and interactive Google Maps discovery.
 
 ---
 
-## 🧭 Core Pillars & Built Features
+## 📖 Complete Documentation
+For an exhaustive, in-depth architectural specification covering all system components, data models, workflows, and CI/CD pipelines, please read **[PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md)**.
 
-### 1. Dual-Identity Account Architecture
-- **Traveler Profiles**: Visual timeline passport stamps, visited states of India interactive tracking, automatic trip logs.
-- **Local Guide Profiles**: Certified local experts (e.g. *"Spiti Valley Local Guide"*, *"Old Delhi Food Guide"*), credibility score (upvotes & helpfulness), guided tour inquiries via direct contact.
+---
 
-### 2. Multi-Format Content Engine
-- **Reels & Short Videos**: Full-screen vertical video feed with one-tap *"Save Spot to Trip"*, *"View on Map"*, sound toggle, and contextual gear overlays.
-- **Photo Carousels & Travel Notes**: High-res photo dumps paired with structured micro-blogs containing:
-  - 💰 Actual cost in INR
-  - ⏰ Best time to visit
-  - ⚠️ Safety advisories (AMS, river crossings, terrain caution)
-  - 📶 Connectivity signal (Jio 4G / Airtel / BSNL)
-  - 🧭 How to reach (shared cabs, local buses, metro)
-- **Live Location Q&A Threads**: Real-time location-pinned discussions (*"Is Manali–Leh highway open today?"*, *"Best vegetarian spots near Varanasi ghats?"*) with highlighted **Verified Local Guide Replies**.
+## 🧭 Core Highlights & Architectural Features
 
-### 3. Admin-Curated Destination Hubs & Discovery Map
-- **Official Destination Hubs**: Verified baseline info for Indian states and hidden gems: history, permits (ILP), emergency contacts, cultural etiquette, scam alerts, and seasonal weather.
-- **Discovery Map Interface**: Dynamic content clusters with custom Indian travel theme. Tapping a pin opens the exact Reels, Travel Notes, and active Q&A for those coordinates, with a turn-by-turn fallback link to Google Maps.
-- **Zero-Headache Trip Builder**: Tapping *"Save"* on any Reel, Note, or Guide recommendation automatically groups pins by circuit into sequenced, map-routed itineraries with stay estimates and total INR budget calculations.
+### 1. Unified Social Feed (Photo Posts & Travel Tweets)
+- **Photo Posts**: High-resolution image carousels with slide counters, double-tap heart animations, daily budget in INR (`₹`), seasonality recommendations, and mobile network signal availability.
+- **Travel Tweets & Threads**: Micro-travel thoughts, road status updates, high-altitude pass advisories, and live weather alerts with threaded discussion capabilities.
+- **Destination Tagging**: Posts and tweets attach destination hubs mapped directly into Maps and Search.
+- **Group Travel Mentions**: Tag companions who journeyed together (`👥 With: @tenzin_spitilocal, @karan_banaras`).
 
-### 4. Time-Bound Influencer Campaigns
-- **Flash Destination Campaigns** (e.g., `#MonsoonInMeghalaya — 14 Days`, `#HampiHiddenGems`).
-- **Interactive Geofenced Checkpoints**: GPS-powered check-ins, celebratory confetti, and limited-edition digital passport badges.
-- **Live Leaderboard**: Gold, Silver, and Bronze explorer tiers based on community contributions.
+### 2. Discussion & Comment System
+- **Threaded Discussions for Tweets**: Specialized thread modal showing the parent tweet, connecting conversation line, and nested replies.
+- **Universal Comments for Posts & Reels**: Fast, responsive bottom sheet for viewing and posting comments across all visual content.
 
-### 5. Native Travel Commerce & Sponsorships
-- **Contextual Gear Tags**: Clean *"Shop Gear"* pills (Wildcraft rucksacks, Rynox riding jackets, Nikon cameras, Decathlon trekking poles).
-- **Native Itinerary Sponsorships**: Verified homestays (e.g. *Zostel Homes Kibber*, *Cherrapunji Holiday Resort*) directly inside the Trip Builder suggestions.
+### 3. Full-Screen Vertical Reels Engine
+- Built with AndroidX Media3 / ExoPlayer for smooth vertical video scrolling.
+- Direct Cloudflare R2 video streaming resolution with fallbacks.
+- Interactive controls: Double-tap like, save, share, and a dedicated **Comment** button opening the comments sheet over the active reel.
+
+### 4. Creator Studio (`+` Button)
+- Prominent `+` button in the Home header allowing travelers to create:
+  - **Travel Tweets / Threads**
+  - **Photo Posts**
+  - **Reel Videos**
+- Includes destination selector spinner and comma-separated travel companion mentions.
+
+### 5. 1-on-1 Direct Messaging (DM)
+- Accessible from the Home top bar or any user's profile:
+  - **Conversations List**: Displays active travel chats and partners.
+  - **1-on-1 Chat Screen**: Instant two-way messaging with sent and received speech bubbles and real-time state updates.
+
+### 6. Journey Follow & Notification Preferences
+- Follow travelers and verified local guides to stay updated on their journeys.
+- **Settings & Following Page**: Lists followed accounts with individual **Notification Alerts toggles** (*Alerts On* vs *Muted*) to customize notifications when they post new tweets, posts, or reels.
+
+### 7. Clean Profile & Group Mentions Hub
+- Modern Instagram-clean layout with no vanity follower counts, karma, or stamp clutter.
+- Action buttons: Follow/Following toggle, Direct Message, and Persona Switcher (Traveler Aarav Sharma vs Verified Local Guide Tenzin Norbu).
+- 3 Segmented Tabs:
+  - **Posts & Tweets**: Content created by the user.
+  - **👥 Mentions**: Dedicated section showing trips and stories where this user was tagged by others in group journeys.
+  - **🔖 Saved**: Bookmarked bucket-list destinations and reels.
+
+### 8. Admin Destination Management & Search Mapping
+- Web Admin Portal (Passkey: `admin2026`) and Android Destination Creator modal.
+- Admins can add destinations with names, states, taglines, cover images, descriptions, budgets, and GPS coordinates.
+- Tapping any destination in Search displays all attached tweets and stories.
 
 ---
 
 ## 🚀 Quick Start
 
+### Web Application (React 19 + TypeScript + Vite)
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Start the local development server
+# 2. Start development server
 npm run dev
+
+# 3. Build for production
+npm run build
 ```
 
-Visit `http://localhost:5173` to explore SafarNama with pre-loaded mock data for **Spiti Valley**, **Varanasi**, **Meghalaya**, **Old Delhi**, and **Hampi**.
+### Native Android Application (Kotlin + Gradle)
+```bash
+# Navigate to the android project directory
+cd android
+
+# Build debug APK
+./gradlew assembleDebug
+
+# Output APK path:
+# android/app/build/outputs/apk/debug/app-debug.apk
+```
 
 ---
 
-## 🛠️ Complete External Setup Guide
+## ⚙️ Environment Configuration
 
-See **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** for detailed instructions on:
-1. **Supabase PostGIS**: Running `supabase/schema.sql`, enabling spatial indices and RLS.
-2. **Mapbox GL JS**: Getting your free public token and setting up custom map styles.
-3. **Cloudflare Stream & R2**: Adaptive HLS video streaming and zero-egress WebP image delivery.
-4. **Capacitor Android Build**: Generating the native APK/AAB in Android Studio.
-5. **Capgo OTA Updates**: Pushing live updates directly to users without Play Store delays.
-6. **Typesense / Meilisearch**: Instant typo-tolerant search for Indian destinations and slang.
+Set these variables in your root `.env`, `android/local.properties`, Vercel Deployment settings, or GitHub Secrets:
+
+```ini
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_GOOGLE_MAPS_API_KEY=AIzaSyPlaceholderSafarnamaMapsKey
+VITE_CLOUDFLARE_R2_PUBLIC_URL=https://media.safarnama.travel
+```
+
+---
+
+## 📄 License
+Open-source under the MIT License.
