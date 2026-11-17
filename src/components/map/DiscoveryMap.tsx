@@ -7,7 +7,8 @@ import {
   Filter, 
   Sparkles, 
   Compass,
-  Info
+  Info,
+  Star
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { DESTINATION_HUBS } from '../../data/mockData';
@@ -18,7 +19,8 @@ export const DiscoveryMap: React.FC = () => {
     posts, 
     selectedMapSpot, 
     clearSelectedMapSpot, 
-    openSpotOnMap 
+    openSpotOnMap,
+    setActiveDestination
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,6 +125,28 @@ export const DiscoveryMap: React.FC = () => {
               }`}
             >
               {r.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Master Destination Hubs with Reviews */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto py-0.5">
+          <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider shrink-0 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
+            <Sparkles className="w-3 h-3" />
+            <span>Master Hubs:</span>
+          </span>
+          {DESTINATION_HUBS.map(hub => (
+            <button
+              key={hub.id}
+              onClick={() => setActiveDestination(hub)}
+              className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-orange-500/30 hover:border-orange-500 flex items-center gap-1 transition-all shadow-sm"
+              title={`View ${hub.name} Heritage, Reviews & Permits`}
+            >
+              <span>{hub.name}</span>
+              <span className="text-amber-400 flex items-center gap-0.5 font-mono">
+                <Star className="w-2.5 h-2.5 fill-current" />
+                {hub.averageRating || 4.8}
+              </span>
             </button>
           ))}
         </div>

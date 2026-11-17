@@ -102,6 +102,25 @@ export interface DestinationHub {
   isFeatured?: boolean;
   topSpotsCount: number;
   guideCount: number;
+  averageRating?: number;
+  reviewsCount?: number;
+}
+
+export interface DestinationReview {
+  id: string;
+  destinationId: string;
+  destinationName: string;
+  author: Profile;
+  rating: number;
+  title: string;
+  reviewText: string;
+  photos?: string[];
+  visitMonth?: string;
+  travelType?: 'Solo' | 'Family' | 'Couple' | 'Friends';
+  helpfulCount: number;
+  isHelpful?: boolean;
+  travelTips?: string;
+  createdAt: string;
 }
 
 export interface QAReply {

@@ -11,6 +11,7 @@ import { ProfileView } from './components/profile/ProfileView';
 import { TravelNoteModal } from './components/feed/TravelNoteModal';
 import { GearShopModal } from './components/common/GearShopModal';
 import { DestinationHubModal } from './components/destinations/DestinationHubModal';
+import { WriteReviewModal } from './components/destinations/WriteReviewModal';
 import { OTABanner } from './components/common/OTABanner';
 
 const MainScreen: React.FC = () => {
@@ -38,6 +39,7 @@ const MainScreen: React.FC = () => {
       <TravelNoteModal />
       <GearShopModal />
       <DestinationHubModal />
+      <WriteReviewModal />
 
       {/* Instagram-Simple Bottom Navigation */}
       <BottomNav />

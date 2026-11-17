@@ -17,6 +17,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { formatINR } from '../../lib/utils';
 import { Post } from '../../types';
+import { DESTINATION_HUBS } from '../../data/mockData';
 
 export const ReelsFeed: React.FC = () => {
   const { 
@@ -25,7 +26,8 @@ export const ReelsFeed: React.FC = () => {
     toggleSavePost, 
     setActiveTravelNote, 
     setActiveGearModal, 
-    openSpotOnMap 
+    openSpotOnMap,
+    setActiveDestination
   } = useApp();
 
   const [isMuted, setIsMuted] = useState(true);
@@ -196,10 +198,32 @@ export const ReelsFeed: React.FC = () => {
                 
                 {/* Region & Author Tag */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-orange-400" />
-                    <span>{post.region}, {post.state}</span>
-                  </span>
+                  {(() => {
+                    const postDest = DESTINATION_HUBS.find(
+                      d => (post.destinationId && d.id === post.destinationId) ||
+                           post.state.toLowerCase().includes(d.state.toLowerCase()) ||
+                           post.region.toLowerCase().includes(d.region.toLowerCase())
+                    );
+                    return postDest ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDestination(postDest);
+                        }}
+                        className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1 hover:border-orange-500/50 hover:text-orange-300 transition-all cursor-pointer shadow"
+                        title={`Open ${postDest.name} Master Hub & Reviews`}
+                      >
+                        <MapPin className="w-3 h-3 text-orange-400" />
+                        <span>{post.region}, {post.state}</span>
+                        <span className="text-[10px] text-amber-400 font-bold ml-0.5">★ Hub</span>
+                      </button>
+                    ) : (
+                      <span className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-orange-400" />
+                        <span>{post.region}, {post.state}</span>
+                      </span>
+                    );
+                  })()}
 
                   {post.costInInr !== undefined && (
                     <span className="glass-pill px-2.5 py-0.5 rounded-full text-emerald-400 text-[11px] font-bold flex items-center gap-0.5">
