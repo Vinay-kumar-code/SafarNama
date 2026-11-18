@@ -218,6 +218,7 @@
 
         <EditText
             android:id="@+id/et_thread_reply_input"
+                    android:maxLength="1000"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_marginStart="10dp"

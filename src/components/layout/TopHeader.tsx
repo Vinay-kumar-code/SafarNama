@@ -67,7 +67,7 @@ export const TopHeader: React.FC = () => {
 
   return (
     <header className="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200 px-4 py-2.5 flex items-center justify-between text-zinc-900 shadow-xs">
-      {/* Brand Logo & Hindi Typography */}
+      {/* Brand logo and wordmark */}
       <div 
         onClick={() => setActiveTab('feed')} 
         className="flex items-center gap-2.5 cursor-pointer group"
@@ -77,9 +77,6 @@ export const TopHeader: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <span className="font-extrabold text-lg tracking-tight text-zinc-900">
               SafarNama
-            </span>
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-600 font-bold border border-orange-200">
-              सफ़रनामा
             </span>
           </div>
           <p className="text-[10px] text-zinc-500 -mt-0.5 font-medium">Authentic India • Map-First</p>

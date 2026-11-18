@@ -9,7 +9,7 @@ export function SocialNav() {
   const { openAuthModal, isAuthenticated } = useAuth();
   const item = (id: NavTab, label: string, Icon: typeof Home) => <button key={id} className={`sn-nav-item ${activeTab === id ? 'active' : ''}`} aria-current={activeTab === id ? 'page' : undefined} onClick={() => setActiveTab(id)}><Icon size={22} strokeWidth={activeTab === id ? 2.2 : 1.7} /><span>{label}</span>{activeTab === id && <i />}</button>;
   return <>
-    <aside className="sn-sidebar"><button className="sn-brand" onClick={() => setActiveTab('feed')} aria-label="SafarNama home"><span className="sn-brand-mark"><Compass size={25} /></span><span>SafarNama<small>हर सफ़र, एक कहानी</small></span></button>
+    <aside className="sn-sidebar"><button className="sn-brand" onClick={() => setActiveTab('feed')} aria-label="SafarNama home"><span className="sn-brand-mark"><Compass size={25} /></span><span>SafarNama<small>Every journey, a story</small></span></button>
       <nav aria-label="Main navigation">{primary.map(link => item(link.id, link.label, link.icon))}<div className="sn-nav-divider" />{item('trips', 'My journeys', BookOpen)}{item('qa', 'Travel conversations', MessageCircle)}{item('campaigns', 'Celebrate India', Sparkles)}</nav>
       <button className="sn-button sn-create" onClick={() => setComposerOpen(true)}><Plus size={19} /><span>Create a story</span></button>
       <div className="sn-sidebar-bottom"><div className="sn-sidebar-note"><span>A little curiosity.</span><span>A whole lot of India.</span><span className="sn-tricolor"><i /><i /><i /></span></div>

@@ -160,3 +160,28 @@ class TravelerSheet : TravelSheet() {
     }
     companion object { fun newInstance(id: String) = TravelerSheet().apply { arguments = Bundle().apply { putString("id", id) } } }
 }
+
+class SavedStorySheet : TravelSheet() {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val post = repository.allContent().find { it.id == arguments?.getString("id") }
+        button("Close story") { dismiss() }
+        if (post == null) {
+            text("This story is no longer available")
+            return
+        }
+        val adapter = feed(listOf(post))
+        if (post.format == PostFormat.REEL) button("Open Reels") {
+            (activity as? com.safarnama.travel.MainActivity)?.openReel(post.id)
+            dismiss()
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            combine(repository.posts, repository.reels) { _, _ -> repository.allContent().filter { it.id == post.id } }
+                .collect { adapter.updatePosts(it) }
+        }
+    }
+    companion object {
+        fun newInstance(id: String) = SavedStorySheet().apply {
+            arguments = Bundle().apply { putString("id", id) }
+        }
+    }
+}

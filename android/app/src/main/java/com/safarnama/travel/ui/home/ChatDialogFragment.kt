@@ -48,7 +48,8 @@ class ChatDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.tvChatHeaderName.text = partnerName
+        binding.tvChatHeaderName.text = "$partnerName · Local preview"
+        binding.etChatInput.hint = "Write a message saved on this device"
         binding.ivChatHeaderAvatar.load(partnerAvatar) {
             crossfade(true)
             transformations(CircleCropTransformation())

@@ -3,13 +3,14 @@ package com.safarnama.travel.ui.profile
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.safarnama.travel.R
 import com.safarnama.travel.data.Post
 import com.safarnama.travel.data.PostFormat
 import com.safarnama.travel.databinding.ItemSavedSpotBinding
+import com.safarnama.travel.ui.journeys.SavedStorySheet
+import com.safarnama.travel.util.TravelActions
 
 class SavedSpotsAdapter(
     private var savedPosts: List<Post>
@@ -37,17 +38,17 @@ class SavedSpotsAdapter(
         holder.binding.ivSavedPhoto.load(photoUrl) {
             crossfade(true)
             placeholder(R.drawable.bg_card_rounded)
+            error(R.drawable.ic_bookmark_outline)
         }
+        holder.itemView.contentDescription = post.spotName
 
         holder.binding.ivSavedFormatIcon.visibility =
             if (post.format == PostFormat.REEL) View.VISIBLE else View.GONE
 
         holder.itemView.setOnClickListener {
-            Toast.makeText(
-                holder.itemView.context,
-                "Opening saved spot: ${post.spotName}",
-                Toast.LENGTH_SHORT
-            ).show()
+            TravelActions.activity(holder.itemView.context)?.let { activity ->
+                SavedStorySheet.newInstance(post.id).show(activity.supportFragmentManager, "saved_story")
+            }
         }
     }
 

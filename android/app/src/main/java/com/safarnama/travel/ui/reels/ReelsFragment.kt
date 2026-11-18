@@ -63,8 +63,12 @@ class ReelsFragment : Fragment() {
         }
 
         // Play initial reel after layout
+        val targetPost = arguments?.getString("post_id")
         binding.viewpagerReels.post {
-            reelsAdapter.playPosition(0)
+            val pager = _binding?.viewpagerReels ?: return@post
+            val position = repository.reels.value.indexOfFirst { it.id == targetPost }.coerceAtLeast(0)
+            pager.setCurrentItem(position, false)
+            reelsAdapter.playPosition(position)
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -76,7 +80,7 @@ class ReelsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (::reelsAdapter.isInitialized) {
+        if (_binding != null && ::reelsAdapter.isInitialized) {
             reelsAdapter.playPosition(binding.viewpagerReels.currentItem)
         }
     }

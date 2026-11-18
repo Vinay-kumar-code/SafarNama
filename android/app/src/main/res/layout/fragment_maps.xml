@@ -7,9 +7,29 @@
     <!-- Interactive Google Map Fragment Container -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map_fragment"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/map_preview_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="30dp"
+        android:visibility="gone">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Explore India by place" android:textSize="25sp"
+            android:textColor="@color/text_zinc_900" android:gravity="center" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Pick a destination to see its guide and open directions in Maps."
+            android:gravity="center" android:layout_marginTop="10dp" android:textSize="14sp"
+            android:textColor="@color/text_zinc_700" />
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_browse_map_places"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:text="Browse places" />
+    </LinearLayout>
 
     <!-- Top Map Filter Chips Floating Overlay -->
     <HorizontalScrollView

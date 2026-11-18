@@ -181,7 +181,7 @@ export const OnboardingModal: React.FC = () => {
                 </h3>
               </div>
               <p className="text-xs text-orange-400/90 font-medium mt-0.5">
-                सफ़रनामा डिजिटल पासपोर्ट • Setup Your Authenticated Indian Identity
+                Set up your SafarNama travel profile
               </p>
             </div>
           </div>

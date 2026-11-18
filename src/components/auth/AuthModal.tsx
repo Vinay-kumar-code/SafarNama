@@ -201,9 +201,6 @@ export const AuthModal: React.FC = () => {
                 <h3 className="text-xl font-black tracking-tight text-slate-900">
                   SafarNama
                 </h3>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 font-bold border border-orange-200">
-                  सफ़रनामा
-                </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
                 Map-First Authentic Travel & Local Guide Community

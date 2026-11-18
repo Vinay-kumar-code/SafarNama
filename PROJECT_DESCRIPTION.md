@@ -1,4 +1,4 @@
-# 🇮🇳 SafarNama (सफ़रनामा) — Comprehensive Project Specification & Architecture
+# 🇮🇳 SafarNama — Comprehensive Project Specification & Architecture
 
 > **Map-First Social Travel Ecosystem for India**  
 > *Connecting travelers and certified local guides across India through an Instagram-clean, multi-format social journal and geo-discovery engine.*
@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary & Brand Philosophy
 
-**SafarNama** (सफ़रनामा, meaning *"Travelogue"* or *"Book of Journeys"*) is a modern, high-performance social travel platform engineered specifically for the Indian travel landscape. It combines the visual immediacy and clean aesthetic of modern social media with deep geo-contextual utility—enabling explorers to document trips, follow fellow travelers, interact with verified local guides, and discover offbeat destinations.
+**SafarNama** (meaning *"Travelogue"* or *"Book of Journeys"*) is a modern, high-performance social travel platform engineered specifically for the Indian travel landscape. It combines the visual immediacy and clean aesthetic of modern social media with deep geo-contextual utility—enabling explorers to document trips, follow fellow travelers, interact with verified local guides, and discover offbeat destinations.
 
 ### Brand Design Principles
 - **Instagram-Clean White Theme**: Pure white (`#FFFFFF`) surfaces, refined zinc typography (`#09090B`, `#71717A`), light borders (`#E4E4E7`), and vibrant saffron/coral accents (`#FF5722`, `#FFA000`).

@@ -5,10 +5,37 @@ import com.safarnama.travel.data.DestinationHub
 import com.safarnama.travel.data.PostFormat
 import com.safarnama.travel.data.SeedData
 import com.safarnama.travel.data.TravelRepository
+import com.safarnama.travel.data.JourneyStop
+import com.safarnama.travel.data.RepositorySnapshot
+import com.safarnama.travel.data.RepositoryStore
 import org.junit.Assert.*
 import org.junit.Test
 
 class TravelRepositoryTest {
+
+    @Test
+    fun createdReelAndJourneySurviveRepositoryRestart() {
+        val store = object : RepositoryStore {
+            var saved: RepositorySnapshot? = null
+            override fun read() = saved
+            override fun write(snapshot: RepositorySnapshot) { saved = snapshot }
+        }
+        val repository = TravelRepository().apply { attachStore(store) }
+        val place = repository.destinations.value.first()
+        val reel = repository.addReel("file:///travel-video.mp4", place.name, "Sunrise", place.name, place.id)
+        repository.toggleSave(reel.id)
+        repository.addComment(reel.id, "A lovely morning")
+        repository.addJourneyStop(JourneyStop(place.id, place.name, place.state, place.latitude, place.longitude, place.coverImage))
+        repository.updateJourneyStop(place.id, 3, "Bring a camera")
+
+        val restored = TravelRepository().apply { attachStore(store) }
+        assertTrue(restored.posts.value.any { it.id == reel.id && it.isSaved })
+        assertTrue(restored.reels.value.any { it.id == reel.id && it.isSaved })
+        assertEquals(1, restored.getPostsForDestination(place.id).count { it.id == reel.id })
+        assertEquals("A lovely morning", restored.getComments(reel.id).single().text)
+        assertEquals(3, restored.journey.value.single().day)
+        assertEquals("Bring a camera", restored.journey.value.single().notes)
+    }
 
     @Test
     fun testSeedPostsLoaded() {

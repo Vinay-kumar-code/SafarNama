@@ -99,6 +99,7 @@
 
         <EditText
             android:id="@+id/et_chat_input"
+                    android:maxLength="2000"
             android:layout_width="0dp"
             android:layout_height="42dp"
             android:layout_weight="1"

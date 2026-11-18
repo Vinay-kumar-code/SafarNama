@@ -34,6 +34,7 @@ class CreateContentBottomSheetDialogFragment : BottomSheetDialogFragment() {
     private var media = emptyList<String>()
     private var busy = false
     private var published = false
+    private var destinationIds = emptyList<String>()
     private val preferences by lazy { requireContext().getSharedPreferences("creator_draft_${repository.currentUser.value.id}", Context.MODE_PRIVATE) }
     private val picker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isEmpty()) return@registerForActivityResult
@@ -65,6 +66,7 @@ class CreateContentBottomSheetDialogFragment : BottomSheetDialogFragment() {
         binding.tvCreateUserRole.text = "Your travel journal · saved on this device"
         binding.ivCreateUserAvatar.load(user.avatarUrl) { transformations(CircleCropTransformation()); placeholder(R.drawable.ic_profile) }
         val destinations = repository.destinations.value
+        destinationIds = destinations.map { it.id }
         binding.spinnerDestinations.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item,
             listOf("Choose a destination") + destinations.map { "${it.name} (${it.state})" })
         selectedFormat = runCatching { PostFormat.valueOf(preferences.getString("format", "TWEET")!!) }.getOrDefault(PostFormat.TWEET)
@@ -115,18 +117,23 @@ class CreateContentBottomSheetDialogFragment : BottomSheetDialogFragment() {
     }
     private fun saveDraft() {
         if (_binding == null || published) return
-        val destination = repository.destinations.value.getOrNull(binding.spinnerDestinations.selectedItemPosition - 1)
+        val destinationId = destinationIds.getOrNull(binding.spinnerDestinations.selectedItemPosition - 1)
         preferences.edit().putString("format", selectedFormat.name).putString("caption", binding.etCreateCaption.text.toString())
             .putString("spot", binding.etCreateSpotName.text.toString()).putString("state", binding.etCreateState.text.toString())
             .putString("budget", binding.etCreateCost.text.toString()).putString("mentions", binding.etCreateMentions.text.toString())
-            .putString("url", binding.etCreateMediaUrl.text.toString()).putString("destination", destination?.id)
+            .putString("url", binding.etCreateMediaUrl.text.toString()).putString("destination", destinationId)
             .putString("media", media.joinToString("\n")).apply()
     }
     private fun publish() {
         if (busy) return
         val caption = binding.etCreateCaption.text.toString().trim()
         if (caption.isBlank()) { binding.etCreateCaption.error = "Tell us about the moment"; return }
-        val destination = repository.destinations.value.getOrNull(binding.spinnerDestinations.selectedItemPosition - 1)
+        if (selectedFormat == PostFormat.TWEET && caption.length > 500) {
+            binding.etCreateCaption.error = "Travel notes can be up to 500 characters"
+            return
+        }
+        val destinationId = destinationIds.getOrNull(binding.spinnerDestinations.selectedItemPosition - 1)
+        val destination = repository.destinations.value.find { it.id == destinationId }
         if (destination == null) { Toast.makeText(requireContext(), "Choose a destination", Toast.LENGTH_SHORT).show(); return }
         val mentions = binding.etCreateMentions.text.toString().split(",", " ").map { it.trim().trimStart('@') }.filter { it.isNotBlank() }.distinct().map { "@$it" }
         val url = binding.etCreateMediaUrl.text.toString().trim()

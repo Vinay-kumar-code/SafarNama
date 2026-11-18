@@ -1,5 +1,5 @@
 import { Profile, Post, DestinationHub, QAThread, Campaign, SponsoredStay, Trip, DestinationReview, GuideVerificationRequest, FlaggedContentItem } from '../types';
-import { getR2AvatarUrl, getR2ImageUrl, getR2VideoUrl } from '../lib/r2';
+import { getR2AvatarUrl, getR2ImageUrl } from '../lib/r2';
 
 export const CURRENT_USER_TRAVELER: Profile = {
   id: 'user-001',
@@ -289,7 +289,7 @@ const SEED_POSTS: Post[] = [
     region: 'Spiti Valley',
     caption: 'A ribbon of yellow across the vast silence of Spiti. The road between Kibber and Chicham is the kind of journey that stays with you long after you get home. Mountains, prayer flags, and a little perspective.',
     format: 'reel',
-    videoUrl: getR2VideoUrl('videos/spiti_chicham_bridge.mp4', 'https://assets.mixkit.co/videos/preview/mixkit-curvy-road-on-a-mountain-slope-41545-large.mp4'),
+    videoUrl: '/media/spiti-preview.mp4',
     thumbnailUrl: getR2ImageUrl('images/spiti_chicham_bridge.jpg', 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop&q=80'),
     costInInr: 350,
     bestTimeToVisit: 'Morning 8:00 AM (Zero crosswinds & crisp mountain light)',
@@ -395,7 +395,7 @@ const SEED_POSTS: Post[] = [
     region: 'Varanasi',
     caption: 'Nothing prepares you for sunrise on the Ganga. As temple bells echo from Assi to Dashashwamedh, flocks of migratory Siberian gulls soar against the golden haze. 🚣‍♂️ Share a wooden rowboat with other pilgrims for the most soulful 90 minutes.',
     format: 'reel',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-river-in-a-mountain-valley-41544-large.mp4',
+    videoUrl: '/media/varanasi-preview.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800&auto=format&fit=crop&q=80',
     costInInr: 300,
     bestTimeToVisit: 'Sunrise 5:15 AM to 6:45 AM',
@@ -506,7 +506,7 @@ const SEED_POSTS: Post[] = [
     region: 'Hampi',
     caption: 'Climbing Matanga Hill in pre-dawn darkness with a torch is the ultimate Hampi rite of passage. As the sun crests the boulder hills, the entire Vijayanagara empire illuminates in crimson and amber beneath you. Pure serenity.',
     format: 'reel',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-waves-coming-to-the-beach-5016-large.mp4',
+    videoUrl: '/media/hampi-preview.mp4',
     thumbnailUrl: 'https://images.unsplash.com/photo-1600100397608-f010f4439c20?w=800&auto=format&fit=crop&q=80',
     costInInr: 0,
     bestTimeToVisit: '5:30 AM (Start climb 4:45 AM from Achyutaraya Temple trail)',

@@ -91,7 +91,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Refresh only bundled demo media; preserve created posts and saved/liked state.
     const restored = cached.map(post => {
       const seed = MOCK_POSTS.find(item => item.id === post.id);
-      return seed ? { ...post, thumbnailUrl: seed.thumbnailUrl, carouselImages: seed.carouselImages,
+      return seed ? { ...post, thumbnailUrl: seed.thumbnailUrl, carouselImages: seed.carouselImages, videoUrl: seed.videoUrl,
         caption: seed.caption, spotName: seed.spotName, author: seed.author } : post;
     });
     return [...restored, ...MOCK_POSTS.filter(seed => !restored.some(post => post.id === seed.id))];

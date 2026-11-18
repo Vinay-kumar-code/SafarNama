@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { getStoredData } from '../lib/utils';
 import { useApp } from './AppContext';
-import type { Profile } from '../types';
+import type { ContentFormat, Profile } from '../types';
 
 export interface TravelComment { id: string; postId: string; author: Profile; text: string; createdAt: string }
 interface SocialState { following: string[]; savedPlaces: string[]; comments: TravelComment[] }
@@ -9,6 +9,8 @@ const initial: SocialState = { following: [], savedPlaces: [], comments: [] };
 const SocialContext = createContext<{
   state: SocialState; toggleFollow: (id: string) => void; togglePlace: (id: string) => void;
   addComment: (postId: string, text: string) => void; composerOpen: boolean;
+  composerFormat?: ContentFormat;
+  openComposer: (format: ContentFormat) => void;
   setComposerOpen: (open: boolean) => void; notice: string; notify: (message: string) => void;
 } | null>(null);
 
@@ -16,6 +18,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const { currentUser } = useApp();
   const [allStates, setAllStates] = useState<Record<string, SocialState>>(() => getStoredData('social_v1', {}));
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerFormat, setComposerFormat] = useState<ContentFormat>();
   const [notice, notify] = useState('');
   const state = allStates[currentUser.id] || initial;
   const update = (change: (previous: SocialState) => SocialState) => {
@@ -27,7 +30,9 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     });
   };
   const toggle = (items: string[], id: string) => items.includes(id) ? items.filter(value => value !== id) : [...items, id];
-  return <SocialContext.Provider value={{ state, composerOpen, setComposerOpen, notice, notify,
+  return <SocialContext.Provider value={{ state, composerOpen, composerFormat, notice, notify,
+    setComposerOpen: open => { setComposerFormat(undefined); setComposerOpen(open); },
+    openComposer: format => { setComposerFormat(format); setComposerOpen(true); },
     toggleFollow: id => update(previous => ({ ...previous, following: toggle(previous.following, id) })),
     togglePlace: id => update(previous => ({ ...previous, savedPlaces: toggle(previous.savedPlaces, id) })),
     addComment: (postId, text) => {

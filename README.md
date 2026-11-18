@@ -1,4 +1,4 @@
-# 🇮🇳 SafarNama (सफ़रनामा) — Map-First Social Travel Ecosystem
+# 🇮🇳 SafarNama — Map-First Social Travel Ecosystem
 
 [![Android APK Build](https://github.com/Vinay-kumar-code/SafarNama/actions/workflows/build-android.yml/badge.svg)](https://github.com/Vinay-kumar-code/SafarNama/actions/workflows/build-android.yml)
 [![React 19](https://img.shields.io/badge/React-19.3-61dafb.svg?style=flat-square&logo=react)](https://react.dev/)
@@ -9,6 +9,14 @@
 [![Cloudflare R2](https://img.shields.io/badge/Cloudflare-R2_Storage-F38020.svg?style=flat-square&logo=cloudflare)](https://cloudflare.com/)
 
 > **Vision**: An Instagram-clean, map-first social travel ecosystem celebrating authentic India through the eyes of locals and travelers. Combines visual micro-blogging, travel tweets & threads, full-screen vertical reels, 1-on-1 direct messaging, and interactive Google Maps discovery.
+
+## Try the community preview
+
+Start the web app with `npm run dev` and open the local URL printed by Vite. Create a photo story, travel note, or reel from Home. Explore India links destination guides to traveler stories, and My journal collects your stories and bookmarks.
+
+The native Android app has the same core flows. From Explore, open a destination and add it to your journey. From Journal, open **My journey** to edit days and notes or share the itinerary. Build the debug APK with JDK 21, Android SDK 36, and `gradlew.bat :app:assembleDebug :app:testDebugUnitTest` from the `android` directory on Windows.
+
+Stories, uploads, reactions, comments, follows, and itinerary changes in the preview are stored on the device. The Android chat is a local preview. Live map tiles require a Maps key. Bundled destination reels are animated photographs. [Photo and video credits](./public/media/credits.html).
 
 ---
 

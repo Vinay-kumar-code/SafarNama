@@ -1,5 +1,5 @@
 -- ============================================================================
--- SAFARNAMA (सफ़रनामा) - DATABASE SCHEMA (PostgreSQL + PostGIS on Supabase)
+-- SAFARNAMA - DATABASE SCHEMA (PostgreSQL + PostGIS on Supabase)
 -- ============================================================================
 -- Map-First Social Travel Ecosystem for Authentic India
 -- Dual Identity Profiles, Multi-Format Content, Curated Hubs, Trips & Campaigns

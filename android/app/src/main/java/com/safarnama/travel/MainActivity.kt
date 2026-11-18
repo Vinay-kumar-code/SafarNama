@@ -2,19 +2,20 @@ package com.safarnama.travel
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import androidx.navigation.ui.NavigationUI
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.navigation.NavigationBarView
 import com.safarnama.travel.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+    fun openReel(postId: String) {
+        navController.navigate(R.id.nav_reels, Bundle().apply { putString("post_id", postId) })
+    }
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
@@ -39,11 +40,6 @@ class MainActivity : AppCompatActivity() {
         // Pure Instagram-Style Bottom Navigation: EXACTLY 5 icon-only buttons, NO text labels
         binding.bottomNavigation.labelVisibilityMode = NavigationBarView.LABEL_VISIBILITY_UNLABELED
         binding.bottomNavigation.setupWithNavController(navController)
-
-        // Custom Navigation Listener to handle top bar and tab transitions
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            NavigationUI.onNavDestinationSelected(item, navController)
-        }
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
@@ -71,7 +67,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.headerTitle.setOnClickListener {
             if (navController.currentDestination?.id != R.id.nav_home) {
-                navController.navigate(R.id.nav_home)
                 binding.bottomNavigation.selectedItemId = R.id.nav_home
             }
         }

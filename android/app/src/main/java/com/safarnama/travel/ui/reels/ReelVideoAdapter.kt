@@ -17,8 +17,10 @@ import coil.load
 import coil.transform.CircleCropTransformation
 import com.safarnama.travel.R
 import com.safarnama.travel.data.Post
+import com.safarnama.travel.data.TravelRepository
 import com.safarnama.travel.databinding.ItemReelPageBinding
 import com.safarnama.travel.util.HeartAnimationUtil
+import com.safarnama.travel.util.TravelActions
 
 class ReelVideoAdapter(
     private var reels: List<Post>,
@@ -27,9 +29,11 @@ class ReelVideoAdapter(
     private val onOpenComments: ((Post) -> Unit)? = null
 ) : RecyclerView.Adapter<ReelVideoAdapter.ReelViewHolder>() {
 
-    private val playersMap = mutableMapOf<Int, ExoPlayer>()
+    private val players = mutableSetOf<ReelViewHolder>()
+    private var activePosition = RecyclerView.NO_POSITION
 
     fun updateReels(newReels: List<Post>) {
+        if (reels == newReels) return
         reels = newReels
         notifyDataSetChanged()
     }
@@ -50,6 +54,7 @@ class ReelVideoAdapter(
         val reel = reels[position]
         val context = holder.itemView.context
         val binding = holder.binding
+        release(holder)
 
         // Creator and Spot Info
         binding.tvReelAuthor.text = "@${reel.author.username}"
@@ -64,6 +69,7 @@ class ReelVideoAdapter(
         }
 
         // Thumbnail Preview
+        binding.ivReelThumbnail.visibility = View.GONE
         if (!reel.thumbnailUrl.isNullOrEmpty()) {
             binding.ivReelThumbnail.visibility = View.VISIBLE
             binding.ivReelThumbnail.load(reel.thumbnailUrl) {
@@ -72,23 +78,36 @@ class ReelVideoAdapter(
         }
 
         // Setup ExoPlayer for this item
-        val videoUrl = reel.videoUrl ?: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+        val videoUrl = reel.videoUrl
+        val photoPreview = videoUrl?.startsWith("asset:///") == true
+        binding.tvReelAudio.text = if (photoPreview) "Destination photo preview" else "Sound off · tap to unmute"
         val exoPlayer = ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri(Uri.parse(videoUrl))
-            setMediaItem(mediaItem)
+            if (!videoUrl.isNullOrBlank()) setMediaItem(MediaItem.fromUri(Uri.parse(videoUrl)))
             repeatMode = Player.REPEAT_MODE_ONE
-            prepare()
+            volume = 0f
             addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) {
                         binding.ivReelThumbnail.visibility = View.GONE
                     }
                 }
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    binding.tvReelAudio.text = "Video unavailable · travel story preview"
+                }
             })
         }
         holder.player = exoPlayer
         binding.playerView.player = exoPlayer
-        playersMap[position] = exoPlayer
+        players.add(holder)
+        if (position == activePosition && !videoUrl.isNullOrBlank()) {
+            exoPlayer.prepare()
+            exoPlayer.play()
+        }
+        binding.tvReelAudio.setOnClickListener {
+            if (photoPreview) return@setOnClickListener
+            exoPlayer.volume = if (exoPlayer.volume == 0f) 1f else 0f
+            binding.tvReelAudio.text = if (exoPlayer.volume == 0f) "Sound off · tap to unmute" else "Sound on · tap to mute"
+        }
 
         // Double-tap Heart Gesture on Reel
         val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -135,17 +154,15 @@ class ReelVideoAdapter(
             onOpenComments?.invoke(reel)
         }
         binding.btnReelShare.setOnClickListener {
-            Toast.makeText(context, "Sharing reel ${reel.spotName}", Toast.LENGTH_SHORT).show()
+            TravelActions.share(context, reel)
         }
 
+        val repository = TravelRepository.instance
+        binding.ivReelAvatar.setOnClickListener { TravelActions.traveler(context, reel) }
+        binding.btnReelFollow.visibility = if (reel.author.id == repository.currentUser.value.id) View.GONE else View.VISIBLE
+        binding.btnReelFollow.text = if (repository.isFollowing(reel.author.id)) "Following" else "Follow"
         binding.btnReelFollow.setOnClickListener {
-            if (binding.btnReelFollow.text == "Follow") {
-                binding.btnReelFollow.text = "Following"
-                binding.btnReelFollow.setTextColor(ContextCompat.getColor(context, R.color.text_zinc_500))
-            } else {
-                binding.btnReelFollow.text = "Follow"
-                binding.btnReelFollow.setTextColor(ContextCompat.getColor(context, R.color.text_zinc_900))
-            }
+            binding.btnReelFollow.text = if (repository.toggleFollow(reel.author)) "Following" else "Follow"
         }
     }
 
@@ -173,29 +190,32 @@ class ReelVideoAdapter(
     }
 
     fun playPosition(position: Int) {
-        playersMap.forEach { (pos, player) ->
-            if (pos == position) {
-                player.playWhenReady = true
+        activePosition = position
+        players.forEach { holder ->
+            val player = holder.player ?: return@forEach
+            if (holder.bindingAdapterPosition == position && player.mediaItemCount > 0) {
+                if (player.playbackState == Player.STATE_IDLE) player.prepare()
                 player.play()
-            } else {
-                player.playWhenReady = false
-                player.pause()
-            }
+            } else player.pause()
         }
     }
 
     fun pauseAll() {
-        playersMap.values.forEach {
-            it.playWhenReady = false
-            it.pause()
-        }
+        activePosition = RecyclerView.NO_POSITION
+        players.forEach { it.player?.pause() }
     }
 
     fun releaseAll() {
-        playersMap.values.forEach {
-            it.release()
-        }
-        playersMap.clear()
+        players.toList().forEach(::release)
+    }
+
+    override fun onViewRecycled(holder: ReelViewHolder) { release(holder); super.onViewRecycled(holder) }
+
+    private fun release(holder: ReelViewHolder) {
+        players.remove(holder)
+        holder.binding.playerView.player = null
+        holder.player?.release()
+        holder.player = null
     }
 
     override fun getItemCount(): Int = reels.size

@@ -7,9 +7,15 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.tabs.TabLayout
+import com.safarnama.travel.data.PostFormat
+import com.safarnama.travel.data.StoryHighlight
 import com.safarnama.travel.data.TravelRepository
 import com.safarnama.travel.databinding.FragmentHomeBinding
+import com.safarnama.travel.ui.journeys.DestinationSheet
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
@@ -68,11 +74,28 @@ class HomeFragment : Fragment() {
             dmDialog.show(parentFragmentManager, "dm_dialog")
         }
 
-        // Observe Feed Posts Flow
+        binding.rvDestinationStories.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         viewLifecycleOwner.lifecycleScope.launch {
-            repository.posts.collectLatest { updatedList ->
-                feedAdapter.updatePosts(updatedList)
+            repository.destinations.collectLatest { places ->
+                val stories = listOf(StoryHighlight("create", "Your story", repository.currentUser.value.avatarUrl)) +
+                    places.map { StoryHighlight(it.id, it.name, it.coverImage) }
+                binding.rvDestinationStories.adapter = StoriesAdapter(stories) { story ->
+                    if (story.id == "create") binding.btnCreateContent.performClick()
+                    else DestinationSheet.newInstance(story.id).show(parentFragmentManager, "destination_story")
+                }
             }
+        }
+
+        listOf("For you", "Following", "Travel notes").forEach {
+            binding.feedFilters.addTab(binding.feedFilters.newTab().setText(it))
+        }
+        binding.feedFilters.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) { updateFeed() }
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
+        })
+        viewLifecycleOwner.lifecycleScope.launch {
+            combine(repository.posts, repository.followedAccounts) { _, _ -> Unit }.collectLatest { updateFeed() }
         }
 
         // Trigger background refresh from Supabase REST API
@@ -84,6 +107,20 @@ class HomeFragment : Fragment() {
                 binding.homeProgressBar.visibility = View.GONE
             }
         }
+    }
+
+    private fun updateFeed() {
+        val filter = binding.feedFilters.selectedTabPosition
+        val posts = repository.posts.value.filter { post ->
+            when (filter) {
+                1 -> repository.isFollowing(post.author.id)
+                2 -> post.format in setOf(PostFormat.TWEET, PostFormat.QUICK_TIP)
+                else -> true
+            }
+        }
+        feedAdapter.updatePosts(posts)
+        binding.feedEmpty.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
+        binding.feedEmpty.text = if (filter == 1) "Open a traveler’s profile and follow their journey to see their stories here." else "Share a travel note to start the conversation."
     }
 
     override fun onDestroyView() {

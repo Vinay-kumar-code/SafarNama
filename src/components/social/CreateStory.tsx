@@ -10,9 +10,12 @@ import type { ContentFormat, Post } from '../../types';
 type Draft = { format: ContentFormat; caption: string; destinationId: string; spot: string; budget: string; tip: string };
 const blank: Draft = { format: 'carousel_note', caption: '', destinationId: '', spot: '', budget: '', tip: '' };
 export function CreateStory() {
-  const { currentUser, createPost, setActiveTab } = useApp(); const { setComposerOpen, notify } = useSocial();
+  const { currentUser, createPost, setActiveTab } = useApp(); const { setComposerOpen, composerFormat, notify } = useSocial();
   const draftKey = `draft_${currentUser.id}`;
-  const [draft, setDraft] = useState<Draft>(() => ({ ...blank, ...getStoredData(draftKey, {}) }));
+  const [draft, setDraft] = useState<Draft>(() => {
+    const saved = { ...blank, ...getStoredData(draftKey, {}) };
+    return composerFormat ? { ...saved, format: composerFormat } : saved;
+  });
   const [files, setFiles] = useState<File[]>([]); const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   useEffect(() => { try { localStorage.setItem(`safarnama_${draftKey}`, JSON.stringify(draft)); } catch { setError('Your draft could not be saved. Browser storage may be full.'); } }, [draft, draftKey]);
@@ -30,6 +33,7 @@ export function CreateStory() {
     event.preventDefault(); if (busy) return;
     const destination = DESTINATION_HUBS.find(place => place.id === draft.destinationId);
     if (!destination || !draft.caption.trim()) { setError('Add a destination and a few words about your journey.'); return; }
+    if (draft.format === 'quick_tip' && draft.caption.length > 500) { setError('Travel notes can be up to 500 characters.'); return; }
     if (draft.format !== 'quick_tip' && !files.length) { setError('Choose your photo or video before sharing.'); return; }
     if (draft.budget && (!Number.isFinite(Number(draft.budget)) || Number(draft.budget) < 0)) { setError('Enter a valid daily budget.'); return; }
     setBusy(true); setError('');

@@ -1,4 +1,4 @@
-# 🇮🇳 SafarNama (सफ़रनामा) — Complete Architecture & External Setup Guide
+# 🇮🇳 SafarNama — Complete Architecture & External Setup Guide
 
 > **Vision**: An Instagram-simple, map-first social travel ecosystem showcasing authentic India through the eyes of locals and travelers—eliminating trip-planning friction while turning personal journeys into living, crowdsourced travel guides.
 

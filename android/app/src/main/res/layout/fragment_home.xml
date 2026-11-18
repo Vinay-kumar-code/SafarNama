@@ -25,7 +25,7 @@
             android:layout_weight="1"
             android:fontFamily="sans-serif-black"
             android:letterSpacing="-0.02"
-            android:text="SafarNama"
+            android:text="India, through your eyes"
             android:textColor="@color/text_zinc_900"
             android:textSize="21sp" />
 
@@ -35,7 +35,7 @@
             android:layout_width="38dp"
             android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Create New Tweet, Post or Reel"
+            android:contentDescription="Create a travel story"
             android:padding="7dp"
             android:src="@drawable/ic_add"
             app:tint="@color/text_zinc_900" />
@@ -50,7 +50,7 @@
             android:contentDescription="Direct Messages">
 
             <ImageView
-                android:layout_width=" match_parent"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="8dp"
                 android:src="@drawable/ic_message"
@@ -65,7 +65,8 @@
                 android:layout_marginTop="6dp"
                 android:layout_marginEnd="6dp"
                 android:background="@drawable/bg_badge_inr"
-                android:backgroundTint="@color/heart_red" />
+                android:backgroundTint="@color/heart_red"
+                android:visibility="gone" />
         </FrameLayout>
 
     </LinearLayout>
@@ -74,6 +75,31 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/border_zinc_200" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_destination_stories"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:clipToPadding="false"
+        android:contentDescription="Stories by destination" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/feed_filters"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        app:tabIndicatorColor="@color/brand_coral"
+        app:tabSelectedTextColor="@color/brand_coral" />
+
+    <TextView
+        android:id="@+id/feed_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="28dp"
+        android:textColor="@color/text_zinc_500"
+        android:visibility="gone" />
 
     <!-- Unified Feed (Tweets, Threads, Photos, Carousels) -->
     <FrameLayout
@@ -86,7 +112,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingBottom="72dp"
+            android:paddingBottom="12dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_feed_post" />
 

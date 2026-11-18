@@ -33,7 +33,7 @@ class DirectMessagesDialogFragment : BottomSheetDialogFragment() {
 
         binding.btnCloseDms.setOnClickListener { dismiss() }
 
-        val guides = repository.guides.value
+        val guides = repository.guides.value.filterNot { it.id == repository.currentUser.value.id }
         val convItems = guides.map { guide ->
             val msgs = repository.getDirectMessages(guide.id)
             ConversationItem(partner = guide, lastMessage = msgs.lastOrNull())
@@ -49,7 +49,7 @@ class DirectMessagesDialogFragment : BottomSheetDialogFragment() {
         // Observe updates
         viewLifecycleOwner.lifecycleScope.launch {
             repository.directMessages.collectLatest { msgMap ->
-                val updatedItems = repository.guides.value.map { guide ->
+                val updatedItems = guides.map { guide ->
                     val msgs = msgMap[guide.id] ?: emptyList()
                     ConversationItem(partner = guide, lastMessage = msgs.lastOrNull())
                 }

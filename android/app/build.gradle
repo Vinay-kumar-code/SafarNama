@@ -47,6 +47,7 @@ def getAppEnv(String key, String fallback = "") {
 }
 
 android {
+    sourceSets.main.assets.srcDir(rootProject.file('../public/media'))
     namespace 'com.safarnama.travel'
     compileSdk rootProject.ext.compileSdkVersion
 

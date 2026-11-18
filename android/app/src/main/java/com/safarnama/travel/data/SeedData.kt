@@ -1,8 +1,15 @@
 package com.safarnama.travel.data
 
-import com.safarnama.travel.api.R2MediaResolver
-
 object SeedData {
+    private val placePhotos = mapOf(
+        "dest-spiti" to "spiti.jpg",
+        "dest-varanasi" to "varanasi.jpg",
+        "dest-meghalaya" to "meghalaya.jpg",
+        "dest-hampi" to "hampi.jpg",
+        "dest-old-delhi" to "delhi.jpg"
+    )
+
+    private fun placePhoto(id: String?): String? = placePhotos[id]?.let { "file:///android_asset/$it" }
 
     // Current User Profile (Aarav Sharma - Traveler)
     val CURRENT_USER = Profile(
@@ -301,7 +308,12 @@ object SeedData {
             isSaved = true,
             createdAt = "2 DAYS AGO"
         )
-    )
+    ).map { post ->
+        val photo = placePhoto(post.destinationId)
+        if (photo != null && post.format == PostFormat.PHOTO_POST) {
+            post.copy(thumbnailUrl = photo, carouselImages = listOf(photo))
+        } else post
+    }
 
     // Reels Feed with Native Video Assets from Cloudflare R2
     val REELS_FEED = listOf(
@@ -313,7 +325,7 @@ object SeedData {
             region = "Spiti Valley",
             caption = "Crossing Kunzum La with the prayer flags snapping in 50 km/h wind. The boundary between Kullu and Spiti Valley. Look at that trans-Himalayan desert! 🏔️🚩 #SpitiValley #KunzumPass #TransHimalayas",
             format = PostFormat.REEL,
-            videoUrl = R2MediaResolver.resolveVideoUrl("videos/spiti_kunzum.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"),
+            videoUrl = "asset:///spiti-preview.mp4",
             thumbnailUrl = "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop&q=80",
             destinationId = "dest-spiti",
             destinationName = "Spiti Valley",
@@ -333,7 +345,7 @@ object SeedData {
             region = "Varanasi",
             caption = "Assi Ghat to Chet Singh Fort at 6:00 AM. Migratory Siberian gulls swirling over the holy river. 🕊️🪔 #Varanasi #GangesMorning #BanarasDiaries",
             format = PostFormat.REEL,
-            videoUrl = R2MediaResolver.resolveVideoUrl("videos/varanasi_aarti.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"),
+            videoUrl = "asset:///varanasi-preview.mp4",
             thumbnailUrl = "https://images.unsplash.com/photo-1561359313-0639aad49ca6?w=800&auto=format&fit=crop&q=80",
             destinationId = "dest-varanasi",
             destinationName = "Varanasi Ghats",
@@ -353,7 +365,7 @@ object SeedData {
             region = "East Khasi Hills",
             caption = "Hidden deep past Nongriat village. When the midday sun strikes the spray, a circular rainbow forms over the pool. Nature's wonder! 🌿🌈 #Meghalaya #RainbowFalls #LivingRootBridge",
             format = PostFormat.REEL,
-            videoUrl = R2MediaResolver.resolveVideoUrl("videos/meghalaya_roots.mp4", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"),
+            videoUrl = "asset:///meghalaya-preview.mp4",
             thumbnailUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80",
             destinationId = "dest-meghalaya",
             destinationName = "Meghalaya Roots",
@@ -365,7 +377,7 @@ object SeedData {
             isSaved = true,
             createdAt = "YESTERDAY"
         )
-    )
+    ).map { reel -> reel.copy(thumbnailUrl = placePhoto(reel.destinationId) ?: reel.thumbnailUrl) }
 
     // Initial Comments and Thread Replies
     val INITIAL_COMMENTS = mapOf(
@@ -554,7 +566,7 @@ object SeedData {
             guideCount = 22,
             averageRating = 4.9
         )
-    )
+    ).map { place -> placePhoto(place.id)?.let { place.copy(coverImage = it, galleryImages = listOf(it)) } ?: place }
 
     // Digital Passport Stamps for Indian States (Kept for model compatibility)
     val PASSPORT_STAMPS = listOf(

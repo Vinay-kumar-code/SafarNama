@@ -91,9 +91,6 @@ export const DesktopNav: React.FC = () => {
             <span className="font-extrabold text-xl tracking-tight text-zinc-900">
               SafarNama
             </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 font-bold border border-orange-200">
-              सफ़रनामा
-            </span>
           </div>
           <p className="text-[11px] text-zinc-500 font-medium">Map-First Social Travel for Authentic India</p>
         </div>

@@ -304,7 +304,9 @@ class FeedAdapter(
     override fun getItemCount(): Int = posts.size
 
     inner class PostViewHolder(val binding: ItemFeedPostBinding) :
-        RecyclerView.ViewHolder(binding.root)
+        RecyclerView.ViewHolder(binding.root) {
+        var pageCallback: ViewPager2.OnPageChangeCallback? = null
+    }
 
     inner class TweetViewHolder(val binding: ItemFeedTweetBinding) :
         RecyclerView.ViewHolder(binding.root)
