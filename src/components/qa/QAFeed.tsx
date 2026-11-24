@@ -1,369 +1,100 @@
-import React, { useState } from 'react';
-import { 
-  MessageSquareText, 
-  MapPin, 
-  ThumbsUp, 
-  Send, 
-  Plus, 
-  ShieldCheck, 
-  Sparkles, 
-  Search, 
-  Clock, 
-  HelpCircle,
-  Users
-} from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { MapPin, MessageCircle, Plus, Search, Send, ShieldCheck, ThumbsUp } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useCommunity } from '../../context/CommunityContext';
+import { useAuth } from '../../context/AuthContext';
 import { timeAgo } from '../../lib/utils';
-import { QAThread } from '../../types';
+import type { QAThread } from '../../types';
+import { EmptyState, Modal, TravelImage } from '../social/Primitives';
 
-export const QAFeed: React.FC = () => {
-  const { 
-    qaThreads, 
-    addQAQuestion, 
-    addQAReply, 
-    upvoteQAThread, 
-    upvoteQAReply, 
-    currentUser 
-  } = useApp();
+const categories: QAThread['category'][] = ['Road Conditions', 'Safety', 'Food & Stays', 'Permits & Weather', 'Local Culture'];
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showAskModal, setShowAskModal] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDestination, setNewDestination] = useState('Spiti Valley');
+export function QAFeed() {
+  const { qaThreads, addQAQuestion, addQAReply, upvoteQAThread, upvoteQAReply, currentUser } = useApp();
+  const { destinations } = useCommunity();
+  const { profile, openAuthModal } = useAuth();
+  const [category, setCategory] = useState<QAThread['category'] | ''>('');
+  const [query, setQuery] = useState('');
+  const [asking, setAsking] = useState(false);
+  const [title, setTitle] = useState('');
+  const [destinationId, setDestinationId] = useState(destinations[0]?.id ?? '');
   const [newCategory, setNewCategory] = useState<QAThread['category']>('Road Conditions');
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState(false);
 
-  const categories: { id: string; label: string; icon: string }[] = [
-    { id: 'all', label: 'All Queries', icon: '💬' },
-    { id: 'Road Conditions', label: 'Roads & Passes', icon: '🛣️' },
-    { id: 'Safety', label: 'Safety & Solo Travel', icon: '🛡️' },
-    { id: 'Food & Stays', label: 'Food & Homestays', icon: '🍲' },
-    { id: 'Permits & Weather', label: 'Permits & Weather', icon: '📄' },
-  ];
+  const keyword = query.trim().toLowerCase();
+  const threads = qaThreads.filter(thread => (!category || thread.category === category) &&
+    [thread.title, thread.destinationName].some(value => value.toLowerCase().includes(keyword)));
 
-  const filteredThreads = qaThreads.filter(t => {
-    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
-    const matchesSearch = searchQuery === '' ||
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.destinationName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  async function ask(event: FormEvent) {
+    event.preventDefault();
+    const destination = destinations.find(place => place.id === destinationId);
+    if (!title.trim() || !destination || sending) return;
+    setSending(true);
+    const saved = await addQAQuestion(title.trim(), destination, newCategory);
+    setSending(false);
+    if (!saved) return;
+    setTitle('');
+    setQuery('');
+    setCategory('');
+    setAsking(false);
+  }
 
-  const handleCreateQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-    addQAQuestion(newTitle.trim(), newDestination, newCategory);
-    setNewTitle('');
-    setShowAskModal(false);
-  };
-
-  const handleSendReply = (threadId: string) => {
+  async function reply(event: FormEvent, threadId: string) {
+    event.preventDefault();
     const text = replyInputs[threadId]?.trim();
-    if (!text) return;
-    addQAReply(threadId, text);
-    setReplyInputs(prev => ({ ...prev, [threadId]: '' }));
-  };
+    if (!text || sending) return;
+    setSending(true);
+    if (await addQAReply(threadId, text)) setReplyInputs(previous => ({ ...previous, [threadId]: '' }));
+    setSending(false);
+  }
 
-  return (
-    <div className="w-full h-[calc(100dvh-57px-60px)] md:h-[calc(100vh-65px)] overflow-y-auto bg-white md:bg-[#fafafa] p-4 md:p-8 no-scrollbar text-zinc-900">
-      <div className="max-w-6xl mx-auto space-y-6 pb-12">
-        
-        {/* =====================================================================
-            DESKTOP & MOBILE RESPONSIVE FORUM GRID
-           ===================================================================== */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          
-          {/* Left Column (Desktop: 4 cols, Mobile: Top Header) */}
-          <div className="md:col-span-4 space-y-5">
-            
-            {/* Title & Ask Button */}
-            <div className="p-5 rounded-3xl bg-white border border-zinc-200 shadow-sm space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
-                <MessageSquareText className="w-4 h-4" />
-                <span>Live Location Q&A</span>
-              </div>
-
-              <h1 className="text-xl md:text-2xl font-black text-zinc-900 leading-tight">
-                Ask Locals & Recent Explorers
-              </h1>
-
-              <p className="text-xs text-zinc-600 leading-relaxed">
-                Location-pinned answers from verified guides on high passes, road status, satvik meals, and permits.
-              </p>
-
-              <button
-                onClick={() => setShowAskModal(true)}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 active:scale-95 transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Ask a Local Question</span>
-              </button>
-            </div>
-
-            {/* Desktop Category Sidebar (hidden on mobile, pills on mobile) */}
-            <div className="hidden md:block p-4 rounded-3xl bg-white border border-zinc-200 shadow-xs space-y-1.5">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400 block px-2 mb-2">
-                Filter by Topic
-              </span>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                    selectedCategory === cat.id
-                      ? 'bg-orange-500 text-white shadow-xs'
-                      : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>{cat.icon}</span>
-                    <span>{cat.label}</span>
-                  </span>
-                  <span className="text-[10px] opacity-80">
-                    {cat.id === 'all' 
-                      ? qaThreads.length 
-                      : qaThreads.filter(t => t.category === cat.id).length}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-          </div>
-
-          {/* Right Column (Desktop: 8 cols, Mobile: full width) */}
-          <div className="md:col-span-8 space-y-4">
-            
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input
-                type="text"
-                placeholder="Search queries (e.g. Kunzum pass, satvik food, ILP permits)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border border-zinc-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-orange-500 shadow-xs"
-              />
-            </div>
-
-            {/* Mobile Horizontal Category Pills (md:hidden) */}
-            <div className="md:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border cursor-pointer ${
-                    selectedCategory === cat.id
-                      ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
-                      : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 shadow-xs'
-                  }`}
-                >
-                  {cat.icon} {cat.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Ask Question Modal / Form */}
-            {showAskModal && (
-              <div className="p-5 rounded-3xl bg-white border border-orange-300 shadow-xl animate-fade-in space-y-3">
-                <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-orange-500" />
-                  <span>Ask Local Guides & Travelers</span>
-                </h3>
-
-                <form onSubmit={handleCreateQuestion} className="space-y-3">
-                  <div>
-                    <label className="text-[11px] text-zinc-500 block mb-1">Your Question</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Is the road between Gramphu and Kaza open today?"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:outline-none focus:border-orange-500"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[11px] text-zinc-500 block mb-1">Destination Hub</label>
-                      <select
-                        value={newDestination}
-                        onChange={(e) => setNewDestination(e.target.value)}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-2.5 py-2 text-xs text-zinc-900 focus:outline-none"
-                      >
-                        <option value="Spiti Valley">Spiti Valley, HP</option>
-                        <option value="Varanasi">Varanasi, UP</option>
-                        <option value="Meghalaya">Meghalaya (Sohra)</option>
-                        <option value="Old Delhi">Old Delhi</option>
-                        <option value="Hampi">Hampi, Karnataka</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] text-zinc-500 block mb-1">Category</label>
-                      <select
-                        value={newCategory}
-                        onChange={(e) => setNewCategory(e.target.value as QAThread['category'])}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-2.5 py-2 text-xs text-zinc-900 focus:outline-none"
-                      >
-                        <option value="Road Conditions">Road Conditions</option>
-                        <option value="Safety">Safety</option>
-                        <option value="Food & Stays">Food & Stays</option>
-                        <option value="Permits & Weather">Permits & Weather</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      type="submit"
-                      className="flex-1 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-xs cursor-pointer"
-                    >
-                      Post Question
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAskModal(false)}
-                      className="px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-semibold text-xs cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Threads List */}
-            <div className="space-y-4">
-              {filteredThreads.map(thread => (
-                <div
-                  key={thread.id}
-                  className="p-5 rounded-3xl bg-white border border-zinc-200 shadow-xs space-y-3 hover:border-zinc-300 hover:shadow-sm transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold border border-orange-200 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {thread.destinationName}
-                      </span>
-                      <span className="text-xs text-zinc-500 font-medium">
-                        {thread.category}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-[11px] text-zinc-400">
-                      <Clock className="w-3 h-3" />
-                      <span>{timeAgo(thread.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-base font-bold text-zinc-900 leading-snug">
-                      {thread.title}
-                    </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Asked by @{thread.author.username}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-1">
-                    <button
-                      onClick={() => upvoteQAThread(thread.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        thread.isUpvoted
-                          ? 'bg-orange-50 text-orange-600 border border-orange-200 shadow-xs'
-                          : 'bg-zinc-100 text-zinc-700 hover:text-zinc-900 hover:bg-zinc-200 border border-zinc-200 shadow-xs'
-                      }`}
-                    >
-                      <ThumbsUp className={`w-3.5 h-3.5 ${thread.isUpvoted ? 'fill-current' : ''}`} />
-                      <span>{thread.upvotesCount}</span>
-                    </button>
-                    <span className="text-xs text-zinc-500">
-                      {thread.replies.length} {thread.replies.length === 1 ? 'reply' : 'replies'}
-                    </span>
-                  </div>
-
-                  {/* Replies List */}
-                  <div className="space-y-2.5 pt-3 border-t border-zinc-100">
-                    {thread.replies.map(reply => (
-                      <div
-                        key={reply.id}
-                        className={`p-3.5 rounded-2xl text-xs space-y-1.5 ${
-                          reply.isVerifiedLocalReply
-                            ? 'bg-emerald-50/70 border border-emerald-200/80'
-                            : 'bg-zinc-50 border border-zinc-200'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={reply.author.avatarUrl}
-                              alt={reply.author.fullName}
-                              className="w-6 h-6 rounded-full object-cover border border-zinc-200"
-                            />
-                            <span className="font-bold text-zinc-900 text-xs">
-                              {reply.author.fullName}
-                            </span>
-                            {reply.isVerifiedLocalReply && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center gap-1 border border-emerald-200">
-                                <ShieldCheck className="w-3 h-3" />
-                                Verified Guide
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-zinc-400">
-                            {timeAgo(reply.createdAt)}
-                          </span>
-                        </div>
-
-                        <p className="text-zinc-700 leading-relaxed pl-8 text-xs">
-                          {reply.replyText}
-                        </p>
-
-                        <div className="flex justify-end pt-1">
-                          <button
-                            onClick={() => upvoteQAReply(thread.id, reply.id)}
-                            className={`flex items-center gap-1 text-xs font-semibold transition-colors cursor-pointer ${
-                              reply.isUpvoted ? 'text-orange-600 font-bold' : 'text-zinc-500 hover:text-zinc-800'
-                            }`}
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                            <span>{reply.upvotesCount}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Quick Reply Form */}
-                    <div className="flex items-center gap-2 pt-2">
-                      <input
-                        type="text"
-                        placeholder={`Reply as ${currentUser.fullName}...`}
-                        value={replyInputs[thread.id] || ''}
-                        onChange={(e) => setReplyInputs(prev => ({ ...prev, [thread.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSendReply(thread.id);
-                        }}
-                        className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-orange-500 shadow-xs"
-                      />
-                      <button
-                        onClick={() => handleSendReply(thread.id)}
-                        className="p-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white transition-all shadow-xs shrink-0 cursor-pointer"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-
-          </div>
-        </div>
-
-      </div>
+  return <section className="sn-secondary-page sn-qa-page" aria-labelledby="qa-title">
+    <header className="sn-page-heading">
+      <div><h1 id="qa-title">Travel Q&amp;A<span>.</span></h1><p>Ask local guides and fellow travelers about your next stop.</p></div>
+      <button className="sn-button" onClick={() => profile ? setAsking(true) : openAuthModal()}><Plus size={16} /> Ask a question</button>
+    </header>
+    <div className="sn-qa-filters">
+      <label className="sn-search"><Search size={18} /><input type="search" aria-label="Search questions" placeholder="Search by question or destination" value={query} onChange={event => setQuery(event.target.value)} /></label>
+      <select className="sn-field" aria-label="Filter questions by topic" value={category} onChange={event => setCategory(event.target.value as typeof category)}>
+        <option value="">All topics</option>
+        {categories.map(topic => <option key={topic}>{topic}</option>)}
+      </select>
     </div>
-  );
-};
+    <div className="sn-secondary-stack">
+      {threads.map(thread => <article key={thread.id} className="sn-panel sn-panel-padding sn-qa-thread">
+        <div className="sn-secondary-actions"><span className="sn-meta"><MapPin size={15} />{thread.destinationName}</span><span className="sn-qa-topic">{thread.category}</span></div>
+        <h2>{thread.title}</h2>
+        <div className="sn-qa-author"><TravelImage src={thread.author.avatarUrl} alt="" className="sn-avatar" /><strong>{thread.author.fullName}</strong><span>{timeAgo(thread.createdAt)}</span></div>
+        <div className="sn-secondary-actions">
+          <button className="sn-vote" aria-label="Upvote question" aria-pressed={Boolean(thread.isUpvoted)} onClick={() => upvoteQAThread(thread.id)}><ThumbsUp size={16} />{thread.upvotesCount}</button>
+          <span className="sn-meta"><MessageCircle size={16} />{thread.repliesCount} {thread.repliesCount === 1 ? 'reply' : 'replies'}</span>
+        </div>
+        {thread.replies.length > 0 && <div className="sn-qa-replies">
+          {thread.replies.map(item => <div className="sn-qa-reply" key={item.id}>
+            <div className="sn-qa-author"><TravelImage src={item.author.avatarUrl} alt="" className="sn-avatar" /><strong>{item.author.fullName}</strong><span>{timeAgo(item.createdAt)}</span></div>
+            {item.isVerifiedLocalReply && <span className="sn-meta"><ShieldCheck size={15} /> Verified guide</span>}
+            <p>{item.replyText}</p>
+            <button className="sn-vote" aria-label="Upvote reply" aria-pressed={Boolean(item.isUpvoted)} onClick={() => upvoteQAReply(thread.id, item.id)}><ThumbsUp size={15} />{item.upvotesCount}</button>
+          </div>)}
+        </div>}
+        <form className="sn-qa-reply-form" onSubmit={event => reply(event, thread.id)}>
+          <input className="sn-field" aria-label={`Reply to ${thread.title}`} placeholder={`Reply as ${currentUser.fullName}…`} value={replyInputs[thread.id] || ''} maxLength={1000} onChange={event => {
+            const value = event.target.value;
+            setReplyInputs(previous => ({ ...previous, [thread.id]: value }));
+          }} />
+          <button className="sn-button" aria-label="Send reply" disabled={!replyInputs[thread.id]?.trim()}><Send size={16} /></button>
+        </form>
+      </article>)}
+      {threads.length === 0 && <EmptyState title="No questions found" description="Try a different search or start a conversation about your destination." action={<button className="sn-button secondary" onClick={() => { setQuery(''); setCategory(''); }}>Clear filters</button>} />}
+    </div>
+    {asking && <Modal title="Ask a travel question" onClose={() => setAsking(false)}>
+      <form className="sn-secondary-form" onSubmit={ask}>
+        <label className="sn-secondary-label">Your question<input className="sn-field" required autoFocus maxLength={200} value={title} onChange={event => setTitle(event.target.value)} placeholder="What would you like to know?" /></label>
+        <label className="sn-secondary-label">Destination<select className="sn-field" value={destinationId} onChange={event => setDestinationId(event.target.value)}>{destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label>
+        <label className="sn-secondary-label">Topic<select className="sn-field" value={newCategory} onChange={event => setNewCategory(event.target.value as QAThread['category'])}>{categories.map(topic => <option key={topic}>{topic}</option>)}</select></label>
+        <div className="sn-secondary-actions"><button className="sn-button" disabled={!title.trim() || !destinationId}>Post question</button></div>
+      </form>
+    </Modal>}
+  </section>;
+}

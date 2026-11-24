@@ -24,7 +24,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { DestinationHub, GuideVerificationRequest, FlaggedContentItem } from '../../types';
-import { DESTINATION_HUBS, MOCK_GUIDE_APPLICATIONS, MOCK_FLAGGED_CONTENT } from '../../data/mockData';
+import { DESTINATION_HUBS } from '../../data/destinations';
 import { getStoredData, setStoredData } from '../../lib/utils';
 
 export const AdminPortal: React.FC = () => {
@@ -36,7 +36,7 @@ export const AdminPortal: React.FC = () => {
 
   // 1. Guides State
   const [guideRequests, setGuideRequests] = useState<GuideVerificationRequest[]>(() => {
-    return getStoredData<GuideVerificationRequest[]>('safarnama_guide_requests', MOCK_GUIDE_APPLICATIONS);
+    return getStoredData<GuideVerificationRequest[]>('safarnama_guide_requests', []);
   });
   const [guideFilter, setGuideFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [guideSearch, setGuideSearch] = useState('');
@@ -80,7 +80,7 @@ export const AdminPortal: React.FC = () => {
 
   // 3. Moderation State
   const [flaggedItems, setFlaggedItems] = useState<FlaggedContentItem[]>(() => {
-    return getStoredData<FlaggedContentItem[]>('safarnama_flagged_content', MOCK_FLAGGED_CONTENT);
+    return getStoredData<FlaggedContentItem[]>('safarnama_flagged_content', []);
   });
   const [moderationToast, setModerationToast] = useState<string | null>(null);
 

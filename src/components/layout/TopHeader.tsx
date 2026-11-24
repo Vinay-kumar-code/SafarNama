@@ -29,7 +29,6 @@ export const TopHeader: React.FC = () => {
     openOnboarding, 
     signOut, 
     openAdminPortal,
-    isOfflineDemo 
   } = useAuth();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);

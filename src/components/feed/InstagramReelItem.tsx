@@ -21,7 +21,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Post, GearTag, DestinationHub } from '../../types';
-import { DESTINATION_HUBS } from '../../data/mockData';
+import { DESTINATION_HUBS } from '../../data/destinations';
 import { triggerHaptic } from '../../lib/utils';
 
 export interface InstagramReelItemProps {

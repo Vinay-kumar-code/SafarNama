@@ -1,0 +1,62 @@
+.sn-main.sn-main-map { position: fixed; inset: 0; margin: 0; padding: 0; min-height: 0; }
+.sn-map-full { position: relative; width: 100%; height: 100%; overflow: hidden; background: #e1eef0; }
+.sn-map-canvas, .sn-live-map, .sn-map-atlas { position: absolute; inset: 0; }
+.sn-live-map[aria-hidden="true"] { visibility: hidden; }
+.sn-map-atlas { overflow: hidden; background: #e7eddf; }
+.sn-map-plane { position: relative; height: 100%; width: min(100%, 112vh); margin-left: max(0px, (100% - 79vh) / 2); background: #e1eef0; }
+.sn-map-canvas[data-picking="true"] .sn-map-plane { cursor: crosshair; }
+.sn-map-coast { position: absolute; inset: 0; width: 100%; height: 100%; fill: #e8eddd; stroke: #a5baab; stroke-width: 1.2; pointer-events: none; }
+.sn-map-plane::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 49px, #4769560c 49px 50px), repeating-linear-gradient(90deg, transparent 0 49px, #4769560c 49px 50px); pointer-events: none; }
+.sn-map-label { position: absolute; transform: translate(-50%, -50%); color: #426653; pointer-events: none; white-space: nowrap; }
+.sn-map-india { left: 42%; top: 53%; font-size: 13px; font-weight: 750; letter-spacing: 4px; }
+.sn-map-water-west, .sn-map-water-east { top: 79%; font: italic 13px Georgia, serif; color: #4d7175; }
+.sn-map-water-west { left: 17%; }
+.sn-map-water-east { left: 69%; }
+.sn-map-pin { position: absolute; z-index: 1; transform: translate(-50%, -50%); display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 1px solid #d8ded4; color: #a74428; box-shadow: 0 2px 7px #24342745; }
+.sn-map-pin:hover, .sn-map-pin:focus-visible, .sn-map-pin[aria-pressed="true"] { z-index: 2; color: #fff; background: #3f5146; border-color: #fff; }
+.sn-map-pin[data-anchor="true"] { background: #456e92; color: white; }
+.sn-map-top { position: absolute; top: max(15px, env(safe-area-inset-top)); left: max(15px, env(safe-area-inset-left)); right: max(15px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 8px; }
+.sn-map-control, .sn-map-search-form, .sn-map-tray, .sn-map-pick-note { border: 1px solid #a7b3aa66; background: #fffffff9; box-shadow: 0 4px 18px #324d3f20; }
+.sn-map-control { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 46px; min-height: 46px; border-radius: 12px; color: #3b5144; padding: 0 11px; flex-shrink: 0; }
+.sn-map-control[aria-pressed="true"], .sn-map-control:hover { background: #f1f3eb; }
+.sn-map-control span { font-size: 13px; font-weight: 650; }
+.sn-map-search-form { max-width: 550px; flex: 1; display: flex; align-items: center; border-radius: 12px; padding: 4px; min-width: 0; height: 46px; }
+.sn-map-search-form input { flex: 1; min-width: 0; height: 100%; padding: 0 10px; outline-offset: -2px; font-size: 14px; }
+.sn-map-search-form input::-webkit-search-cancel-button { display: none; }
+.sn-map-search-submit { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 36px; border-radius: 8px; background: #eaf0eb; color: #325045; font-size: 13px; font-weight: 650; }
+.sn-map-tools { position: absolute; display: grid; gap: 7px; right: max(15px, env(safe-area-inset-right)); top: calc(max(15px, env(safe-area-inset-top)) + 56px); }
+.sn-map-pick-note { position: absolute; top: calc(max(15px, env(safe-area-inset-top)) + 55px); left: 15px; max-width: calc(100% - 80px); padding: 9px 14px; border-radius: 9px; font-size: 13px; color: #344b3e; z-index: 2; }
+.sn-map-tray { position: absolute; display: flex; flex-direction: column; left: max(15px, env(safe-area-inset-left)); top: calc(max(15px, env(safe-area-inset-top)) + 58px); max-height: calc(100% - 109px); width: min(340px, 42vw); border-radius: 15px; overflow: hidden; }
+.sn-map-tray-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 13px; }
+.sn-map-tray-top h1 { font-size: 21px; line-height: 1.18; font-weight: 680; }
+.sn-map-tray-top p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.sn-map-tray-toggle { display: none; }
+.sn-map-tray-content { min-height: 0; overflow-y: auto; display: grid; gap: 9px; padding: 0 12px 12px; overscroll-behavior: contain; }
+.sn-map-radius { width: auto; max-width: 100px; }
+.sn-map-selection { display: grid; gap: 7px; padding: 10px; background: #f4f6ef; border-radius: 10px; border: 1px solid #d4ded4; }
+.sn-map-selection-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 5px; }
+.sn-map-selection-title h2 { font-size: 17px; font-weight: 670; }
+.sn-map-state { color: #526252; font-size: 11px; font-weight: 650; }
+.sn-map-cards { display: grid; gap: 6px; }
+.sn-map-card { display: flex; align-items: center; padding: 6px; gap: 6px; background: white; border: 1px solid var(--line); border-radius: 10px; }
+.sn-map-card[data-selected="true"] { border-color: #849f8b; background: #f6f7f0; }
+.sn-map-card-pick { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1; text-align: left; }
+.sn-map-card-pick > span { display: grid; gap: 2px; }
+.sn-map-card-pick strong { font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+.sn-map-card-image { width: 46px; height: 46px; object-fit: cover; border-radius: 7px; flex: 0 0 46px; }
+.sn-map-link { display: grid; place-items: center; width: 40px; height: 40px; color: #a74428; border-radius: 8px; }
+.sn-map-link:hover { background: #fbf2ea; }
+.sn-map-story .sn-post { margin: 0; border: 0; }
+.sn-map-story .sn-post-body { padding-bottom: 9px; }
+.sn-map-tray .sn-empty { padding: 20px 10px; }
+@media (max-width: 760px) {
+  .sn-map-plane { margin: 0; width: 100%; height: 86%; top: 7%; }
+  .sn-map-tray { top: auto; left: 10px; right: 10px; width: auto; bottom: calc(25px + env(safe-area-inset-bottom)); max-height: 47%; }
+  .sn-map-tray:not([data-expanded="true"]) .sn-map-tray-content { display: none; }
+  .sn-map-tray-top { padding: 9px 12px; }
+  .sn-map-tray-top h1 { font-size: 18px; }
+  .sn-map-tray-toggle { display: inline-flex; }
+  .sn-map-control span, .sn-map-search-submit span { display: none; }
+  .sn-map-top { left: 10px; right: 10px; gap: 6px; }
+  .sn-map-tools { right: 10px; }
+}

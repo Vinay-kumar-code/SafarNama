@@ -1,0 +1,96 @@
+.sn-place-controls {
+  flex-wrap: wrap;
+}
+
+.sn-post-media {
+  touch-action: pan-y pinch-zoom;
+}
+
+@media (max-width: 767px) {
+  .sn-app {
+    --muted: #686b61;
+  }
+
+  .sn-mobile-header .sn-icon,
+  .sn-modal .sn-icon,
+  .sn-post-actions > button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .sn-mobile-header > .sn-icon {
+    border-radius: 14px;
+    color: #a64325;
+    background: #fff2eb;
+  }
+
+  .sn-bottom-nav .sn-nav-item {
+    min-width: 44px;
+    min-height: 46px;
+    padding-inline: clamp(4px, 2.3vw, 11px);
+    justify-content: center;
+  }
+
+  .sn-bottom-nav .sn-nav-item span,
+  .sn-story strong {
+    font-size: 10px;
+  }
+
+  .sn-post-header {
+    min-height: 64px;
+  }
+
+  .sn-author strong,
+  .sn-caption,
+  .sn-page-heading p {
+    font-size: 13px;
+  }
+
+  .sn-author > button,
+  .sn-follow,
+  .sn-details-toggle {
+    font-size: 11px;
+  }
+
+  .sn-follow,
+  .sn-feed-tabs > button {
+    min-height: 44px;
+  }
+
+  .sn-post-actions {
+    gap: 12px;
+    padding-block: 5px;
+  }
+
+  .sn-feed-tabs > button,
+  .sn-place-controls .sn-button {
+    font-size: 12px;
+  }
+
+  .sn-composer-prompt > button,
+  .sn-journal-shortcuts strong {
+    font-size: 11px;
+  }
+
+  .sn-place-controls .sn-button {
+    min-height: 44px;
+  }
+
+  .sn-create-form textarea,
+  .sn-create-form input:not([type=file]),
+  .sn-create-form select,
+  .sn-comment-form input,
+  .sn-review-form textarea,
+  .sn-review-form select {
+    font-size: 16px;
+  }
+
+  .sn-create-form .sn-format-picker button {
+    min-height: 44px;
+    font-size: 11px;
+  }
+
+  .sn-account-footer {
+    font-size: 11px;
+  }
+}

@@ -1,48 +1,54 @@
-import { Profile, UserRole } from '../types';
+import type { User } from '@supabase/supabase-js';
+import type { AccountType, Profile } from '../types';
 
-// Helper to map DB row from public.profiles table to TypeScript Profile interface
-export function mapDbProfileToProfile(dbRow: any, fallbackId?: string, fallbackEmail?: string): Profile {
-  const fallbackUsername = fallbackEmail ? fallbackEmail.split('@')[0] : 'traveler';
+export const accountLabels: Record<AccountType, string> = {
+  traveler: 'Traveler',
+  local_guide: 'Local guide',
+  business: 'Business',
+  destination_manager: 'Destination manager',
+};
+
+export const isAccountType = (role: unknown): role is AccountType =>
+  typeof role === 'string' && Object.hasOwn(accountLabels, role);
+
+export const emptyStats = { tripsCompleted: 0, spotsSaved: 0, contributions: 0 };
+
+export const guestProfile: Profile = {
+  id: '', username: '', fullName: 'Guest', avatarUrl: '', bio: '', activeRole: 'traveler',
+  homeCity: '', isVerifiedGuide: false, guideCircuits: [], credibilityScore: 0,
+  passportStampsCount: 0, languagesSpoken: [], visitedStates: [], stats: emptyStats,
+};
+
+type ProfileDetails = Pick<Profile, 'username' | 'fullName' | 'avatarUrl' | 'bio' | 'homeCity' | 'languagesSpoken' | 'guideCircuits'>;
+
+function text(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function list(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+export function profileFromUser(user: User, row?: Record<string, unknown> | null): Profile {
+  const meta = user.user_metadata;
+  const saved: Partial<ProfileDetails> = meta.safarnama_profile ?? {};
+  const account = meta.account_type ?? meta.role ?? row?.active_role;
   return {
-    id: dbRow?.id || fallbackId || 'user-001',
-    username: dbRow?.username || fallbackUsername,
-    fullName: dbRow?.full_name || dbRow?.fullName || (fallbackEmail ? fallbackEmail.split('@')[0] : 'Safar Explorer'),
-    avatarUrl: dbRow?.avatar_url || dbRow?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-    bio: dbRow?.bio || 'Exploring authentic India • Map-First Traveler',
-    activeRole: (dbRow?.active_role || dbRow?.activeRole || 'traveler') as UserRole,
-    homeCity: dbRow?.home_city || dbRow?.homeCity || 'New Delhi, India',
-    isVerifiedGuide: Boolean(dbRow?.is_verified_guide ?? dbRow?.isVerifiedGuide ?? false),
-    guideCircuits: dbRow?.guide_circuits || dbRow?.guideCircuits || [],
-    credibilityScore: dbRow?.credibility_score ?? dbRow?.credibilityScore ?? 100,
-    passportStampsCount: dbRow?.passport_stamps_count ?? dbRow?.passportStampsCount ?? 3,
-    languagesSpoken: dbRow?.languages_spoken || dbRow?.languagesSpoken || ['Hindi', 'English'],
-    contactPhone: dbRow?.contact_phone || dbRow?.contactPhone,
-    visitedStates: dbRow?.visited_states || dbRow?.visitedStates || ['Himachal Pradesh', 'Delhi'],
-    stats: dbRow?.stats || {
-      tripsCompleted: dbRow?.trips_completed ?? 2,
-      spotsSaved: dbRow?.spots_saved ?? 5,
-      contributions: dbRow?.contributions ?? 1,
-      guideToursLed: dbRow?.guide_tours_led ?? (dbRow?.active_role === 'local_guide' ? 5 : 0),
-    },
+    ...guestProfile,
+    id: user.id,
+    username: text(saved.username ?? row?.username ?? meta.username, `traveler_${user.id.slice(0, 8)}`),
+    fullName: text(saved.fullName ?? row?.full_name ?? meta.full_name ?? meta.name, 'Traveler'),
+    avatarUrl: text(saved.avatarUrl ?? row?.avatar_url ?? meta.avatar_url ?? meta.picture),
+    bio: text(saved.bio ?? row?.bio ?? meta.bio),
+    homeCity: text(saved.homeCity ?? row?.home_city ?? meta.home_city),
+    languagesSpoken: list(saved.languagesSpoken ?? row?.languages_spoken),
+    guideCircuits: list(saved.guideCircuits ?? row?.guide_circuits),
+    activeRole: user.app_metadata.role === 'admin' ? 'admin' : isAccountType(account) ? account : 'traveler',
+    isVerifiedGuide: user.app_metadata.verified_guide === true,
   };
 }
 
-// Helper to map partial Profile updates to DB columns
-export function mapProfileToDbUpdates(updates: Partial<Profile>): Record<string, any> {
-  const dbUpdates: Record<string, any> = {
-    updated_at: new Date().toISOString(),
-  };
-  if (updates.username !== undefined) dbUpdates.username = updates.username;
-  if (updates.fullName !== undefined) dbUpdates.full_name = updates.fullName;
-  if (updates.avatarUrl !== undefined) dbUpdates.avatar_url = updates.avatarUrl;
-  if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
-  if (updates.activeRole !== undefined) dbUpdates.active_role = updates.activeRole;
-  if (updates.homeCity !== undefined) dbUpdates.home_city = updates.homeCity;
-  if (updates.isVerifiedGuide !== undefined) dbUpdates.is_verified_guide = updates.isVerifiedGuide;
-  if (updates.guideCircuits !== undefined) dbUpdates.guide_circuits = updates.guideCircuits;
-  if (updates.credibilityScore !== undefined) dbUpdates.credibility_score = updates.credibilityScore;
-  if (updates.passportStampsCount !== undefined) dbUpdates.passport_stamps_count = updates.passportStampsCount;
-  if (updates.languagesSpoken !== undefined) dbUpdates.languages_spoken = updates.languagesSpoken;
-  if (updates.contactPhone !== undefined) dbUpdates.contact_phone = updates.contactPhone;
-  return dbUpdates;
+export function profileDetails(profile: Profile): ProfileDetails {
+  const { username, fullName, avatarUrl, bio, homeCity, languagesSpoken, guideCircuits } = profile;
+  return { username, fullName, avatarUrl, bio, homeCity, languagesSpoken, guideCircuits };
 }

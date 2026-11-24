@@ -1,27 +1,76 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getStoredData } from '../lib/utils';
+import { passportStoragePrefix, readPassport, validateVisitDate, type PassportVisit } from '../lib/passport';
 import { useApp } from './AppContext';
-import type { ContentFormat, Profile } from '../types';
+import { useAuth } from './AuthContext';
+import type { ContentFormat, DestinationHub } from '../types';
+import { hasServerStorage } from '../lib/serverStorage';
+import { reportStorageError, useServerData, type TravelComment } from './ServerDataContext';
 
-export interface TravelComment { id: string; postId: string; author: Profile; text: string; createdAt: string }
 interface SocialState { following: string[]; savedPlaces: string[]; comments: TravelComment[] }
 const initial: SocialState = { following: [], savedPlaces: [], comments: [] };
 const SocialContext = createContext<{
   state: SocialState; toggleFollow: (id: string) => void; togglePlace: (id: string) => void;
-  addComment: (postId: string, text: string) => void; composerOpen: boolean;
+  addComment: (postId: string, text: string) => Promise<boolean>; composerOpen: boolean;
   composerFormat?: ContentFormat;
   openComposer: (format: ContentFormat) => void;
   setComposerOpen: (open: boolean) => void; notice: string; notify: (message: string) => void;
+  passport: PassportVisit[];
+  saveVisit: (destination: Pick<DestinationHub, 'id' | 'name' | 'state'>, visitedOn: string) => Promise<void>;
+  removeVisit: (destinationId: string) => Promise<void>;
 } | null>(null);
 
 export function SocialProvider({ children }: { children: ReactNode }) {
   const { currentUser } = useApp();
+  const { profile, openAuthModal } = useAuth();
+  const { snapshot, write } = useServerData();
   const [allStates, setAllStates] = useState<Record<string, SocialState>>(() => getStoredData('social_v1', {}));
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerFormat, setComposerFormat] = useState<ContentFormat>();
   const [notice, notify] = useState('');
-  const state = allStates[currentUser.id] || initial;
+  const [localPassport, setPassport] = useState(() => hasServerStorage ? [] : readPassport(currentUser.id));
+  const passport = hasServerStorage ? snapshot?.account.passport ?? [] : localPassport;
+  const accountId = currentUser.id;
+  const canStamp = profile?.activeRole === 'traveler';
+
+  useEffect(() => {
+    if (!accountId || hasServerStorage) return;
+    const prefix = passportStoragePrefix(accountId);
+    function sync(event: StorageEvent) {
+      if (event.key === null || event.key?.startsWith(prefix)) setPassport(readPassport(accountId));
+    }
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [accountId]);
+
+  async function saveVisit(destination: Pick<DestinationHub, 'id' | 'name' | 'state'>, visitedOn: string) {
+    if (!canStamp) throw new Error('Passport stamps are available on traveler accounts.');
+    validateVisitDate(visitedOn);
+    if (hasServerStorage) { await write('me', 'passport', destination.id, { visitedOn }); return; }
+    const saved = readPassport(accountId).find(visit => visit.destinationId === destination.id);
+    const visit: PassportVisit = {
+      destinationId: destination.id, name: destination.name, state: destination.state,
+      visitedOn, stampedAt: saved?.stampedAt ?? new Date().toISOString(),
+    };
+    localStorage.setItem(passportStoragePrefix(accountId) + destination.id, JSON.stringify(visit));
+    setPassport(readPassport(accountId));
+  }
+
+  async function removeVisit(destinationId: string) {
+    if (!canStamp) throw new Error('Passport stamps are available on traveler accounts.');
+    if (hasServerStorage) { await write('me', 'passport', destinationId); return; }
+    localStorage.removeItem(passportStoragePrefix(accountId) + destinationId);
+    setPassport(readPassport(accountId));
+  }
+  const own = allStates[currentUser.id] || initial;
+  const comments = hasServerStorage ? snapshot?.comments ?? [] : Object.values(allStates).flatMap(item => item.comments);
+  const state = {
+    following: hasServerStorage ? snapshot?.account.following ?? [] : own.following,
+    savedPlaces: hasServerStorage ? snapshot?.account.savedPlaces ?? [] : own.savedPlaces,
+    comments: [...comments].sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
+  };
   const update = (change: (previous: SocialState) => SocialState) => {
+    if (!profile) { openAuthModal(); return; }
     setAllStates(previous => {
       const next = { ...previous, [currentUser.id]: change(previous[currentUser.id] || initial) };
       try { localStorage.setItem('safarnama_social_v1', JSON.stringify(next)); }
@@ -30,14 +79,32 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     });
   };
   const toggle = (items: string[], id: string) => items.includes(id) ? items.filter(value => value !== id) : [...items, id];
-  return <SocialContext.Provider value={{ state, composerOpen, composerFormat, notice, notify,
-    setComposerOpen: open => { setComposerFormat(undefined); setComposerOpen(open); },
-    openComposer: format => { setComposerFormat(format); setComposerOpen(true); },
-    toggleFollow: id => update(previous => ({ ...previous, following: toggle(previous.following, id) })),
-    togglePlace: id => update(previous => ({ ...previous, savedPlaces: toggle(previous.savedPlaces, id) })),
-    addComment: (postId, text) => {
-      if (!text.trim()) return;
+  function toggleSelection(kind: 'following' | 'savedPlaces', id: string) {
+    if (!profile) { openAuthModal(); return; }
+    if (hasServerStorage) {
+      void write('me', kind, id, state[kind].includes(id) ? undefined : {}).catch(reportStorageError);
+    } else update(previous => ({ ...previous, [kind]: toggle(previous[kind], id) }));
+  }
+  return <SocialContext.Provider value={{ state, composerOpen, composerFormat, notice, notify, passport: canStamp ? passport : [], saveVisit, removeVisit,
+    setComposerOpen: open => {
+      if (open && !profile) { openAuthModal(); return; }
+      setComposerFormat(undefined); setComposerOpen(open);
+    },
+    openComposer: format => {
+      if (!profile) { openAuthModal(); return; }
+      setComposerFormat(format); setComposerOpen(true);
+    },
+    toggleFollow: id => toggleSelection('following', id),
+    togglePlace: id => toggleSelection('savedPlaces', id),
+    addComment: async (postId, text) => {
+      if (!text.trim()) return false;
+      if (!profile) { openAuthModal(); return false; }
+      if (hasServerStorage) {
+        try { await write('public', 'comments', crypto.randomUUID(), { postId, text: text.trim() }); return true; }
+        catch (failure) { reportStorageError(failure); return false; }
+      }
       update(previous => ({ ...previous, comments: [...previous.comments, { id: crypto.randomUUID(), postId, author: currentUser, text: text.trim().slice(0, 1000), createdAt: new Date().toISOString() }] }));
+      return true;
     },
   }}>{children}</SocialContext.Provider>;
 }

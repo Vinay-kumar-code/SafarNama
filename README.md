@@ -8,70 +8,35 @@
 [![Supabase PostGIS](https://img.shields.io/badge/Supabase-PostGIS-3ecf8e.svg?style=flat-square&logo=supabase)](https://supabase.com/)
 [![Cloudflare R2](https://img.shields.io/badge/Cloudflare-R2_Storage-F38020.svg?style=flat-square&logo=cloudflare)](https://cloudflare.com/)
 
-> **Vision**: An Instagram-clean, map-first social travel ecosystem celebrating authentic India through the eyes of locals and travelers. Combines visual micro-blogging, travel tweets & threads, full-screen vertical reels, 1-on-1 direct messaging, and interactive Google Maps discovery.
+> A travel journal for discovering India through the stories, tips, and routes of the people who travel here.
 
 ## Try the community preview
 
 Start the web app with `npm run dev` and open the local URL printed by Vite. Create a photo story, travel note, or reel from Home. Explore India links destination guides to traveler stories, and My journal collects your stories and bookmarks.
 
-The native Android app has the same core flows. From Explore, open a destination and add it to your journey. From Journal, open **My journey** to edit days and notes or share the itinerary. Build the debug APK with JDK 21, Android SDK 36, and `gradlew.bat :app:assembleDebug :app:testDebugUnitTest` from the `android` directory on Windows.
+The website and Android app use the same React screens in `src/`. Gradle bundles those screens into each APK. Android provides the media picker, share sheet, and itinerary export. Make interface changes in the shared code, then build and test both targets. The retired Android screens and their entry point have been removed.
 
-Stories, uploads, reactions, comments, follows, and itinerary changes in the preview are stored on the device. The Android chat is a local preview. Live map tiles require a Maps key. Bundled destination reels are animated photographs. [Photo and video credits](./public/media/credits.html).
+In **Map**, switch between places and travel stories, search by name or state, and open directions or a destination guide. The bundled map keeps pins and guides available when live tiles are unavailable. From **My journal**, open **My journeys**, **Conversations**, or **Celebrate India**.
 
----
+Accounts use Supabase Auth. The [Coolify deployment](./COOLIFY.md) stores published content, uploaded media, and signed-in account activity on the Ubuntu server. Development previews can still run with device-local storage. [Destination photo credits](./public/media/credits.html).
 
-## 📖 Complete Documentation
-For an exhaustive, in-depth architectural specification covering all system components, data models, workflows, and CI/CD pipelines, please read **[PROJECT_DESCRIPTION.md](./PROJECT_DESCRIPTION.md)**.
-
----
-
-## 🧭 Core Highlights & Architectural Features
-
-### 1. Unified Social Feed (Photo Posts & Travel Tweets)
-- **Photo Posts**: High-resolution image carousels with slide counters, double-tap heart animations, daily budget in INR (`₹`), seasonality recommendations, and mobile network signal availability.
-- **Travel Tweets & Threads**: Micro-travel thoughts, road status updates, high-altitude pass advisories, and live weather alerts with threaded discussion capabilities.
-- **Destination Tagging**: Posts and tweets attach destination hubs mapped directly into Maps and Search.
-- **Group Travel Mentions**: Tag companions who journeyed together (`👥 With: @tenzin_spitilocal, @karan_banaras`).
-
-### 2. Discussion & Comment System
-- **Threaded Discussions for Tweets**: Specialized thread modal showing the parent tweet, connecting conversation line, and nested replies.
-- **Universal Comments for Posts & Reels**: Fast, responsive bottom sheet for viewing and posting comments across all visual content.
-
-### 3. Full-Screen Vertical Reels Engine
-- Built with AndroidX Media3 / ExoPlayer for smooth vertical video scrolling.
-- Direct Cloudflare R2 video streaming resolution with fallbacks.
-- Interactive controls: Double-tap like, save, share, and a dedicated **Comment** button opening the comments sheet over the active reel.
-
-### 4. Creator Studio (`+` Button)
-- Prominent `+` button in the Home header allowing travelers to create:
-  - **Travel Tweets / Threads**
-  - **Photo Posts**
-  - **Reel Videos**
-- Includes destination selector spinner and comma-separated travel companion mentions.
-
-### 5. 1-on-1 Direct Messaging (DM)
-- Accessible from the Home top bar or any user's profile:
-  - **Conversations List**: Displays active travel chats and partners.
-  - **1-on-1 Chat Screen**: Instant two-way messaging with sent and received speech bubbles and real-time state updates.
-
-### 6. Journey Follow & Notification Preferences
-- Follow travelers and verified local guides to stay updated on their journeys.
-- **Settings & Following Page**: Lists followed accounts with individual **Notification Alerts toggles** (*Alerts On* vs *Muted*) to customize notifications when they post new tweets, posts, or reels.
-
-### 7. Clean Profile & Group Mentions Hub
-- Modern Instagram-clean layout with no vanity follower counts, karma, or stamp clutter.
-- Action buttons: Follow/Following toggle, Direct Message, and Persona Switcher (Traveler Aarav Sharma vs Verified Local Guide Tenzin Norbu).
-- 3 Segmented Tabs:
-  - **Posts & Tweets**: Content created by the user.
-  - **👥 Mentions**: Dedicated section showing trips and stories where this user was tagged by others in group journeys.
-  - **🔖 Saved**: Bookmarked bucket-list destinations and reels.
-
-### 8. Admin Destination Management & Search Mapping
-- Web Admin Portal (Passkey: `admin2026`) and Android Destination Creator modal.
-- Admins can add destinations with names, states, taglines, cover images, descriptions, budgets, and GPS coordinates.
-- Tapping any destination in Search displays all attached tweets and stories.
+Live maps in the Android app use `VITE_ANDROID_GOOGLE_MAPS_API_KEY` for the Maps JavaScript API, with `https://appassets.androidplatform.net/*` allowed as a referrer. Add `safarnama://auth-callback` and `safarnama-preview://auth-callback` to the Supabase redirect URL allowlist for Google sign-in and email confirmation. Google sign-in opens the device browser and returns to SafarNama.
 
 ---
+
+## What you can do
+
+- Publish a photo story, a short travel note, or a reel. Follow travelers, join conversations, and save stories to your journal.
+- Discover places on the map or in Explore. Open destination guides for photos, budgets, best times to visit, reviews, and travel stories.
+- Add stops to your journey, organize them by day, edit notes, share your itinerary, or export it.
+- Ask travel questions and read replies from travelers and verified guides.
+- Explore India's travel challenges and preview checkpoints, badges, and leaderboards.
+- Use the full-screen map to search a city, destination, or coordinates and find listed places nearby. Sign in to add a destination, drop its pin, or edit a place you manage.
+- Open Publishing studio from My journal to manage destination pages and post local updates. Guides can publish tours and businesses can list stays, agencies, and services. Visitors can discover them in Explore or on each destination page, and follow the manager for updates in Home.
+- Traveler accounts can choose **Mark visited** on a destination page, then open **My journal → Passport** to see stamps, visit totals, and badges. **My journal → Settings** opens the profile editor.
+
+See the [setup guide](./SETUP_GUIDE.md) for the current architecture. The [original project specification](./PROJECT_DESCRIPTION.md) documents the broader product vision.
+
 
 ## 🚀 Quick Start
 
@@ -87,13 +52,23 @@ npm run dev
 npm run build
 ```
 
-### Native Android Application (Kotlin + Gradle)
+### Android Application (Kotlin + Gradle)
 ```bash
-# Navigate to the android project directory
+# Install dependencies for the bundled interface in the repository root
+npm ci
+
+# Navigate to the android project directory (JDK 21 and Android SDK 36 required)
 cd android
 
-# Build debug APK
-./gradlew assembleDebug
+# Build the debug APK and run unit tests
+./gradlew :app:assembleDebug :app:testDebugUnitTest
+# On Windows: gradlew.bat :app:assembleDebug :app:testDebugUnitTest
+
+# Installable alongside a previous debug APK, with separate app data
+./gradlew :app:assemblePreview
+
+# Run the bundled interface smoke test with an Android device or emulator connected
+./gradlew :app:connectedDebugAndroidTest
 
 # Output APK path:
 # android/app/build/outputs/apk/debug/app-debug.apk
@@ -103,12 +78,13 @@ cd android
 
 ## ⚙️ Environment Configuration
 
-Set these variables in your root `.env`, `android/local.properties`, Vercel Deployment settings, or GitHub Secrets:
+Set public Vite variables in the root `.env`, your website build environment, or GitHub Actions. See the [setup guide](./SETUP_GUIDE.md) for platform-specific configuration.
 
 ```ini
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_GOOGLE_MAPS_API_KEY=AIzaSyPlaceholderSafarnamaMapsKey
+VITE_ANDROID_GOOGLE_MAPS_API_KEY=
 VITE_CLOUDFLARE_R2_PUBLIC_URL=https://media.safarnama.travel
 ```
 

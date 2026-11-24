@@ -1,5 +1,7 @@
 # 🇮🇳 SafarNama — Comprehensive Project Specification & Architecture
 
+This document records the original project specification. The current website and Android app share the React interface in `src/`. See the [setup guide](./SETUP_GUIDE.md) for the current architecture and build commands.
+
 > **Map-First Social Travel Ecosystem for India**  
 > *Connecting travelers and certified local guides across India through an Instagram-clean, multi-format social journal and geo-discovery engine.*
 

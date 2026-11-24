@@ -1,29 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, Profile, DestinationHub, QAThread, Campaign, Trip, GearTag, UserRole, DestinationReview } from '../types';
-import { 
-  CURRENT_USER_TRAVELER, 
-  CURRENT_USER_GUIDE, 
-  CURRENT_USER_ADMIN,
-  MOCK_POSTS, 
-  MOCK_QA_THREADS, 
-  MOCK_CAMPAIGNS, 
-  INITIAL_USER_TRIP,
-  MOCK_DESTINATION_REVIEWS
-} from '../data/mockData';
+import { guestProfile } from '../lib/authHelpers';
 import { getStoredData, setStoredData } from '../lib/utils';
 import { useAuth } from './AuthContext';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { hasServerStorage } from '../lib/serverStorage';
+import { reportStorageError, useServerData } from './ServerDataContext';
 
-export type NavTab = 'feed' | 'explore' | 'reels' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile';
+export type NavTab = 'feed' | 'explore' | 'reels' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile' | 'studio';
 
 interface AppContextType {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
+  closeMap: () => void;
   currentUser: Profile;
   activeRole: UserRole;
   switchRole: (role: UserRole) => void;
   posts: Post[];
-  createPost: (post: Post) => void;
+  createPost: (post: Post) => Promise<void>;
+  editPost: (postId: string, caption: string) => Promise<void>;
+  deletePost: (postId: string) => Promise<void>;
   toggleLikePost: (postId: string) => void;
   toggleSavePost: (postId: string) => void;
   activeTravelNote: Post | null;
@@ -55,11 +50,14 @@ interface AppContextType {
   selectedMapSpot: { lat: number; lng: number; spotName: string } | null;
   clearSelectedMapSpot: () => void;
   currentTrip: Trip;
-  addSpotToTrip: (post: Post) => void;
-  removeStopFromTrip: (stopId: string) => void;
+  addSpotToTrip: (post: Post) => Promise<boolean>;
+  addDestinationToTrip: (destination: DestinationHub) => Promise<boolean>;
+  removeStopFromTrip: (stopId: string) => Promise<boolean>;
+  renameTrip: (title: string) => Promise<boolean>;
+  editTripStop: (stopId: string, dayNumber: number, notes: string) => Promise<boolean>;
   qaThreads: QAThread[];
-  addQAQuestion: (title: string, destinationName: string, category: QAThread['category']) => void;
-  addQAReply: (threadId: string, replyText: string) => void;
+  addQAQuestion: (title: string, destination: DestinationHub, category: QAThread['category']) => Promise<boolean>;
+  addQAReply: (threadId: string, replyText: string) => Promise<boolean>;
   upvoteQAThread: (threadId: string) => void;
   upvoteQAReply: (threadId: string, replyId: string) => void;
   campaigns: Campaign[];
@@ -68,46 +66,52 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const fixturePosts = new Set(['post-001', 'post-002', 'post-003', 'post-004', 'post-005', 'note-delhi-001']);
+const fixtureAuthor = (id: string) => /^(user-(00[1-9]|admin-001)|demo-.+)$/.test(id);
+type Reactions = Record<string, Record<string, { isLiked?: boolean; isSaved?: boolean }>>;
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, updateProfile: authUpdateProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<NavTab>('feed');
-  const [activeRole, setActiveRole] = useState<UserRole>(() => 
-    profile?.activeRole || getStoredData<UserRole>('active_role', 'traveler')
+  const { profile, openAuthModal, updateProfile: authUpdateProfile } = useAuth();
+  const { snapshot, write } = useServerData();
+  const [activeTab, navigate] = useState<NavTab>('feed');
+  const [mapReturn, setMapReturn] = useState<Exclude<NavTab, 'map'>>('feed');
+  const currentUser = profile ?? guestProfile;
+  const activeRole = currentUser.activeRole;
+  const tripKey = `trip_v2_${currentUser.id || 'guest'}`;
+  const [allReactions, setAllReactions] = useState<Reactions>(() => getStoredData('post_reactions', {}));
+  const reactions = allReactions[currentUser.id] ?? {};
+  const [basePosts, setPosts] = useState<Post[]>(() =>
+    getStoredData<Post[]>('posts_cache', []).filter(post => !fixturePosts.has(post.id))
+      .map(post => fixtureAuthor(post.author.id) ? {
+        ...post, author: { ...guestProfile, id: `archived-${post.author.id}`, fullName: 'Traveler' },
+      } : post)
   );
+  const posts = hasServerStorage ? (snapshot?.posts ?? []).map(post => ({
+    ...post, isLiked: snapshot?.account.likes.includes(post.id), isSaved: snapshot?.account.saves.includes(post.id),
+  })) : basePosts.map(post => ({
+    ...post, isLiked: Boolean(reactions[post.id]?.isLiked), isSaved: Boolean(reactions[post.id]?.isSaved),
+    likesCount: post.likesCount + Object.values(allReactions).filter(account => account[post.id]?.isLiked).length,
+    savesCount: post.savesCount + Object.values(allReactions).filter(account => account[post.id]?.isSaved).length,
+    author: profile?.id === post.author.id ? profile : post.author,
+  }));
 
-  // Keep activeRole in sync if profile changes
-  useEffect(() => {
-    if (profile?.activeRole && profile.activeRole !== activeRole) {
-      setActiveRole(profile.activeRole);
-    }
-  }, [profile?.activeRole]);
-
-  // Authenticated Supabase profile takes precedence; fallback to mock traveler / guide / admin
-  const currentUser: Profile = profile || (activeRole === 'admin' ? CURRENT_USER_ADMIN : activeRole === 'traveler' ? CURRENT_USER_TRAVELER : CURRENT_USER_GUIDE);
-
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const cached = getStoredData<Post[]>('posts_cache', MOCK_POSTS);
-    // Refresh only bundled demo media; preserve created posts and saved/liked state.
-    const restored = cached.map(post => {
-      const seed = MOCK_POSTS.find(item => item.id === post.id);
-      return seed ? { ...post, thumbnailUrl: seed.thumbnailUrl, carouselImages: seed.carouselImages, videoUrl: seed.videoUrl,
-        caption: seed.caption, spotName: seed.spotName, author: seed.author } : post;
-    });
-    return [...restored, ...MOCK_POSTS.filter(seed => !restored.some(post => post.id === seed.id))];
-  });
-
-  const [qaThreads, setQaThreads] = useState<QAThread[]>(() => 
-    getStoredData<QAThread[]>('qa_cache', MOCK_QA_THREADS)
+  const [localQuestions, setQaThreads] = useState<QAThread[]>(() =>
+    getStoredData<QAThread[]>('qa_cache', []).filter(thread => !fixtureAuthor(thread.author.id))
   );
+  const qaThreads = hasServerStorage ? snapshot?.questions ?? [] : localQuestions;
 
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => 
-    getStoredData<Campaign[]>('campaigns_cache', MOCK_CAMPAIGNS)
+    getStoredData<Campaign[]>('campaigns_cache', []).filter(campaign => !['camp-01', 'camp-02'].includes(campaign.id))
   );
 
-  const [currentTrip, setCurrentTrip] = useState<Trip>(() => 
-    getStoredData<Trip>('active_trip', INITIAL_USER_TRIP)
-  );
+  const [localTrip, setCurrentTrip] = useState<Trip>(() => {
+    const emptyTrip: Trip = {
+      id: crypto.randomUUID(), title: 'My journey', description: '', totalBudgetInr: 0,
+      isPublic: false, shareSlug: crypto.randomUUID(), stops: [], createdAt: new Date().toISOString(),
+    };
+    return hasServerStorage ? emptyTrip : getStoredData(tripKey, emptyTrip);
+  });
+  const currentTrip = hasServerStorage ? snapshot?.account.trip ?? localTrip : localTrip;
 
   const [activeTravelNote, setActiveTravelNote] = useState<Post | null>(null);
   const [activeGearModal, setActiveGearModal] = useState<GearTag | null>(null);
@@ -116,9 +120,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
 
   // Reviews System State
-  const [destinationReviews, setDestinationReviews] = useState<DestinationReview[]>(() =>
-    getStoredData<DestinationReview[]>('destination_reviews_cache', MOCK_DESTINATION_REVIEWS)
+  const [localReviews, setDestinationReviews] = useState<DestinationReview[]>(() =>
+    getStoredData<DestinationReview[]>('destination_reviews_cache', []).filter(review => !fixtureAuthor(review.author.id))
   );
+  const destinationReviews = hasServerStorage ? snapshot?.reviews ?? [] : localReviews;
   const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
   const [reviewTargetDestination, setReviewTargetDestination] = useState<DestinationHub | null>(null);
 
@@ -134,49 +139,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const switchRole = (newRole: UserRole) => {
-    setActiveRole(newRole);
-    setStoredData('active_role', newRole);
     if (profile) {
-      authUpdateProfile({ activeRole: newRole });
+      void authUpdateProfile({ activeRole: newRole });
     }
   };
 
-  const toggleLikePost = (postId: string) => {
-    setPosts(prev => {
-      const updated = prev.map(p => {
-        if (p.id === postId) {
-          const isLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked,
-            likesCount: isLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1),
-          };
-        }
-        return p;
-      });
-      setStoredData('posts_cache', updated);
-      return updated;
-    });
-  };
+  function toggleReaction(postId: string, reaction: 'isLiked' | 'isSaved') {
+    if (!profile) { openAuthModal(); return; }
+    if (hasServerStorage) {
+      const kind = reaction === 'isLiked' ? 'likes' : 'saves';
+      void write('me', kind, postId, snapshot?.account[kind].includes(postId) ? undefined : {}).catch(reportStorageError);
+      return;
+    }
+    const next = { ...allReactions, [profile.id]: {
+      ...reactions, [postId]: { ...reactions[postId], [reaction]: !reactions[postId]?.[reaction] },
+    } };
+    setStoredData('post_reactions', next);
+    setAllReactions(next);
+  }
 
-  const toggleSavePost = (postId: string) => {
-    setPosts(prev => {
-      const updated = prev.map(p => {
-        if (p.id === postId) {
-          const isSaved = !p.isSaved;
-          return {
-            ...p,
-            isSaved,
-            savesCount: isSaved ? p.savesCount + 1 : Math.max(0, p.savesCount - 1),
-          };
-        }
-        return p;
-      });
-      setStoredData('posts_cache', updated);
-      return updated;
-    });
+  function setActiveTab(tab: NavTab) {
+    if (tab === 'map' && activeTab !== 'map') setMapReturn(activeTab);
+    if (tab !== 'map') setSelectedMapSpot(null);
+    navigate(tab);
+  }
 
-  };
+  function savePosts(next: Post[]) {
+    localStorage.setItem('safarnama_posts_cache', JSON.stringify(next));
+    setPosts(next);
+  }
+
+  function getOwnPost(id: string) {
+    const post = basePosts.find(item => item.id === id);
+    if (!profile || post?.author.id !== profile.id) throw new Error('Only the author can change this story.');
+    return post;
+  }
+
+  async function editPost(id: string, caption: string) {
+    if (hasServerStorage) { await write('public', 'posts', id, { caption }); return; }
+    const post = getOwnPost(id);
+    const text = caption.trim();
+    if (!text || text.length > (post.format === 'quick_tip' ? 500 : 2200)) throw new Error('Enter a story within the character limit.');
+    savePosts(basePosts.map(item => item.id === id ? { ...item, caption: text } : item));
+  }
+
+  async function deletePost(id: string) {
+    if (hasServerStorage) { await write('public', 'posts', id); return; }
+    getOwnPost(id);
+    savePosts(basePosts.filter(item => item.id !== id));
+  }
 
   const openSpotOnMap = (lat: number, lng: number, spotName: string) => {
     setSelectedMapSpot({ lat, lng, spotName });
@@ -187,39 +198,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedMapSpot(null);
   };
 
-  const addSpotToTrip = (post: Post) => {
-    setCurrentTrip(prev => {
-      // Check if spot already exists in trip
-      if (prev.stops.some(s => s.spotName === post.spotName)) {
-        return prev;
-      }
+  async function changeTrip(update: (trip: Trip) => Trip) {
+    if (hasServerStorage) {
+      if (!profile) { openAuthModal(); return false; }
+      if (!snapshot) { reportStorageError(new Error('Your journey is still loading. Try again.')); return false; }
+      try {
+        await write('me', 'trip', 'current', { version: snapshot.account.tripVersion, trip: update(currentTrip) });
+        return true;
+      } catch (failure) { reportStorageError(failure); return false; }
+    }
+    setCurrentTrip(previous => {
+      const updated = update(previous);
+      setStoredData(tripKey, updated);
+      return updated;
+    });
+    return true;
+  }
+
+  const addTripStop = (stop: Pick<Trip['stops'][number], 'postId' | 'spotName' | 'state' | 'latitude' | 'longitude' | 'costInInr' | 'thumbnailUrl' | 'notes'>) => {
+    return changeTrip(prev => {
+      if (prev.stops.some(place => place.spotName === stop.spotName && place.state === stop.state)) return prev;
+      const lastDay = Math.max(1, ...prev.stops.map(place => place.dayNumber));
+      const stopsOnLastDay = prev.stops.filter(place => place.dayNumber === lastDay);
+      const dayNumber = stopsOnLastDay.length >= 2 ? Math.min(99, lastDay + 1) : lastDay;
+      const orderInDay = 1 + Math.max(0, ...prev.stops.filter(place => place.dayNumber === dayNumber).map(place => place.orderInDay));
       const newStop = {
-        id: `stop-${Date.now()}`,
+        ...stop,
+        id: crypto.randomUUID(),
         tripId: prev.id,
-        postId: post.id,
-        spotName: post.spotName,
-        state: post.state,
-        dayNumber: Math.max(1, Math.ceil((prev.stops.length + 1) / 2)),
-        orderInDay: (prev.stops.length % 2) + 1,
+        dayNumber,
+        orderInDay,
         stayMinutes: 90,
-        latitude: post.latitude,
-        longitude: post.longitude,
-        costInInr: post.costInInr || 200,
-        thumbnailUrl: post.thumbnailUrl,
-        notes: post.safetyTips || 'Acclimatize and carry water bottle.',
       };
       const updated = {
         ...prev,
-        totalBudgetInr: prev.totalBudgetInr + (post.costInInr || 200),
+        totalBudgetInr: prev.totalBudgetInr + (stop.costInInr ?? 0),
         stops: [...prev.stops, newStop],
       };
-      setStoredData('active_trip', updated);
       return updated;
     });
   };
 
+  const addSpotToTrip = (post: Post) => addTripStop({
+    postId: post.id, spotName: post.spotName, state: post.state,
+    latitude: post.latitude, longitude: post.longitude, costInInr: post.costInInr,
+    thumbnailUrl: post.thumbnailUrl, notes: post.safetyTips,
+  });
+
+  const addDestinationToTrip = (destination: DestinationHub) => addTripStop({
+    spotName: destination.name, state: destination.state,
+    latitude: destination.latitude, longitude: destination.longitude,
+    costInInr: destination.estimatedDailyBudgetInr, thumbnailUrl: destination.coverImage,
+  });
+
+  const renameTrip = async (title: string) => title.trim()
+    ? changeTrip(previous => ({ ...previous, title: title.trim().slice(0, 100) })) : false;
+
+  const editTripStop = async (stopId: string, dayNumber: number, notes: string) => {
+    if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 99) return false;
+    return changeTrip(previous => {
+      const nextOrder = 1 + Math.max(0, ...previous.stops.filter(stop => stop.dayNumber === dayNumber).map(stop => stop.orderInDay));
+      const stops = previous.stops.map(stop => stop.id === stopId
+        ? { ...stop, dayNumber, notes: notes.trim().slice(0, 1000), orderInDay: stop.dayNumber === dayNumber ? stop.orderInDay : nextOrder }
+        : stop);
+      return { ...previous, stops };
+    });
+  };
+
   const removeStopFromTrip = (stopId: string) => {
-    setCurrentTrip(prev => {
+    return changeTrip(prev => {
       const stopToRemove = prev.stops.find(s => s.id === stopId);
       const updatedStops = prev.stops.filter(s => s.id !== stopId);
       const updated = {
@@ -227,20 +274,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         totalBudgetInr: Math.max(0, prev.totalBudgetInr - (stopToRemove?.costInInr || 0)),
         stops: updatedStops,
       };
-      setStoredData('active_trip', updated);
       return updated;
     });
   };
 
-  const addQAQuestion = (title: string, destinationName: string, category: QAThread['category']) => {
+  async function writeCommunity(kind: string, id: string, payload: object) {
+    try { await write('public', kind, id, payload); return true; }
+    catch (failure) { reportStorageError(failure); return false; }
+  }
+
+  const addQAQuestion = async (title: string, destination: DestinationHub, category: QAThread['category']) => {
+    if (!profile) { openAuthModal(); return false; }
+    if (hasServerStorage) return writeCommunity('questions', crypto.randomUUID(), { title, destinationId: destination.id, category });
     const newThread: QAThread = {
       id: `qa-${Date.now()}`,
       author: currentUser,
-      destinationName,
+      destinationName: destination.name,
       title,
       category,
-      latitude: 28.6139,
-      longitude: 77.2090,
+      latitude: destination.latitude,
+      longitude: destination.longitude,
       status: 'active',
       upvotesCount: 1,
       repliesCount: 0,
@@ -253,9 +306,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setStoredData('qa_cache', updated);
       return updated;
     });
+    return true;
   };
 
-  const addQAReply = (threadId: string, replyText: string) => {
+  const addQAReply = async (threadId: string, replyText: string) => {
+    if (!profile) { openAuthModal(); return false; }
+    if (hasServerStorage) return writeCommunity('replies', crypto.randomUUID(), { threadId, replyText });
     setQaThreads(prev => {
       const updated = prev.map(t => {
         if (t.id === threadId) {
@@ -280,9 +336,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setStoredData('qa_cache', updated);
       return updated;
     });
+    return true;
   };
 
   const upvoteQAThread = (threadId: string) => {
+    if (!profile) { openAuthModal(); return; }
+    if (hasServerStorage) {
+      void write('me', 'questionVotes', threadId, qaThreads.find(thread => thread.id === threadId)?.isUpvoted ? undefined : {}).catch(reportStorageError);
+      return;
+    }
     setQaThreads(prev => {
       const updated = prev.map(t => {
         if (t.id === threadId) {
@@ -301,6 +363,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const upvoteQAReply = (threadId: string, replyId: string) => {
+    if (!profile) { openAuthModal(); return; }
+    if (hasServerStorage) {
+      const voted = qaThreads.find(thread => thread.id === threadId)?.replies.find(reply => reply.id === replyId)?.isUpvoted;
+      void write('me', 'replyVotes', replyId, voted ? undefined : {}).catch(reportStorageError);
+      return;
+    }
     setQaThreads(prev => {
       const updated = prev.map(t => {
         if (t.id === threadId) {
@@ -329,7 +397,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const checkInCampaignCheckpoint = (campaignId: string, checkpointId: string) => {
     setCampaigns(prev => {
       const updated = prev.map(c => {
-        if (c.id === campaignId) {
+        if (c.id === campaignId && c.checkpoints.some(cp => cp.id === checkpointId && !cp.isCompleted)) {
           return {
             ...c,
             totalCheckins: c.totalCheckins + 1,
@@ -377,6 +445,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     travelType?: 'Solo' | 'Family' | 'Couple' | 'Friends';
     travelTips?: string;
   }): Promise<DestinationReview> => {
+    if (!profile) throw new Error('Sign in to write a review.');
+    if (hasServerStorage) {
+      const id = crypto.randomUUID();
+      const result = await write('public', 'reviews', id, reviewData);
+      const saved = result.reviews.find(review => review.id === id);
+      if (!saved) throw new Error('Could not load the saved review.');
+      return saved;
+    }
     const newReview: DestinationReview = {
       id: `rev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       destinationId: reviewData.destinationId,
@@ -400,36 +476,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('destination_reviews').insert({
-          id: newReview.id,
-          destination_id: newReview.destinationId,
-          destination_name: newReview.destinationName,
-          user_id: currentUser.id,
-          author_username: currentUser.username,
-          author_name: currentUser.fullName,
-          author_avatar: currentUser.avatarUrl,
-          author_role: currentUser.activeRole,
-          rating: newReview.rating,
-          title: newReview.title,
-          review_text: newReview.reviewText,
-          photos: newReview.photos || [],
-          visit_month: newReview.visitMonth,
-          travel_type: newReview.travelType,
-          travel_tips: newReview.travelTips,
-          helpful_count: 0,
-          created_at: newReview.createdAt,
-        });
-      } catch (err) {
-        console.warn('Supabase destination_reviews sync fallback:', err);
-      }
-    }
-
     return newReview;
   };
 
   const toggleReviewHelpful = (reviewId: string) => {
+    if (!profile) { openAuthModal(); return; }
+    if (hasServerStorage) {
+      void write('me', 'helpful', reviewId, destinationReviews.find(review => review.id === reviewId)?.isHelpful ? undefined : {}).catch(reportStorageError);
+      return;
+    }
     setDestinationReviews(prev => {
       const updated = prev.map(r => {
         if (r.id === reviewId) {
@@ -452,17 +507,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         activeTab,
         setActiveTab,
+        closeMap: () => setActiveTab(mapReturn),
         currentUser,
         activeRole,
         switchRole,
         posts,
-        createPost: (post: Post) => {
-          const updated = [post, ...posts];
-          localStorage.setItem('safarnama_posts_cache', JSON.stringify(updated));
-          setPosts(updated);
+        createPost: async (post: Post) => {
+          if (!profile || post.author.id !== profile.id) throw new Error('Sign in to publish a story.');
+          if (hasServerStorage) { await write('public', 'posts', post.id, post); return; }
+          savePosts([post, ...basePosts]);
         },
-        toggleLikePost,
-        toggleSavePost,
+        editPost,
+        deletePost,
+        toggleLikePost: id => toggleReaction(id, 'isLiked'),
+        toggleSavePost: id => toggleReaction(id, 'isSaved'),
         activeTravelNote,
         setActiveTravelNote,
         activeGearModal,
@@ -483,7 +541,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearSelectedMapSpot,
         currentTrip,
         addSpotToTrip,
+        addDestinationToTrip,
         removeStopFromTrip,
+        renameTrip,
+        editTripStop,
         qaThreads,
         addQAQuestion,
         addQAReply,

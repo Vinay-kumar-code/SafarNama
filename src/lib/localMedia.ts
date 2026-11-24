@@ -1,4 +1,6 @@
-// Binary uploads live in IndexedDB, never in the small localStorage post cache.
+import { hasServerStorage, requestStorage } from './serverStorage';
+
+// Local previews keep binary uploads in IndexedDB.
 function openMediaDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('safarnama-media', 1);
@@ -8,6 +10,12 @@ function openMediaDB(): Promise<IDBDatabase> {
   });
 }
 export async function storeMedia(file: File): Promise<string> {
+  if (hasServerStorage) {
+    const result = await requestStorage<{ url: string }>('media', {
+      method: 'POST', headers: { 'Content-Type': file.type }, body: file,
+    }, true);
+    return result.url;
+  }
   const db = await openMediaDB();
   const id = crypto.randomUUID();
   try {
@@ -28,6 +36,23 @@ export async function loadMedia(source: string): Promise<Blob | undefined> {
       const request = db.transaction('files').objectStore('files').get(source.slice('local-media:'.length));
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
+    });
+  } finally { db.close(); }
+}
+export async function removeMedia(source: string): Promise<void> {
+  const upload = /^\/media\/uploads\/([a-f\d-]{36})$/i.exec(source);
+  if (upload && hasServerStorage) {
+    await requestStorage(`media/${upload[1]}`, { method: 'DELETE' }, true);
+    return;
+  }
+  if (!source.startsWith('local-media:')) return;
+  const db = await openMediaDB();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction('files', 'readwrite');
+      transaction.objectStore('files').delete(source.slice('local-media:'.length));
+      transaction.oncomplete = () => resolve();
+      transaction.onabort = () => reject(transaction.error);
     });
   } finally { db.close(); }
 }

@@ -1,18 +1,92 @@
 import { useState } from 'react';
-import { MapPin, Bookmark, ArrowUpRight, CalendarDays, IndianRupee, HeartHandshake } from 'lucide-react';
+import { BellPlus, Bookmark, CalendarDays, Check, Clock, HeartHandshake, IndianRupee, MapPin, Pencil, Plus, Stamp } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCommunity } from '../../context/CommunityContext';
 import { useSocial } from '../../context/SocialContext';
+import { DestinationEditor } from '../destinations/DestinationEditor';
+import { FollowAccount, ListingCard, UpdateCard } from '../destinations/CommunityCards';
+import { UpdateEditor } from '../destinations/UpdateEditor';
+import { formatINR } from '../../lib/utils';
 import { Modal, TravelImage, EmptyState } from './Primitives';
 import { PostCard } from './PostCard';
-import { formatINR } from '../../lib/utils';
+import { VisitEditor } from './VisitEditor';
+
+const tabs = ['Overview', 'Updates', 'Stories', 'Tours', 'Businesses', 'Reviews'] as const;
+
 export function PlaceSheet() {
-  const { activeDestination: place, setActiveDestination, posts, openSpotOnMap, getReviewsForDestination, addDestinationReview } = useApp();
-  const { state, togglePlace } = useSocial(); const [tab, setTab] = useState('Get to know it'); const [review, setReview] = useState(''); const [rating, setRating] = useState('5'); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const { activeDestination, setActiveDestination, posts, openSpotOnMap, getReviewsForDestination, addDestinationReview, currentTrip, addDestinationToTrip } = useApp();
+  const { profile, openAuthModal } = useAuth();
+  const { destinations, canManage, findManager, updates, listings } = useCommunity();
+  const { state, togglePlace, notify, passport } = useSocial();
+  const [tab, setTab] = useState<typeof tabs[number]>('Overview');
+  const [editor, setEditor] = useState<'place' | 'update' | 'visit'>();
+  const [review, setReview] = useState('');
+  const [rating, setRating] = useState('5');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const place = destinations.find(item => item.id === activeDestination?.id) ?? activeDestination;
   if (!place) return null;
-  const stories = posts.filter(post => post.destinationId === place.id); const reviews = getReviewsForDestination(place.id);
-  return <Modal title={place.name} onClose={() => setActiveDestination(null)} className="sn-place-modal"><div className="sn-place-hero"><TravelImage src={place.coverImage} alt={place.name} /><div><span>{place.state} · {place.region}</span><h1>{place.name.split(' &')[0]}</h1><p>{place.tagline}</p></div></div><div className="sn-place-content"><div className="sn-place-controls"><button className="sn-button" onClick={() => { openSpotOnMap(place.latitude, place.longitude, place.name); setActiveDestination(null); }}><MapPin size={16} />Find on map</button><button className="sn-button secondary" aria-pressed={state.savedPlaces.includes(place.id)} onClick={() => togglePlace(place.id)}><Bookmark size={16} fill={state.savedPlaces.includes(place.id) ? 'currentColor' : 'none'} />{state.savedPlaces.includes(place.id) ? 'Saved for later' : 'Save place'}</button></div><div className="sn-feed-tabs">{['Get to know it', 'Travel stories', 'Reviews'].map(name => <button key={name} className={tab === name ? 'active' : ''} onClick={() => setTab(name)}>{name}</button>)}</div>
-      {tab === 'Get to know it' && <><p className="sn-place-overview">{place.overview}</p><div className="sn-place-facts"><div><IndianRupee size={22} /><span>Plan a daily budget<strong>~ {formatINR(place.estimatedDailyBudgetInr)}</strong></span></div><div><CalendarDays size={22} /><span>When to go<strong>{place.bestTimeToVisit}</strong></span></div></div>{place.culturalEtiquette && <section className="sn-culture-note"><HeartHandshake size={23} /><div><h3>A little respect goes a long way</h3><p>{place.culturalEtiquette}</p></div></section>}<div className="sn-place-gallery">{place.galleryImages.slice(0, 3).map((src, index) => <TravelImage key={src} src={src} alt={`${place.name}, view ${index + 1}`} />)}</div><p className="sn-preview-label">Sample destination guide. Budgets, access, and visiting conditions need local verification before travel.</p></>}
-      {tab === 'Travel stories' && (stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact />) : <EmptyState title="Tell this place’s first story" description="Close this guide and choose Create a story to share your experience." />)}
-      {tab === 'Reviews' && <><form className="sn-review-form" onSubmit={async event => { event.preventDefault(); setBusy(true); try { await addDestinationReview({ destinationId: place.id, destinationName: place.name, rating: Number(rating), title: 'My experience', reviewText: review.trim() }); setReview(''); setError(''); } catch { setError('Could not save your review. Please try again.'); } finally { setBusy(false); } }}><h3>Been here? Share your experience.</h3><label>Rating<select aria-label="Your rating" value={rating} onChange={event => setRating(event.target.value)}>{[5, 4, 3, 2, 1].map(value => <option value={value} key={value}>{value} {value === 1 ? 'star' : 'stars'}</option>)}</select></label><textarea aria-label="Your experience" placeholder="What should another traveler know?" value={review} maxLength={1500} required onChange={event => setReview(event.target.value)} /><button className="sn-button" disabled={!review.trim() || busy}>{busy ? 'Saving…' : 'Add review'}</button>{error && <p role="alert">{error}</p>}</form>{reviews.map(item => <article className="sn-review" key={item.id}><strong>{item.author.fullName}<span>{'★'.repeat(item.rating)}</span></strong><p>{item.reviewText}</p></article>)}</>}
-    </div></Modal>;
+  const stories = posts.filter(post => post.destinationId === place.id);
+  const reviews = getReviewsForDestination(place.id);
+  const placeUpdates = updates.filter(update => update.destinationId === place.id);
+  const placeListings = listings.filter(item => item.destinationId === place.id && (tab === 'Tours' ? item.category === 'Tour package' : item.category !== 'Tour package'));
+  const managerId = findManager(place.id) ?? placeUpdates[0]?.author.id;
+  const planned = currentTrip.stops.some(stop => stop.spotName === place.name && stop.state === place.state);
+  const saved = state.savedPlaces.includes(place.id);
+  const visited = passport.some(visit => visit.destinationId === place.id);
+
+  return <Modal title={place.name} onClose={() => setActiveDestination(null)} className="sn-place-modal">
+    <div className={`sn-place-hero ${place.coverImage ? '' : 'sn-place-no-photo'}`}>
+      {place.coverImage && <TravelImage src={place.coverImage} alt={place.name} />}
+      <div><span>{place.state}{place.region !== place.state && ` · ${place.region}`}</span><h1>{place.name}</h1><p>{place.tagline}</p></div>
+    </div>
+    <div className="sn-place-content">
+      <div className="sn-place-controls">
+        <button className="sn-button" onClick={() => { openSpotOnMap(place.latitude, place.longitude, place.name); setActiveDestination(null); }}><MapPin size={16} />Find on map</button>
+        <button className="sn-button secondary" aria-pressed={saved} onClick={() => togglePlace(place.id)}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />{saved ? 'Saved' : 'Save place'}</button>
+        {(!profile || profile.activeRole === 'traveler') && <button className={`sn-button secondary sn-visit-action${visited ? ' is-visited' : ''}`} onClick={() => profile ? setEditor('visit') : openAuthModal()}>
+          {visited ? <Check size={16} /> : <Stamp size={16} />}{visited ? 'Visited · Edit stamp' : 'Mark visited'}
+        </button>}
+        <button className="sn-button secondary" disabled={planned} onClick={async () => { if (await addDestinationToTrip(place)) notify('Place added to My journeys.'); }}>
+          {planned ? <Check size={16} /> : <Plus size={16} />}{planned ? 'In your journey' : 'Add to journey'}
+        </button>
+        {managerId && <FollowAccount id={managerId} label="Follow manager" />}
+      </div>
+      {canManage(place.id) && <div className="sn-secondary-actions sn-place-manage">
+        <button className="sn-button secondary" onClick={() => setEditor('place')}><Pencil size={15} /> Edit page</button>
+        <button className="sn-button secondary" onClick={() => setEditor('update')}><BellPlus size={15} /> Post update</button>
+      </div>}
+      <div className="sn-feed-tabs sn-place-tabs" role="group" aria-label="Destination sections">{tabs.map(name => <button key={name} aria-pressed={tab === name} className={tab === name ? 'active' : ''} onClick={() => setTab(name)}>{name}</button>)}</div>
+      {tab === 'Overview' && <>
+        <p className="sn-place-overview">{place.overview}</p>
+        {(place.estimatedDailyBudgetInr > 0 || place.bestTimeToVisit || place.openingHours) && <div className="sn-place-facts">
+          {place.estimatedDailyBudgetInr > 0 && <div><IndianRupee size={20} /><span>Daily budget<strong>~ {formatINR(place.estimatedDailyBudgetInr)}</strong></span></div>}
+          {place.bestTimeToVisit && <div><CalendarDays size={20} /><span>When to go<strong>{place.bestTimeToVisit}</strong></span></div>}
+          {place.openingHours && <div><Clock size={20} /><span>Opening hours<strong>{place.openingHours}</strong></span></div>}
+        </div>}
+        {placeUpdates[0] && <div className="sn-secondary-stack"><div className="sn-row-heading"><h3>Latest update</h3><button className="sn-community-link" onClick={() => setTab('Updates')}>See all</button></div><UpdateCard update={placeUpdates[0]} /></div>}
+        {place.culturalEtiquette && <section className="sn-culture-note"><HeartHandshake size={22} /><div><h3>Local customs</h3><p>{place.culturalEtiquette}</p></div></section>}
+        {place.galleryImages.length > 0 && <div className="sn-place-gallery">{place.galleryImages.slice(0, 3).map((src, index) => <TravelImage key={src} src={src} alt={`${place.name}, view ${index + 1}`} />)}</div>}
+      </>}
+      {tab === 'Updates' && (placeUpdates.length ? <div className="sn-secondary-stack">{placeUpdates.map(item => <UpdateCard update={item} key={item.id} />)}</div> : <EmptyState title="No updates yet" description="Weather, opening hours, and local news from the destination’s manager will appear here." />)}
+      {tab === 'Stories' && (stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onShowMap={() => setActiveDestination(null)} />) : <EmptyState title="No stories from here yet" description="Choose Create a story and tag this destination to share your experience." />)}
+      {(tab === 'Tours' || tab === 'Businesses') && (placeListings.length ? <div className="sn-community-grid">{placeListings.map(listing => <ListingCard listing={listing} key={listing.id} />)}</div> : <EmptyState title={tab === 'Tours' ? 'No tours listed yet' : 'No businesses listed yet'} description={tab === 'Tours' ? 'Tour packages published by local guides will appear here.' : 'Stays, agencies, and services listed for this destination will appear here.'} />)}
+      {tab === 'Reviews' && <>
+        {profile ? <form className="sn-review-form" onSubmit={async event => {
+          event.preventDefault(); if (!review.trim() || busy) return; setBusy(true); setError('');
+          try { await addDestinationReview({ destinationId: place.id, destinationName: place.name, rating: Number(rating), title: 'My experience', reviewText: review.trim() }); setReview(''); }
+          catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not save your review.'); }
+          finally { setBusy(false); }
+        }}><label>Rating<select aria-label="Your rating" value={rating} onChange={event => setRating(event.target.value)}>{[5, 4, 3, 2, 1].map(value => <option value={value} key={value}>{value} {value === 1 ? 'star' : 'stars'}</option>)}</select></label>
+          <textarea aria-label="Your experience" placeholder="What should another traveler know?" value={review} maxLength={1500} required onChange={event => setReview(event.target.value)} />
+          <button className="sn-button" disabled={!review.trim() || busy}>{busy ? 'Saving…' : 'Add review'}</button>{error && <p role="alert">{error}</p>}
+        </form> : <button className="sn-button secondary" onClick={() => openAuthModal()}>Sign in to review</button>}
+        {reviews.map(item => <article className="sn-review" key={item.id}><strong>{item.author.fullName}<span>{'★'.repeat(item.rating)}</span></strong><p>{item.reviewText}</p></article>)}
+      </>}
+    </div>
+    {editor === 'place' && <DestinationEditor place={place} onClose={() => setEditor(undefined)} onSave={() => { setEditor(undefined); notify('Destination updated.'); }} />}
+    {editor === 'update' && <UpdateEditor destination={place} onClose={() => setEditor(undefined)} onSave={() => { setEditor(undefined); setTab('Updates'); notify('Update published.'); }} />}
+    {editor === 'visit' && <VisitEditor destination={place} onClose={() => setEditor(undefined)} />}
+  </Modal>;
 }

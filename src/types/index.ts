@@ -1,4 +1,5 @@
-export type UserRole = 'traveler' | 'creator' | 'local_guide' | 'admin';
+export type UserRole = 'traveler' | 'creator' | 'local_guide' | 'business' | 'destination_manager' | 'admin';
+export type AccountType = 'traveler' | 'local_guide' | 'business' | 'destination_manager';
 
 export interface GuideVerificationRequest {
   id: string;
@@ -134,6 +135,30 @@ export interface DestinationHub {
   guideCount: number;
   averageRating?: number;
   reviewsCount?: number;
+  openingHours?: string;
+}
+
+export interface DestinationUpdate {
+  id: string;
+  destinationId: string;
+  author: Profile;
+  category: 'Weather' | 'Opening hours' | 'Travel advisory' | 'Local news';
+  title: string;
+  detail: string;
+  createdAt: string;
+}
+
+export interface DestinationListing {
+  id: string;
+  destinationId: string;
+  author: Profile;
+  category: 'Tour package' | 'Hotel or stay' | 'Travel agency' | 'Food and drink' | 'Local service';
+  title: string;
+  detail: string;
+  duration?: string;
+  priceInr?: number;
+  contactUrl?: string;
+  createdAt: string;
 }
 
 export interface DestinationReview {

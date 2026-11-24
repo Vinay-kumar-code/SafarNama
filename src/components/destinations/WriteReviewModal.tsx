@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
-import { DESTINATION_HUBS } from '../../data/mockData';
+import { DESTINATION_HUBS } from '../../data/destinations';
 import { DestinationHub } from '../../types';
 
 interface WriteReviewModalProps {

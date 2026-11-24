@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { isNative } from './device';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -17,7 +18,8 @@ export const supabase: SupabaseClient = isSupabaseConfigured
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: !isNative,
+        flowType: isNative ? 'pkce' : 'implicit',
       },
     })
   : createClient('https://placeholder.supabase.co', 'placeholder-key', {

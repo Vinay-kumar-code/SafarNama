@@ -1,28 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  Compass, 
-  MapPin, 
-  Clock, 
-  IndianRupee, 
-  Trash2, 
-  Share2, 
-  Download, 
-  Calendar, 
-  Navigation, 
-  Building2, 
-  Star, 
-  ExternalLink,
-  Sparkles,
-  Check
-} from 'lucide-react';
+import { Clock, Download, MapPin, Pencil, Share2, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatINR } from '../../lib/utils';
-import { MOCK_SPONSORED_STAYS } from '../../data/mockData';
+import { isNative, nativeAction } from '../../lib/device';
+import { EmptyState, Modal, TravelImage } from '../social/Primitives';
+import { useSocial } from '../../context/SocialContext';
+import type { TripStop } from '../../types';
 
 export const TripBuilder: React.FC = () => {
-  const { currentTrip, removeStopFromTrip, openSpotOnMap, setActiveTab } = useApp();
+  const { currentTrip, removeStopFromTrip, openSpotOnMap, setActiveTab, renameTrip, editTripStop } = useApp();
+  const { notify } = useSocial();
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
+  const [stopDraft, setStopDraft] = useState<{ stop: TripStop; day: string; notes: string } | null>(null);
 
   // Group stops by day number
   const dayGroups: Record<number, typeof currentTrip.stops> = {};
@@ -34,296 +25,119 @@ export const TripBuilder: React.FC = () => {
   });
 
   const availableDays = Object.keys(dayGroups).map(Number).sort((a, b) => a - b);
-  const currentDayStops = dayGroups[selectedDay] || [];
+  const visibleDay = dayGroups[selectedDay] ? selectedDay : availableDays[0] || 1;
+  const currentDayStops = (dayGroups[visibleDay] || []).slice().sort((a, b) => a.orderInDay - b.orderInDay);
 
-  // Find relevant sponsored stays for this circuit
-  const relevantStay = MOCK_SPONSORED_STAYS[0];
 
   const handleShareTrip = async () => {
-    const shareText = `Check out my ${currentTrip.title} itinerary with ${currentTrip.stops.length} authentic stops on SafarNama!`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: currentTrip.title,
-          text: shareText,
-          url: `${window.location.origin}/trip/${currentTrip.shareSlug}`,
-        });
-      } catch {
-        console.log('Share canceled');
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(`${window.location.origin}/trip/${currentTrip.shareSlug}`);
+    const stops = [...currentTrip.stops].sort((a, b) => a.dayNumber - b.dayNumber || a.orderInDay - b.orderInDay);
+    const shareText = [
+      currentTrip.title,
+      ...stops.flatMap(stop => [
+        `Day ${stop.dayNumber}: ${stop.spotName}, ${stop.state}`,
+        ...(stop.notes ? [stop.notes] : []),
+        `https://www.google.com/maps/search/?api=1&query=${stop.latitude},${stop.longitude}`,
+        '',
+      ]),
+      `Estimated budget: ${formatINR(currentTrip.totalBudgetInr)}`,
+    ].join('\n');
+    try {
+      if (isNative) await nativeAction({ action: 'share', title: currentTrip.title, text: shareText });
+      else if (navigator.share) await navigator.share({ title: currentTrip.title, text: shareText });
+      else {
+        await navigator.clipboard.writeText(shareText);
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2000);
-      } catch {
-        alert(`Trip Link: ${window.location.origin}/trip/${currentTrip.shareSlug}`);
       }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) notify('Could not share the itinerary.');
     }
   };
 
-  const handleExportOffline = () => {
+  const handleExportOffline = async () => {
+    const filename = `SafarNama_${currentTrip.shareSlug}.json`;
+    if (isNative) {
+      try {
+        await nativeAction({ action: 'exportItinerary', filename, itinerary: currentTrip });
+        notify('Itinerary saved.');
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== 'Export canceled') notify('Could not save the itinerary.');
+      }
+      return;
+    }
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentTrip, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `SafarNama_${currentTrip.shareSlug}.json`);
+    downloadAnchor.setAttribute("download", filename);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    alert('Itinerary downloaded for offline use in zero-network travel zones!');
+    notify('Itinerary download started.');
   };
 
-  return (
-    <div className="w-full h-[calc(100dvh-57px-60px)] md:h-[calc(100vh-65px)] overflow-y-auto bg-white md:bg-[#fafafa] p-4 md:p-8 no-scrollbar text-zinc-900">
-      <div className="max-w-6xl mx-auto space-y-6 pb-12">
-        
-        {/* =====================================================================
-            DESKTOP & MOBILE RESPONSIVE GRID
-           ===================================================================== */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          
-          {/* Left Column (Desktop: 5 cols, Mobile: full width) */}
-          <div className="md:col-span-5 space-y-5">
-            
-            {/* Header Card */}
-            <div className="relative rounded-3xl p-6 bg-white border border-zinc-200 shadow-sm overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Zero-Headache Trip Builder</span>
-              </div>
-
-              <h1 className="text-xl md:text-2xl font-black text-zinc-900 mt-1 leading-snug">
-                {currentTrip.title}
-              </h1>
-
-              <p className="text-xs text-zinc-600 mt-2 leading-relaxed">
-                {currentTrip.description}
-              </p>
-
-              {/* Metrics */}
-              <div className="grid grid-cols-3 gap-2.5 mt-5 pt-4 border-t border-zinc-100">
-                <div className="bg-zinc-50 p-2.5 rounded-2xl border border-zinc-200/80 text-center shadow-xs">
-                  <span className="text-[10px] text-zinc-500 block font-medium">Stops</span>
-                  <span className="text-base font-black text-zinc-900">{currentTrip.stops.length} Pins</span>
-                </div>
-
-                <div className="bg-zinc-50 p-2.5 rounded-2xl border border-zinc-200/80 text-center shadow-xs">
-                  <span className="text-[10px] text-zinc-500 block font-medium">Est. Budget</span>
-                  <span className="text-base font-black text-emerald-600">
-                    {formatINR(currentTrip.totalBudgetInr)}
-                  </span>
-                </div>
-
-                <div className="bg-zinc-50 p-2.5 rounded-2xl border border-zinc-200/80 text-center shadow-xs">
-                  <span className="text-[10px] text-zinc-500 block font-medium">Duration</span>
-                  <span className="text-base font-black text-amber-600">
-                    {availableDays.length || 1} Days
-                  </span>
-                </div>
-              </div>
-
-              {/* Action Row */}
-              <div className="flex items-center gap-2.5 mt-5">
-                <button
-                  onClick={handleShareTrip}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/20 transition-all cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>{copiedLink ? 'Copied Link!' : 'Share Itinerary'}</span>
-                </button>
-
-                <button
-                  onClick={handleExportOffline}
-                  className="py-2.5 px-3 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs flex items-center justify-center gap-1.5 border border-zinc-200 shadow-xs transition-all cursor-pointer"
-                  title="Download for offline access in remote mountains"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Offline Cache</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Native Itinerary Sponsorship (Featured Stays) */}
-            {relevantStay && (
-              <div className="p-5 rounded-3xl bg-amber-50/60 border border-amber-200/80 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>Featured Stay (Verified Partner)</span>
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300">
-                    Native Suggestion
-                  </span>
-                </div>
-
-                <div className="flex gap-3.5">
-                  <img
-                    src={relevantStay.imageUrl}
-                    alt={relevantStay.name}
-                    className="w-24 h-24 rounded-2xl object-cover shrink-0 border border-zinc-200"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-zinc-900 truncate">
-                        {relevantStay.name}
-                      </h4>
-                      <div className="flex items-center gap-1 text-xs text-amber-600 font-bold">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        <span>{relevantStay.rating}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-zinc-600 mt-1 line-clamp-2">
-                      {relevantStay.tagline}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-xs font-black text-emerald-600">
-                        {formatINR(relevantStay.pricePerNightInr)} / night
-                      </span>
-                      <a
-                        href={relevantStay.bookingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all"
-                      >
-                        <span>Reserve</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+  return <section className="sn-secondary-page" aria-labelledby="journey-title">
+    <header className="sn-page-heading"><div><h1 id="journey-title">My journeys<span>.</span></h1><p>Keep your stops, plans, and notes in one place.</p></div></header>
+    <div className="sn-secondary-grid sn-journey-grid">
+      <div className="sn-secondary-stack">
+        <section className="sn-panel sn-panel-padding sn-secondary-stack" aria-label="Journey overview">
+          <div className="sn-row-heading"><h2>{currentTrip.title}</h2><button className="sn-icon" aria-label="Rename journey" onClick={() => setNameDraft(currentTrip.title)}><Pencil size={17} /></button></div>
+          {currentTrip.description && <p className="sn-secondary-body">{currentTrip.description}</p>}
+          <dl className="sn-journey-facts">
+            <div><dt>Stops</dt><dd>{currentTrip.stops.length}</dd></div>
+            <div><dt>Est. budget</dt><dd>{formatINR(currentTrip.totalBudgetInr)}</dd></div>
+            <div><dt>Days planned</dt><dd>{availableDays.length}</dd></div>
+          </dl>
+          <div className="sn-secondary-actions">
+            <button className="sn-button" onClick={handleShareTrip}><Share2 size={16} />{copiedLink ? 'Itinerary copied' : 'Share itinerary'}</button>
+            <button className="sn-button secondary" onClick={handleExportOffline}><Download size={16} /> Export</button>
           </div>
-
-          {/* Right Column (Desktop: 7 cols, Mobile: full width) */}
-          <div className="md:col-span-7 space-y-4">
-            
-            {/* Day Selector Tabs */}
-            {availableDays.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                {availableDays.map(dayNum => (
-                  <button
-                    key={dayNum}
-                    onClick={() => setSelectedDay(dayNum)}
-                    className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                      selectedDay === dayNum
-                        ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 shadow-md shadow-orange-500/20 scale-105'
-                        : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-xs'
-                    }`}
-                  >
-                    Day {dayNum} ({dayGroups[dayNum]?.length || 0} stops)
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Sequenced Stops for the Day */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-extrabold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Day {selectedDay} Sequenced Route</span>
-                </h3>
-                <span className="text-[11px] text-zinc-400">
-                  Shortest distance optimized
-                </span>
-              </div>
-
-              {currentDayStops.length === 0 ? (
-                <div className="rounded-2xl p-8 bg-white border border-zinc-200 text-center space-y-3 shadow-xs">
-                  <MapPin className="w-8 h-8 text-zinc-400 mx-auto" />
-                  <p className="text-sm font-semibold text-zinc-800">No spots saved for this day</p>
-                  <p className="text-xs text-zinc-500">
-                    Tap "Save Spot to Trip" on any Reel or Guide Note to automatically add it!
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('feed')}
-                    className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
-                  >
-                    Browse Reels Feed
-                  </button>
-                </div>
-              ) : (
-                currentDayStops.map((stop, idx) => (
-                  <div
-                    key={stop.id}
-                    className="relative flex items-start gap-4 p-4 rounded-2xl bg-white border border-zinc-200 shadow-xs group hover:border-orange-500/40 hover:shadow-sm transition-all"
-                  >
-                    {/* Step number badge */}
-                    <div className="flex flex-col items-center shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
-                        {idx + 1}
-                      </div>
-                      {idx < currentDayStops.length - 1 && (
-                        <div className="w-0.5 h-16 bg-zinc-200 my-1 group-hover:bg-orange-400 transition-colors" />
-                      )}
-                    </div>
-
-                    {/* Stop Thumbnail */}
-                    {stop.thumbnailUrl && (
-                      <img
-                        src={stop.thumbnailUrl}
-                        alt={stop.spotName}
-                        className="w-20 h-20 rounded-2xl object-cover shrink-0 border border-zinc-200"
-                      />
-                    )}
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <h4 className="text-sm font-bold text-zinc-900 truncate">
-                          {stop.spotName}
-                        </h4>
-                        <button
-                          onClick={() => removeStopFromTrip(stop.id)}
-                          className="text-zinc-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                          title="Remove from trip"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 mt-1.5 text-xs text-zinc-500 flex-wrap">
-                        <span className="flex items-center gap-1 text-amber-700 font-semibold">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>~{stop.stayMinutes} mins</span>
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-0.5 text-emerald-700 font-bold">
-                          <IndianRupee className="w-3.5 h-3.5" />
-                          <span>{stop.costInInr}</span>
-                        </span>
-                      </div>
-
-                      {stop.notes && (
-                        <p className="text-xs text-zinc-600 mt-1.5 line-clamp-2 italic">
-                          "{stop.notes}"
-                        </p>
-                      )}
-
-                      <div className="pt-2.5 flex items-center gap-2">
-                        <button
-                          onClick={() => openSpotOnMap(stop.latitude, stop.longitude, stop.spotName)}
-                          className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold flex items-center gap-1.5 border border-zinc-200 transition-all shadow-xs cursor-pointer"
-                        >
-                          <Navigation className="w-3.5 h-3.5 text-orange-500" />
-                          <span>View Map Pin</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-          </div>
-        </div>
-
+        </section>
       </div>
+      <section className="sn-secondary-stack sn-journey-route" aria-label="Daily itinerary">
+        <div className="sn-row-heading"><h2>Itinerary</h2>{currentDayStops.length > 0 && <span className="sn-meta">{currentDayStops.length} {currentDayStops.length === 1 ? 'stop' : 'stops'} on day {visibleDay}</span>}</div>
+        {availableDays.length > 0 && <div className="sn-segment" role="group" aria-label="Itinerary days">
+          {availableDays.map(day => <button key={day} aria-pressed={visibleDay === day} onClick={() => setSelectedDay(day)}>Day {day}</button>)}
+        </div>}
+        {currentDayStops.length === 0 ? <EmptyState title="No stops yet" description="Open a place guide or travel story to start building your itinerary." action={<button className="sn-button secondary" onClick={() => setActiveTab('explore')}>Explore places</button>} />
+          : <ol className="sn-panel">
+            {currentDayStops.map((stop, index) => <li key={stop.id} className="sn-list-row sn-journey-stop">
+              <span className="sn-soft-icon">{index + 1}</span>
+              {stop.thumbnailUrl && <TravelImage src={stop.thumbnailUrl} alt="" className="sn-journey-thumbnail" />}
+              <div className="sn-list-text">
+                <h3>{stop.spotName}</h3>
+                <p className="sn-secondary-body">{stop.state}</p>
+                <p className="sn-secondary-actions"><span className="sn-meta"><Clock size={14} /> About {stop.stayMinutes} min</span>{stop.costInInr !== undefined && <span className="sn-meta">{formatINR(stop.costInInr)}</span>}</p>
+                {stop.notes && <p className="sn-secondary-body sn-journey-notes">{stop.notes}</p>}
+                <div className="sn-secondary-actions sn-journey-stop-actions">
+                  <button className="sn-button secondary" onClick={() => openSpotOnMap(stop.latitude, stop.longitude, stop.spotName)}><MapPin size={15} /> View on map</button>
+                  <button className="sn-button secondary" onClick={() => setStopDraft({ stop, day: String(stop.dayNumber), notes: stop.notes || '' })}><Pencil size={15} /> Edit stop</button>
+                </div>
+              </div>
+              <button className="sn-icon" aria-label={`Remove ${stop.spotName} from journey`} onClick={() => removeStopFromTrip(stop.id)}><Trash2 size={17} /></button>
+            </li>)}
+          </ol>}
+      </section>
     </div>
-  );
+
+      {nameDraft !== null && <Modal title="Rename journey" onClose={() => setNameDraft(null)}>
+        <form className="sn-create-form" onSubmit={async event => { event.preventDefault(); if (await renameTrip(nameDraft)) setNameDraft(null); }}>
+          <label>Journey name<input value={nameDraft} onChange={event => setNameDraft(event.target.value)} maxLength={100} required autoFocus /></label>
+          <div className="sn-publish-footer"><button className="sn-button" disabled={!nameDraft.trim()}>Save name</button></div>
+        </form>
+      </Modal>}
+      {stopDraft && <Modal title={`Edit ${stopDraft.stop.spotName}`} onClose={() => setStopDraft(null)}>
+        <form className="sn-create-form" onSubmit={async event => {
+          event.preventDefault();
+          if (!await editTripStop(stopDraft.stop.id, Number(stopDraft.day), stopDraft.notes)) return;
+          setSelectedDay(Number(stopDraft.day));
+          setStopDraft(null);
+        }}>
+          <label>Day<input type="number" min="1" max="99" required value={stopDraft.day}
+            onChange={event => setStopDraft({ ...stopDraft, day: event.target.value })} /></label>
+          <label>Notes<textarea value={stopDraft.notes} rows={4} maxLength={1000}
+            onChange={event => setStopDraft({ ...stopDraft, notes: event.target.value })} /></label>
+          <div className="sn-publish-footer"><button className="sn-button">Save changes</button></div>
+        </form>
+      </Modal>}
+  </section>;
 };

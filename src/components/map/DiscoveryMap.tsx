@@ -1,282 +1,174 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  MapPin, 
-  Search, 
-  Compass, 
-  Info, 
-  Bookmark, 
-  Navigation, 
-  IndianRupee, 
-  ShieldCheck, 
-  ExternalLink,
-  Sparkles,
-  Check
-} from 'lucide-react';
+import { useRef, useState, type FormEvent } from 'react';
+import { ArrowLeft, ArrowUpRight, ChevronDown, ChevronUp, LocateFixed, MapPin, Navigation, Plus, Search, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { formatINR } from '../../lib/utils';
-import { SpotDetailsDrawer } from './SpotDetailsDrawer';
-import { GoogleMapView, MapPinItem } from './GoogleMapView';
+import { useAuth } from '../../context/AuthContext';
+import { useCommunity } from '../../context/CommunityContext';
+import { useSocial } from '../../context/SocialContext';
+import type { DestinationHub, Post } from '../../types';
+import { haversineDistanceKm } from '../../lib/utils';
+import { DestinationEditor } from '../destinations/DestinationEditor';
+import { EmptyState, Modal, TravelImage } from '../social/Primitives';
+import { PostCard } from '../social/PostCard';
+import { GoogleMapView, type MapPinItem } from './GoogleMapView';
+import { searchLocation, type SearchLocation } from './locationSearch';
+import './discovery.css';
 
-export const DiscoveryMap: React.FC = () => {
-  const { 
-    posts, 
-    selectedMapSpot, 
-    clearSelectedMapSpot, 
-    openSpotOnMap,
-    toggleSavePost,
-    setActiveTravelNote,
-    setActiveDestination
-  } = useApp();
+type MapEntry = MapPinItem & { guide?: DestinationHub; story?: Post; distance?: number };
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<string>('all');
-  const [activePin, setActivePin] = useState<{
-    spotName: string;
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+export function DiscoveryMap() {
+  const { posts, selectedMapSpot, clearSelectedMapSpot, setActiveDestination, closeMap, openSpotOnMap } = useApp();
+  const { destinations } = useCommunity();
+  const { profile, openAuthModal } = useAuth();
+  const { notify } = useSocial();
+  const [query, setQuery] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const [focus, setFocus] = useState<SearchLocation>();
+  const [radius, setRadius] = useState(100);
+  const [mode, setMode] = useState<'Places' | 'Stories'>('Places');
+  const [selectedId, setSelectedId] = useState('');
+  const [storyId, setStoryId] = useState('');
+  const [expanded, setExpanded] = useState(Boolean(selectedMapSpot));
+  const [picking, setPicking] = useState(false);
+  const [editor, setEditor] = useState<{ location?: SearchLocation }>();
+  const [searching, setSearching] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [overviewRevision, setOverviewRevision] = useState(0);
+  const request = useRef(0);
 
-  // Sync when selectedMapSpot changes from reels/notes
-  useEffect(() => {
-    if (selectedMapSpot) {
-      setActivePin({
-        spotName: selectedMapSpot.spotName,
-        latitude: selectedMapSpot.lat,
-        longitude: selectedMapSpot.lng,
-      });
-    }
-  }, [selectedMapSpot]);
+  const places: MapEntry[] = destinations.map(guide => ({ ...guide, guide }));
+  const stories: MapEntry[] = posts.filter(post => Number.isFinite(post.latitude) && Number.isFinite(post.longitude))
+    .map(story => ({ ...story, name: story.spotName, story }));
+  const openedStory = posts.find(post => post.id === storyId);
+  const linked: MapEntry | undefined = selectedMapSpot ? [...places, ...stories].find(pin => pin.name === selectedMapSpot.spotName &&
+    haversineDistanceKm(pin.latitude, pin.longitude, selectedMapSpot.lat, selectedMapSpot.lng) < 0.2) ??
+      { id: 'linked-spot', name: selectedMapSpot.spotName, state: '', latitude: selectedMapSpot.lat, longitude: selectedMapSpot.lng } : undefined;
+  const activeMode = linked ? linked.story ? 'Stories' : 'Places' : mode;
+  const entries = activeMode === 'Places' ? places : stories;
+  const activeFocus = linked ? undefined : focus;
+  const results = activeFocus ? entries.map(entry => ({
+    ...entry, distance: haversineDistanceKm(activeFocus.latitude, activeFocus.longitude, entry.latitude, entry.longitude),
+  })).filter(entry => entry.distance <= radius).sort((a, b) => a.distance - b.distance)
+    : entries.filter(entry => linked || !keyword || `${entry.name} ${entry.state} ${entry.guide?.region ?? ''}`.toLowerCase().includes(keyword));
+  const selected = linked ?? results.find(entry => entry.id === selectedId);
+  const pins: MapEntry[] = linked && !results.some(entry => entry.id === linked.id) ? [linked, ...results] : results;
+  const searchPin = activeFocus ? { ...activeFocus, id: 'search-center', anchor: true } : undefined;
 
-  // Unique list of pins from posts
-  const allPins = posts.map(post => ({
-    id: post.id,
-    post,
-    spotName: post.spotName,
-    state: post.state,
-    region: post.region,
-    latitude: post.latitude,
-    longitude: post.longitude,
-    likesCount: post.likesCount,
-    savesCount: post.savesCount,
-    author: post.author,
-    thumbnailUrl: post.thumbnailUrl,
-    costInInr: post.costInInr,
-    safetyTips: post.safetyTips,
-    caption: post.caption,
-    isSaved: post.isSaved,
-  }));
+  function clearSearch() {
+    request.current++;
+    setSearching(false);
+    setQuery('');
+    setKeyword('');
+    setFocus(undefined);
+    setSelectedId('');
+    setFeedback('');
+    clearSelectedMapSpot();
+    setOverviewRevision(value => value + 1);
+  }
 
-  // Filter pins
-  const filteredPins = allPins.filter(pin => {
-    const matchesRegion = selectedRegion === 'all' || 
-      pin.state.toLowerCase().includes(selectedRegion.toLowerCase()) ||
-      pin.region.toLowerCase().includes(selectedRegion.toLowerCase());
-    
-    const matchesSearch = searchQuery === '' ||
-      pin.spotName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pin.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pin.region.toLowerCase().includes(searchQuery.toLowerCase());
+  async function find(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const term = query.trim();
+    if (!term) { clearSearch(); return; }
+    const current = ++request.current;
+    setMode(activeMode);
+    clearSelectedMapSpot();
+    setSelectedId('');
+    setFeedback('');
+    setSearching(true);
+    let location: SearchLocation | undefined;
+    try { location = await searchLocation(term, destinations); }
+    catch { /* Catalogue text search is still available. */ }
+    if (current !== request.current) return;
+    setSearching(false);
+    setFocus(location);
+    setKeyword(location ? '' : term.toLowerCase());
+    if (!location) setFeedback('No location found. Try a city, a destination name, or latitude and longitude.');
+    setExpanded(true);
+  }
 
-    return matchesRegion && matchesSearch;
-  });
+  function select(id: string) {
+    if (id === 'search-center') { setSelectedId(''); setOverviewRevision(value => value + 1); return; }
+    if (linked?.id === id) { setExpanded(true); return; }
+    setMode(activeMode);
+    clearSelectedMapSpot();
+    setSelectedId(id);
+    setExpanded(true);
+  }
 
-  return (
-    <div className="relative w-full h-[calc(100dvh-57px-60px)] md:h-[calc(100vh-65px)] overflow-hidden bg-[#07080c] select-none flex flex-col md:flex-row">
-      
-      {/* =========================================================================
-          DESKTOP LEFT SIDEBAR: Search, Regions, and Scrollable Spot Cards (md:flex)
-         ========================================================================= */}
-      <div className="hidden md:flex flex-col w-[420px] h-full bg-[#0d0f17] border-r border-white/10 shrink-0 z-20">
-        
-        {/* Search & Regions */}
-        <div className="p-4 border-b border-white/10 space-y-3 shrink-0">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search spots, valleys, ghats..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 shadow-inner"
-            />
-          </div>
+  function addPlace(dropPin: boolean) {
+    if (!profile) { openAuthModal(); return; }
+    if (dropPin) setPicking(true);
+    else setEditor({ location: focus });
+  }
 
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            {[
-              { id: 'all', label: 'All India' },
-              { id: 'himachal', label: 'Spiti' },
-              { id: 'delhi', label: 'Old Delhi' },
-              { id: 'uttar pradesh', label: 'Varanasi' },
-              { id: 'meghalaya', label: 'Meghalaya' },
-              { id: 'karnataka', label: 'Hampi' },
-            ].map(r => (
-              <button
-                key={r.id}
-                onClick={() => setSelectedRegion(r.id)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
-                  selectedRegion === r.id
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 shadow-md'
-                    : 'bg-slate-900 text-slate-300 border-white/10 hover:border-white/20'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+  function open(entry: MapEntry) {
+    if (entry.guide) setActiveDestination(entry.guide);
+    else if (entry.story) setStoryId(entry.story.id);
+  }
 
-          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-            <span>Showing {filteredPins.length} Geotagged Pins</span>
-            <span className="text-[10px] text-orange-400 font-semibold">Click to fly on map</span>
-          </div>
-        </div>
-
-        {/* Scrollable Spots List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-          {filteredPins.map(pin => {
-            const isSelected = activePin?.spotName === pin.spotName;
-            return (
-              <div
-                key={pin.id}
-                onClick={() => {
-                  setActivePin({
-                    spotName: pin.spotName,
-                    latitude: pin.latitude,
-                    longitude: pin.longitude,
-                  });
-                }}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer group flex gap-3 ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/50 shadow-xl'
-                    : 'bg-slate-900/80 hover:bg-slate-900 border-white/5 hover:border-white/20'
-                }`}
-              >
-                <img
-                  src={pin.thumbnailUrl}
-                  alt={pin.spotName}
-                  className="w-20 h-20 rounded-xl object-cover shrink-0 border border-white/10"
-                />
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-[10px] font-bold text-orange-400 truncate">
-                      {pin.region}, {pin.state}
-                    </span>
-                    {pin.costInInr !== undefined && (
-                      <span className="text-[10px] font-bold text-emerald-400 shrink-0">
-                        {formatINR(pin.costInInr)}
-                      </span>
-                    )}
-                  </div>
-
-                  <h4 className="text-xs font-bold text-white group-hover:text-orange-400 transition-colors truncate mt-0.5">
-                    {pin.spotName}
-                  </h4>
-
-                  <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
-                    {pin.caption}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-2 pt-1 border-t border-white/5">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSavePost(pin.id);
-                      }}
-                      className={`text-[10px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 transition-all ${
-                        pin.isSaved ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      {pin.isSaved ? <Check className="w-2.5 h-2.5" /> : <Bookmark className="w-2.5 h-2.5" />}
-                      <span>{pin.isSaved ? 'Saved' : 'Save'}</span>
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveTravelNote(pin.post);
-                      }}
-                      className="text-[10px] text-slate-400 hover:text-white"
-                    >
-                      Travel Notes →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* =========================================================================
-          MOBILE TOP FLOATING CONTROLS (md:hidden)
-         ========================================================================= */}
-      <div className="md:hidden absolute top-3 inset-x-3 z-20 space-y-2 pointer-events-none">
-        <div className="relative pointer-events-auto">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search authentic Indian circuits, valleys, ghats..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#11131c]/90 backdrop-blur-md border border-white/15 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 shadow-xl focus:outline-none focus:border-orange-500"
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto py-0.5">
-          {[
-            { id: 'all', label: 'All India' },
-            { id: 'himachal', label: 'Spiti' },
-            { id: 'delhi', label: 'Old Delhi' },
-            { id: 'uttar pradesh', label: 'Varanasi' },
-            { id: 'meghalaya', label: 'Meghalaya' },
-            { id: 'karnataka', label: 'Hampi' },
-          ].map(r => (
-            <button
-              key={r.id}
-              onClick={() => setSelectedRegion(r.id)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border shadow-sm ${
-                selectedRegion === r.id
-                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400 shadow-orange-500/20'
-                  : 'bg-black/60 backdrop-blur-md text-slate-300 border-white/10 hover:border-white/20'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* =========================================================================
-          INTERACTIVE MAP CANVAS (Powered by Google Maps Platform / Fallback)
-         ========================================================================= */}
-      <div className="flex-1 h-full relative flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-        <GoogleMapView
-          pins={filteredPins}
-          activePin={activePin}
-          onSelectPin={(pin) => {
-            setActivePin({
-              spotName: pin.spotName,
-              latitude: pin.latitude,
-              longitude: pin.longitude,
-            });
-          }}
-          className="w-full h-full"
-        />
-      </div>
-
-      {/* Spot Details Drawer */}
-      {activePin && (
-        <SpotDetailsDrawer
-          spotName={activePin.spotName}
-          latitude={activePin.latitude}
-          longitude={activePin.longitude}
-          onClose={() => {
-            setActivePin(null);
-            clearSelectedMapSpot();
-          }}
-        />
-      )}
-
+  return <section className="sn-map-full" aria-label="Explore the map">
+    <GoogleMapView
+      pins={searchPin ? [searchPin, ...pins] : pins}
+      selected={selected}
+      focus={searchPin}
+      radius={radius}
+      onSelectPin={select}
+      onPick={picking ? (latitude, longitude) => { setPicking(false); setEditor({ location: { name: '', state: focus?.state ?? '', latitude, longitude } }); } : undefined}
+      overviewRevision={overviewRevision}
+    />
+    <header className="sn-map-top">
+      <button className="sn-map-control" aria-label="Exit map" onClick={closeMap}><ArrowLeft size={21} /></button>
+      <form className="sn-map-search-form" onSubmit={find}>
+        <input type="search" aria-label="Search the map" placeholder="Search a city or destination" value={query} onChange={event => setQuery(event.target.value)} />
+        {query && <button className="sn-icon" type="button" aria-label="Clear map search" onClick={clearSearch}><X size={17} /></button>}
+        <button className="sn-map-search-submit" aria-label="Find location" disabled={searching}><Search size={18} /><span>{searching ? 'Searching…' : 'Find'}</span></button>
+      </form>
+      <button className="sn-map-control sn-map-add" type="button" aria-label="Add a destination" onClick={() => addPlace(false)}><Plus size={20} /><span>Add place</span></button>
+    </header>
+    <div className="sn-map-tools">
+      <button className="sn-map-control" aria-label="Show overview" title="Show overview" onClick={clearSearch}><LocateFixed size={20} /></button>
+      <button className="sn-map-control" aria-label={picking ? 'Cancel dropping a pin' : 'Drop a pin'} title={picking ? 'Cancel' : 'Drop a pin'} aria-pressed={picking} onClick={() => picking ? setPicking(false) : addPlace(true)}>{picking ? <X size={20} /> : <MapPin size={20} />}</button>
     </div>
-  );
-};
+    {picking && <div className="sn-map-pick-note" role="status">Tap the map where the destination belongs.</div>}
+    <section className="sn-map-tray" data-expanded={expanded} aria-label="Map results">
+      <div className="sn-map-tray-top">
+        <div><h1>{activeFocus ? 'Destinations nearby' : 'Explore the map'}</h1><p>{activeFocus ? activeFocus.name : `${results.length} ${activeMode.toLowerCase()}`}</p></div>
+        <button className="sn-icon sn-map-tray-toggle" aria-expanded={expanded} aria-label={expanded ? 'Collapse map results' : 'Expand map results'} onClick={() => setExpanded(!expanded)}>{expanded ? <ChevronDown size={22} /> : <ChevronUp size={22} />}</button>
+      </div>
+      <div className="sn-map-tray-content">
+        <div className="sn-row-heading">
+          <div className="sn-segment" role="group" aria-label="Show on the map">
+            {(['Places', 'Stories'] as const).map(label => <button key={label} aria-pressed={activeMode === label} onClick={() => {
+              setMode(label); clearSelectedMapSpot(); setSelectedId(''); setExpanded(true);
+            }}>{label}</button>)}
+          </div>
+          {activeFocus && <select className="sn-field sn-map-radius" aria-label="Search radius" value={radius} onChange={event => setRadius(Number(event.target.value))}>{[25, 50, 100, 250, 500].map(km => <option key={km} value={km}>{km} km</option>)}</select>}
+        </div>
+        {feedback && <p className="sn-secondary-body" role="status">{feedback}</p>}
+        {selected && <div className="sn-map-selection">
+          <div className="sn-map-selection-title"><div><span className="sn-map-state">{selected.state || 'Selected pin'}</span><h2>{selected.name}</h2></div><button className="sn-icon" aria-label="Clear selected location" onClick={() => { setMode(activeMode); clearSelectedMapSpot(); setSelectedId(''); }}><X size={17} /></button></div>
+          <div className="sn-secondary-actions">
+            {(selected.guide || selected.story) && <button className="sn-button" onClick={() => open(selected)}>{selected.guide ? 'Open place guide' : 'Read story'}<ArrowUpRight size={15} /></button>}
+            <a className="sn-button secondary" href={`https://www.google.com/maps/dir/?api=1&destination=${selected.latitude},${selected.longitude}`} target="_blank" rel="noopener noreferrer"><Navigation size={15} /> Directions</a>
+          </div>
+        </div>}
+        {results.length ? <div className="sn-map-cards" role="list">{results.map(entry => <article key={entry.id} className="sn-map-card" data-selected={selected?.id === entry.id} role="listitem">
+          <button className="sn-map-card-pick" aria-pressed={selected?.id === entry.id} aria-label={`Show ${entry.name} on map`} onClick={() => select(entry.id)}>
+            <TravelImage src={entry.guide?.coverImage ?? entry.story?.thumbnailUrl} alt="" className="sn-map-card-image" />
+            <span><span className="sn-map-state">{entry.state}{entry.distance !== undefined && ` · ${entry.distance < 1 ? '<1' : Math.round(entry.distance)} km`}</span><strong>{entry.name}</strong></span>
+          </button>
+          <button className="sn-map-link" aria-label={`Open ${entry.name}`} onClick={() => open(entry)}><ArrowUpRight size={18} /></button>
+        </article>)}</div> : <EmptyState title={activeFocus ? 'No results in this radius' : 'No results'} description={activeFocus ? 'Try a wider search radius or add a destination you know.' : 'Search another location or switch to Places.'} />}
+      </div>
+    </section>
+    {editor && <DestinationEditor location={editor.location} onClose={() => setEditor(undefined)} onSave={place => {
+      setEditor(undefined);
+      setFocus(undefined);
+      setKeyword('');
+      setExpanded(true);
+      openSpotOnMap(place.latitude, place.longitude, place.name);
+      notify('Destination published.');
+    }} />}
+    {openedStory && <Modal title={openedStory.spotName} onClose={() => setStoryId('')} className="sn-map-story"><PostCard post={openedStory} onShowMap={() => setStoryId('')} /></Modal>}
+  </section>;
+}

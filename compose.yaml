@@ -1,0 +1,28 @@
+services:
+  safarnama:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
+    environment:
+      SUPABASE_URL: ${VITE_SUPABASE_URL:?}
+      SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:?}
+      SAFARNAMA_ORIGIN: ${SAFARNAMA_ORIGIN:?}
+      MIN_FREE_MIB: ${MIN_FREE_MIB:-5120}
+    expose:
+      - "3000"
+    volumes:
+      - safarnama-data:/app/data
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  safarnama-data:

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatINR } from '../../lib/utils';
-import { DESTINATION_HUBS } from '../../data/mockData';
+import { DESTINATION_HUBS } from '../../data/destinations';
 
 export const TravelNoteModal: React.FC = () => {
   const { 

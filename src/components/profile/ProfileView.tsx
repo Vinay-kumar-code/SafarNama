@@ -35,7 +35,7 @@ export const ProfileView: React.FC = () => {
     openOnboarding, 
     signOut, 
     openAdminPortal,
-    isOfflineDemo,
+
     user 
   } = useAuth();
 

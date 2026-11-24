@@ -9,12 +9,23 @@ on:
 
 jobs:
   build-apk:
-    name: Build SafarNama Native Android APK
+    name: Build SafarNama Android APK with the shared interface
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Node for the shared interface
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install and check shared web dependencies
+        run: |
+          npm ci
+          npx tsc -b
 
       - name: Setup Java 21 (Zulu)
         uses: actions/setup-java@v5
@@ -38,10 +49,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_ANDROID_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_ANDROID_GOOGLE_MAPS_API_KEY }}
           VITE_CLOUDFLARE_R2_PUBLIC_URL: ${{ secrets.VITE_CLOUDFLARE_R2_PUBLIC_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
           cd android
-          ./gradlew assembleDebug -x lint --stacktrace --no-daemon
+          ./gradlew assembleDebug testDebugUnitTest -x lint --stacktrace --no-daemon
 
       - name: Upload SafarNama APK Artifact
         uses: actions/upload-artifact@v4

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useApp, NavTab } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { DESTINATION_HUBS } from '../../data/mockData';
+import { DESTINATION_HUBS } from '../../data/destinations';
 import { BrandLogo } from '../common/BrandLogo';
 
 export const DesktopNav: React.FC = () => {

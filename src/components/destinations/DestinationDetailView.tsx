@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatINR } from '../../lib/utils';
-import { MOCK_SPONSORED_STAYS } from '../../data/mockData';
+import type { SponsoredStay } from '../../types';
 import { DestinationHub } from '../../types';
 import { WriteReviewModal } from './WriteReviewModal';
 
@@ -74,7 +74,7 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
   if (!destination) return null;
 
   // Relevant Stays for this destination
-  const relevantStays = MOCK_SPONSORED_STAYS.filter(
+  const relevantStays = ([] as SponsoredStay[]).filter(
     s => s.destinationId === destination.id
   );
 
