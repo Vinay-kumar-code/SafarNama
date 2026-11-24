@@ -7,6 +7,7 @@ import { useSocial } from '../../context/SocialContext';
 import { DestinationEditor } from '../destinations/DestinationEditor';
 import { FollowAccount, ListingCard, UpdateCard } from '../destinations/CommunityCards';
 import { UpdateEditor } from '../destinations/UpdateEditor';
+import { AddToJourney } from '../trips/AddToJourney';
 import { formatINR } from '../../lib/utils';
 import { Modal, TravelImage, EmptyState } from './Primitives';
 import { PostCard } from './PostCard';
@@ -15,12 +16,12 @@ import { VisitEditor } from './VisitEditor';
 const tabs = ['Overview', 'Updates', 'Stories', 'Tours', 'Businesses', 'Reviews'] as const;
 
 export function PlaceSheet() {
-  const { activeDestination, setActiveDestination, posts, openSpotOnMap, getReviewsForDestination, addDestinationReview, currentTrip, addDestinationToTrip } = useApp();
+  const { activeDestination, setActiveDestination, posts, openSpotOnMap, getReviewsForDestination, addDestinationReview, journeys } = useApp();
   const { profile, openAuthModal } = useAuth();
   const { destinations, canManage, findManager, updates, listings } = useCommunity();
   const { state, togglePlace, notify, passport } = useSocial();
   const [tab, setTab] = useState<typeof tabs[number]>('Overview');
-  const [editor, setEditor] = useState<'place' | 'update' | 'visit'>();
+  const [editor, setEditor] = useState<'place' | 'update' | 'visit' | 'journey'>();
   const [review, setReview] = useState('');
   const [rating, setRating] = useState('5');
   const [busy, setBusy] = useState(false);
@@ -32,7 +33,6 @@ export function PlaceSheet() {
   const placeUpdates = updates.filter(update => update.destinationId === place.id);
   const placeListings = listings.filter(item => item.destinationId === place.id && (tab === 'Tours' ? item.category === 'Tour package' : item.category !== 'Tour package'));
   const managerId = findManager(place.id) ?? placeUpdates[0]?.author.id;
-  const planned = currentTrip.stops.some(stop => stop.spotName === place.name && stop.state === place.state);
   const saved = state.savedPlaces.includes(place.id);
   const visited = passport.some(visit => visit.destinationId === place.id);
 
@@ -48,9 +48,7 @@ export function PlaceSheet() {
         {(!profile || profile.activeRole === 'traveler') && <button className={`sn-button secondary sn-visit-action${visited ? ' is-visited' : ''}`} onClick={() => profile ? setEditor('visit') : openAuthModal()}>
           {visited ? <Check size={16} /> : <Stamp size={16} />}{visited ? 'Visited · Edit stamp' : 'Mark visited'}
         </button>}
-        <button className="sn-button secondary" disabled={planned} onClick={async () => { if (await addDestinationToTrip(place)) notify('Place added to My journeys.'); }}>
-          {planned ? <Check size={16} /> : <Plus size={16} />}{planned ? 'In your journey' : 'Add to journey'}
-        </button>
+        <button className="sn-button secondary" onClick={() => { if (journeys.requireAccount()) setEditor('journey'); }}><Plus size={16} /> Add to journey</button>
         {managerId && <FollowAccount id={managerId} label="Follow manager" />}
       </div>
       {canManage(place.id) && <div className="sn-secondary-actions sn-place-manage">
@@ -88,5 +86,7 @@ export function PlaceSheet() {
     {editor === 'place' && <DestinationEditor place={place} onClose={() => setEditor(undefined)} onSave={() => { setEditor(undefined); notify('Destination updated.'); }} />}
     {editor === 'update' && <UpdateEditor destination={place} onClose={() => setEditor(undefined)} onSave={() => { setEditor(undefined); setTab('Updates'); notify('Update published.'); }} />}
     {editor === 'visit' && <VisitEditor destination={place} onClose={() => setEditor(undefined)} />}
+    {editor === 'journey' && <AddToJourney stop={{ spotName: place.name, state: place.state, latitude: place.latitude, longitude: place.longitude,
+      costInInr: place.estimatedDailyBudgetInr, thumbnailUrl: place.coverImage }} onClose={() => setEditor(undefined)} />}
   </Modal>;
 }

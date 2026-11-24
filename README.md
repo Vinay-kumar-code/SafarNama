@@ -28,7 +28,7 @@ Live maps in the Android app use `VITE_ANDROID_GOOGLE_MAPS_API_KEY` for the Maps
 
 - Publish a photo story, a short travel note, or a reel. Follow travelers, join conversations, and save stories to your journal.
 - Discover places on the map or in Explore. Open destination guides for photos, budgets, best times to visit, reviews, and travel stories.
-- Add stops to your journey, organize them by day, edit notes, share your itinerary, or export it.
+- Keep separate journeys in **My journal → My journeys**. Add a stop from a destination or story, choose its day, and reorder or edit your stops. Each journey has its own estimated budget, notes, and share or export options.
 - Ask travel questions and read replies from travelers and verified guides.
 - Explore India's travel challenges and preview checkpoints, badges, and leaderboards.
 - Use the full-screen map to search a city, destination, or coordinates and find listed places nearby. Sign in to add a destination, drop its pin, or edit a place you manage.

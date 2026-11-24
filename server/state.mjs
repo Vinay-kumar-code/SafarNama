@@ -118,6 +118,7 @@ export function createState(dataDirectory) {
     ON CONFLICT(kind,id) DO UPDATE SET data=excluded.data,parent=excluded.parent`);
   const remove = db.prepare('DELETE FROM records WHERE kind=? AND id=?');
   const ownerData = db.prepare('SELECT data FROM private WHERE owner=? AND kind=? AND id=?');
+  const countTrips = db.prepare("SELECT count(*) AS n FROM private WHERE owner=? AND kind='trip'");
   const putPrivate = db.prepare(`INSERT INTO private VALUES (?,?,?,?) ON CONFLICT(owner,kind,id) DO UPDATE SET data=excluded.data`);
   const removePrivate = db.prepare('DELETE FROM private WHERE owner=? AND kind=? AND id=?');
   const list = db.prepare('SELECT * FROM records WHERE kind=? ORDER BY rowid DESC LIMIT 500');
@@ -279,12 +280,20 @@ export function createState(dataDirectory) {
     const owner = account.profile.id;
     if (kind === 'profile') return;
     if (kind === 'trip') {
-      ensure(id === 'current' && method === 'PUT', 'Invalid trip action.');
+      if (id !== 'current') idOf(id, uuidPattern);
+      ensure(method === 'PUT', 'Invalid journey action.');
       const saved = decode(ownerData.get(owner, kind, id));
       ensure(body.version === (saved?.version ?? 0), 'Your journey changed elsewhere. Reopen it and try again.', 409);
+      if (body.remove === true) {
+        ensure(saved, 'Journey not found.', 404);
+        removePrivate.run(owner, kind, id);
+        return;
+      }
+      ensure(saved || countTrips.get(owner).n < 20, 'You can keep up to 20 journeys.');
       const trip = body.trip;
       ensure(trip && Array.isArray(trip.stops) && trip.stops.length <= 250, 'A journey can contain up to 250 stops.');
       const tripId = idOf(trip.id, uuidPattern);
+      ensure((id === 'current' || tripId === id) && (!saved || tripId === saved.trip.id), 'Journey ID does not match.');
       const stops = trip.stops.map(stop => ({
         id: idOf(stop.id, uuidPattern), tripId, postId: stop.postId ? idOf(stop.postId, uuidPattern) : undefined,
         spotName: str(stop.spotName, 100, true), state: str(stop.state, 65),
@@ -340,10 +349,14 @@ export function createState(dataDirectory) {
   function snapshot(account) {
     const owner = account?.profile.id;
     const personal = { passport: [], following: [], savedPlaces: [], likes: [], saves: [], questionVotes: [], replyVotes: [], helpful: [],
-      trip: null, tripVersion: 0 };
+      trip: null, tripVersion: 0, trips: [] };
     if (owner) {
       for (const item of db.prepare('SELECT * FROM private WHERE owner=? ORDER BY rowid DESC').all(owner)) {
-        if (item.kind === 'trip') { const saved = decode(item); personal.trip = saved.trip; personal.tripVersion = saved.version; }
+        if (item.kind === 'trip') {
+          const saved = decode(item);
+          personal.trips.push({ ...saved, recordId: item.id });
+          if (item.id === 'current') { personal.trip = saved.trip; personal.tripVersion = saved.version; }
+        }
         else if (item.kind === 'passport') personal.passport.push(decode(item));
         else if (Array.isArray(personal[item.kind])) personal[item.kind].push(item.id);
       }

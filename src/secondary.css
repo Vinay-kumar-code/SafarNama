@@ -104,6 +104,9 @@
 .sn-checkpoint .sn-secondary-actions { flex-wrap: nowrap; }
 .sn-checkpoint .sn-secondary-actions .sn-button { white-space: nowrap; }
 .sn-journey-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); }
+.sn-journey-heading { flex-wrap: wrap; }
+.sn-journey-select { max-width: 400px; margin-bottom: 18px; }
+.sn-journey-edit-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sn-journey-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .sn-journey-facts div { min-width: 0; border-radius: 8px; padding: 9px; background: #f5f6ef; }
 .sn-journey-facts dt { font-size: 11px; color: #536150; }
@@ -115,6 +118,9 @@
 .sn-journey-stop .sn-soft-icon { width: 25px; height: 25px; font-size: 12px; font-weight: 650; }
 .sn-journey-thumbnail { width: 53px; height: 53px; object-fit: cover; border-radius: 7px; flex: 0 0 53px; }
 .sn-journey-stop-actions { margin-top: 8px; gap: 6px; }
+.sn-journey-order { display: inline-flex; gap: 2px; }
+.sn-journey-order .sn-icon { width: 40px; height: 40px; }
+.sn-journey-order .sn-icon:disabled { opacity: .34; }
 .sn-journey-notes { white-space: pre-wrap; }
 @media (max-width: 767px) {
   .sn-journey-grid { grid-template-columns: minmax(0, 1fr); }

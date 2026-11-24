@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Post, Profile, DestinationHub, QAThread, Campaign, Trip, GearTag, UserRole, DestinationReview } from '../types';
+import { Post, Profile, DestinationHub, QAThread, Campaign, GearTag, UserRole, DestinationReview } from '../types';
 import { guestProfile } from '../lib/authHelpers';
 import { getStoredData, setStoredData } from '../lib/utils';
 import { useAuth } from './AuthContext';
 import { hasServerStorage } from '../lib/serverStorage';
 import { reportStorageError, useServerData } from './ServerDataContext';
+import { useJourneys } from './useJourneys';
 
 export type NavTab = 'feed' | 'explore' | 'reels' | 'map' | 'trips' | 'qa' | 'campaigns' | 'profile' | 'studio';
 
@@ -49,12 +50,7 @@ interface AppContextType {
   openSpotOnMap: (lat: number, lng: number, spotName: string) => void;
   selectedMapSpot: { lat: number; lng: number; spotName: string } | null;
   clearSelectedMapSpot: () => void;
-  currentTrip: Trip;
-  addSpotToTrip: (post: Post) => Promise<boolean>;
-  addDestinationToTrip: (destination: DestinationHub) => Promise<boolean>;
-  removeStopFromTrip: (stopId: string) => Promise<boolean>;
-  renameTrip: (title: string) => Promise<boolean>;
-  editTripStop: (stopId: string, dayNumber: number, notes: string) => Promise<boolean>;
+  journeys: ReturnType<typeof useJourneys>;
   qaThreads: QAThread[];
   addQAQuestion: (title: string, destination: DestinationHub, category: QAThread['category']) => Promise<boolean>;
   addQAReply: (threadId: string, replyText: string) => Promise<boolean>;
@@ -77,7 +73,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mapReturn, setMapReturn] = useState<Exclude<NavTab, 'map'>>('feed');
   const currentUser = profile ?? guestProfile;
   const activeRole = currentUser.activeRole;
-  const tripKey = `trip_v2_${currentUser.id || 'guest'}`;
+  const journeys = useJourneys();
   const [allReactions, setAllReactions] = useState<Reactions>(() => getStoredData('post_reactions', {}));
   const reactions = allReactions[currentUser.id] ?? {};
   const [basePosts, setPosts] = useState<Post[]>(() =>
@@ -103,15 +99,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => 
     getStoredData<Campaign[]>('campaigns_cache', []).filter(campaign => !['camp-01', 'camp-02'].includes(campaign.id))
   );
-
-  const [localTrip, setCurrentTrip] = useState<Trip>(() => {
-    const emptyTrip: Trip = {
-      id: crypto.randomUUID(), title: 'My journey', description: '', totalBudgetInr: 0,
-      isPublic: false, shareSlug: crypto.randomUUID(), stops: [], createdAt: new Date().toISOString(),
-    };
-    return hasServerStorage ? emptyTrip : getStoredData(tripKey, emptyTrip);
-  });
-  const currentTrip = hasServerStorage ? snapshot?.account.trip ?? localTrip : localTrip;
 
   const [activeTravelNote, setActiveTravelNote] = useState<Post | null>(null);
   const [activeGearModal, setActiveGearModal] = useState<GearTag | null>(null);
@@ -196,86 +183,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const clearSelectedMapSpot = () => {
     setSelectedMapSpot(null);
-  };
-
-  async function changeTrip(update: (trip: Trip) => Trip) {
-    if (hasServerStorage) {
-      if (!profile) { openAuthModal(); return false; }
-      if (!snapshot) { reportStorageError(new Error('Your journey is still loading. Try again.')); return false; }
-      try {
-        await write('me', 'trip', 'current', { version: snapshot.account.tripVersion, trip: update(currentTrip) });
-        return true;
-      } catch (failure) { reportStorageError(failure); return false; }
-    }
-    setCurrentTrip(previous => {
-      const updated = update(previous);
-      setStoredData(tripKey, updated);
-      return updated;
-    });
-    return true;
-  }
-
-  const addTripStop = (stop: Pick<Trip['stops'][number], 'postId' | 'spotName' | 'state' | 'latitude' | 'longitude' | 'costInInr' | 'thumbnailUrl' | 'notes'>) => {
-    return changeTrip(prev => {
-      if (prev.stops.some(place => place.spotName === stop.spotName && place.state === stop.state)) return prev;
-      const lastDay = Math.max(1, ...prev.stops.map(place => place.dayNumber));
-      const stopsOnLastDay = prev.stops.filter(place => place.dayNumber === lastDay);
-      const dayNumber = stopsOnLastDay.length >= 2 ? Math.min(99, lastDay + 1) : lastDay;
-      const orderInDay = 1 + Math.max(0, ...prev.stops.filter(place => place.dayNumber === dayNumber).map(place => place.orderInDay));
-      const newStop = {
-        ...stop,
-        id: crypto.randomUUID(),
-        tripId: prev.id,
-        dayNumber,
-        orderInDay,
-        stayMinutes: 90,
-      };
-      const updated = {
-        ...prev,
-        totalBudgetInr: prev.totalBudgetInr + (stop.costInInr ?? 0),
-        stops: [...prev.stops, newStop],
-      };
-      return updated;
-    });
-  };
-
-  const addSpotToTrip = (post: Post) => addTripStop({
-    postId: post.id, spotName: post.spotName, state: post.state,
-    latitude: post.latitude, longitude: post.longitude, costInInr: post.costInInr,
-    thumbnailUrl: post.thumbnailUrl, notes: post.safetyTips,
-  });
-
-  const addDestinationToTrip = (destination: DestinationHub) => addTripStop({
-    spotName: destination.name, state: destination.state,
-    latitude: destination.latitude, longitude: destination.longitude,
-    costInInr: destination.estimatedDailyBudgetInr, thumbnailUrl: destination.coverImage,
-  });
-
-  const renameTrip = async (title: string) => title.trim()
-    ? changeTrip(previous => ({ ...previous, title: title.trim().slice(0, 100) })) : false;
-
-  const editTripStop = async (stopId: string, dayNumber: number, notes: string) => {
-    if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 99) return false;
-    return changeTrip(previous => {
-      const nextOrder = 1 + Math.max(0, ...previous.stops.filter(stop => stop.dayNumber === dayNumber).map(stop => stop.orderInDay));
-      const stops = previous.stops.map(stop => stop.id === stopId
-        ? { ...stop, dayNumber, notes: notes.trim().slice(0, 1000), orderInDay: stop.dayNumber === dayNumber ? stop.orderInDay : nextOrder }
-        : stop);
-      return { ...previous, stops };
-    });
-  };
-
-  const removeStopFromTrip = (stopId: string) => {
-    return changeTrip(prev => {
-      const stopToRemove = prev.stops.find(s => s.id === stopId);
-      const updatedStops = prev.stops.filter(s => s.id !== stopId);
-      const updated = {
-        ...prev,
-        totalBudgetInr: Math.max(0, prev.totalBudgetInr - (stopToRemove?.costInInr || 0)),
-        stops: updatedStops,
-      };
-      return updated;
-    });
   };
 
   async function writeCommunity(kind: string, id: string, payload: object) {
@@ -539,12 +446,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openSpotOnMap,
         selectedMapSpot,
         clearSelectedMapSpot,
-        currentTrip,
-        addSpotToTrip,
-        addDestinationToTrip,
-        removeStopFromTrip,
-        renameTrip,
-        editTripStop,
+        journeys,
         qaThreads,
         addQAQuestion,
         addQAReply,

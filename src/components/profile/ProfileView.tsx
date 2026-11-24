@@ -28,7 +28,7 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import { UserRole } from '../../types';
 
 export const ProfileView: React.FC = () => {
-  const { currentUser, activeRole, switchRole, currentTrip, posts } = useApp();
+  const { currentUser, activeRole, switchRole, posts } = useApp();
   const { 
     isAuthenticated, 
     openAuthModal, 

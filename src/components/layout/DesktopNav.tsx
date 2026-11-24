@@ -26,7 +26,7 @@ export const DesktopNav: React.FC = () => {
   const { 
     activeTab, 
     setActiveTab, 
-    currentTrip, 
+    journeys,
     qaThreads, 
     activeRole, 
     switchRole, 
@@ -45,7 +45,7 @@ export const DesktopNav: React.FC = () => {
   const [destDropdownOpen, setDestDropdownOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  const totalSavedStops = currentTrip.stops.length;
+  const totalSavedStops = journeys.trips.reduce((total, trip) => total + trip.stops.length, 0);
   const activeQACount = qaThreads.filter(t => t.status === 'active').length;
 
   const navLinks: { id: NavTab; label: string; icon: React.ReactNode; badge?: number }[] = [

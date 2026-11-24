@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Bookmark, Heart, MessageCircle, Send, MapPin, BadgeCheck, ChevronLeft, ChevronRight, ArrowUpRight, Plus, Check, Clapperboard, Ellipsis } from 'lucide-react';
+import { Bookmark, Heart, MessageCircle, Send, MapPin, BadgeCheck, ChevronLeft, ChevronRight, ArrowUpRight, Plus, Clapperboard, Ellipsis } from 'lucide-react';
 import type { Post } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { useSocial } from '../../context/SocialContext';
@@ -8,13 +8,15 @@ import { formatINR, timeAgo } from '../../lib/utils';
 import { Modal, TravelImage, EmptyState, ProfileAvatar } from './Primitives';
 import { isNative, nativeAction } from '../../lib/device';
 import { hasServerStorage, storyShareUrl } from '../../lib/serverStorage';
+import { AddToJourney } from '../trips/AddToJourney';
 
 export function PostCard({ post, compact = false, onShowMap }: { post: Post; compact?: boolean; onShowMap?: () => void }) {
-  const { currentUser, toggleLikePost, toggleSavePost, setActiveDestination, openSpotOnMap, addSpotToTrip, currentTrip, editPost, deletePost } = useApp();
+  const { currentUser, toggleLikePost, toggleSavePost, setActiveDestination, openSpotOnMap, journeys, editPost, deletePost } = useApp();
   const { state, toggleFollow, addComment, notify } = useSocial();
   const { destinations } = useCommunity();
   const [slide, setSlide] = useState(0); const [details, setDetails] = useState(false); const [commentsOpen, setCommentsOpen] = useState(false); const [reply, setReply] = useState('');
   const [editing, setEditing] = useState(false);
+  const [addingToJourney, setAddingToJourney] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [caption, setCaption] = useState('');
   const [editError, setEditError] = useState('');
@@ -24,7 +26,6 @@ export function PostCard({ post, compact = false, onShowMap }: { post: Post; com
   const images = post.carouselImages?.length ? post.carouselImages : post.thumbnailUrl ? [post.thumbnailUrl] : [];
   const comments = state.comments.filter(comment => comment.postId === post.id);
   const destination = destinations.find(place => place.id === post.destinationId);
-  const inTrip = currentTrip.stops.some(stop => stop.spotName === post.spotName);
   function showOnMap() {
     openSpotOnMap(post.latitude, post.longitude, post.spotName);
     onShowMap?.();
@@ -71,10 +72,12 @@ export function PostCard({ post, compact = false, onShowMap }: { post: Post; com
     </div>}
     <div className="sn-post-body">{post.format === 'quick_tip' && <span className="sn-eyebrow">A note from the road</span>}<p className={post.format === 'quick_tip' ? 'sn-note-text' : 'sn-caption'}>{post.caption}</p>
       {<button className="sn-details-toggle" onClick={() => setDetails(!details)} aria-expanded={details}>The details that help you get there <ArrowUpRight size={14} /></button>}
-      {details && <div className="sn-travel-details"><div><span>Traveler’s budget</span><strong>{post.costInInr !== undefined ? `${formatINR(post.costInInr)} / day` : 'Not shared'}</strong></div><div><span>When to visit</span><strong>{post.bestTimeToVisit || 'Ask the traveler'}</strong></div>{post.howToReach && <p>{post.howToReach}</p>}{post.safetyTips && <p>{post.safetyTips}</p>}{post.connectivitySignal && <p>Connectivity · {post.connectivitySignal}</p>}<button onClick={showOnMap}><MapPin size={15} />View on map</button><button disabled={inTrip} onClick={async () => { if (await addSpotToTrip(post)) notify('Place added to My journeys.'); }}>{inTrip ? <Check size={15} /> : <Plus size={15} />}{inTrip ? 'In your journey' : 'Add to journey'}</button></div>}
+      {details && <div className="sn-travel-details"><div><span>Traveler’s budget</span><strong>{post.costInInr !== undefined ? `${formatINR(post.costInInr)} / day` : 'Not shared'}</strong></div><div><span>When to visit</span><strong>{post.bestTimeToVisit || 'Ask the traveler'}</strong></div>{post.howToReach && <p>{post.howToReach}</p>}{post.safetyTips && <p>{post.safetyTips}</p>}{post.connectivitySignal && <p>Connectivity · {post.connectivitySignal}</p>}<button onClick={showOnMap}><MapPin size={15} />View on map</button><button onClick={() => { if (journeys.requireAccount()) setAddingToJourney(true); }}><Plus size={15} />Add to journey</button></div>}
       <div className="sn-post-actions"><button className={post.isLiked ? 'liked' : ''} aria-label={post.isLiked ? 'Unlike story' : 'Like story'} aria-pressed={!!post.isLiked} onClick={() => toggleLikePost(post.id)}><Heart size={21} fill={post.isLiked ? 'currentColor' : 'none'} /><span>{post.likesCount.toLocaleString('en-IN')}</span></button><button aria-label="Open comments" onClick={() => setCommentsOpen(true)}><MessageCircle size={21} /><span>{comments.length || 'Comment'}</span></button><button aria-label="Share story" onClick={share}><Send size={20} /></button><button className={`sn-save ${post.isSaved ? 'saved' : ''}`} aria-label={post.isSaved ? 'Unsave story' : 'Save story'} aria-pressed={!!post.isSaved} onClick={() => toggleSavePost(post.id)}><Bookmark size={21} fill={post.isSaved ? 'currentColor' : 'none'} /></button></div>
     </div>
     {commentsOpen && <Modal title="Travel conversations" onClose={() => setCommentsOpen(false)}><div className="sn-comments"><p className="sn-comment-context">{post.spotName}</p>{comments.length ? comments.map(comment => <div className="sn-comment" key={comment.id}><TravelImage className="sn-avatar" src={comment.author.avatarUrl} alt="" /><div><strong>{comment.author.fullName}</strong><small>{timeAgo(comment.createdAt)}</small><p>{comment.text}</p></div></div>) : <EmptyState title="Start a conversation" description="Ask about the journey, share a tip, or say what caught your eye." />}</div><form className="sn-comment-form" onSubmit={async event => { event.preventDefault(); if (sending) return; setSending(true); if (await addComment(post.id, reply)) setReply(''); setSending(false); }}><input aria-label="Your comment" placeholder="Add to the conversation…" value={reply} maxLength={1000} onChange={event => setReply(event.target.value)} /><button className="sn-icon" aria-label="Post comment" disabled={sending || !reply.trim()}><Send size={20} /></button></form></Modal>}
+    {addingToJourney && <AddToJourney stop={{ postId: post.id, spotName: post.spotName, state: post.state, latitude: post.latitude,
+      longitude: post.longitude, costInInr: post.costInInr, thumbnailUrl: post.thumbnailUrl, notes: post.safetyTips }} onClose={() => setAddingToJourney(false)} />}
     {editing && <Modal title={confirmDelete ? 'Delete this story?' : 'Edit story'} onClose={() => { if (!saving) setEditing(false); }}>
       <form className="sn-secondary-form" onSubmit={async event => {
         event.preventDefault();

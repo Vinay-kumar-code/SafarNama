@@ -93,6 +93,15 @@ test('server protects ownership and persists publishing, files, and private acco
     const trip = { id: randomUUID(), shareSlug: randomUUID(), title: 'Private journey', stops: [] };
     assert.equal((await put('/api/me/trip/current', { version: 0, trip })).status, 200);
     assert.equal((await put('/api/me/trip/current', { version: 0, trip })).status, 409);
+    const firstStop = { id: randomUUID(), spotName: 'Hampi', state: 'Karnataka', latitude: 15, longitude: 76,
+      dayNumber: 2, orderInDay: 2, stayMinutes: 90, costInInr: 250 };
+    const secondStop = { ...firstStop, id: randomUUID(), spotName: 'Badami', orderInDay: 1, stayMinutes: 60, costInInr: 120 };
+    const weekend = { id: randomUUID(), shareSlug: randomUUID(), title: 'Karnataka weekend', stops: [secondStop, firstStop] };
+    const weekendPath = '/api/me/trip/' + weekend.id;
+    assert.equal((await put(weekendPath, { version: 0, trip: weekend })).status, 200);
+    assert.equal((await put(weekendPath, { version: 0, trip: weekend })).status, 409);
+    assert.equal((await put(weekendPath, { version: 1, remove: true }, 'business')).status, 409);
+    assert.equal((await put('/api/me/trip/' + randomUUID(), { version: 0, trip: weekend })).status, 400);
     const comment = { postId, text: 'Thank you' };
     assert.equal((await put('/api/public/comments/' + randomUUID(), comment, 'business')).status, 200);
     const questionId = randomUUID();
@@ -108,8 +117,10 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal(guest.comments[0].text, comment.text);
     assert.equal(guest.reviews[0].rating, 5);
     assert.equal(guest.account.trip, null);
+    assert.deepEqual(guest.account.trips, []);
     assert.deepEqual(guest.account.passport, []);
     assert.deepEqual((await bootstrap('business')).account.passport, []);
+    assert.deepEqual((await bootstrap('business')).account.trips, []);
 
     await close(app);
     app = await createApp(options);
@@ -117,6 +128,14 @@ test('server protects ownership and persists publishing, files, and private acco
     const persisted = await bootstrap('traveler');
     assert.equal(persisted.posts[0].id, postId);
     assert.equal(persisted.account.trip.title, trip.title);
+    assert.deepEqual(persisted.account.trips.map(item => item.recordId), [weekend.id, 'current']);
+    const savedJourney = persisted.account.trips[0].trip;
+    assert.equal(savedJourney.title, weekend.title);
+    assert.equal(savedJourney.totalBudgetInr, 370);
+    assert.deepEqual(savedJourney.stops.map(stop => [stop.spotName, stop.dayNumber, stop.orderInDay]), [['Badami', 2, 1], ['Hampi', 2, 2]]);
+    assert.equal((await put(weekendPath, { version: 1, remove: true })).status, 200);
+    assert.equal((await put(weekendPath, { version: 1, trip: weekend })).status, 409);
+    assert.deepEqual((await bootstrap('traveler')).account.trips.map(item => item.trip.id), [trip.id]);
     assert.equal(persisted.account.passport[0].visitedOn, '2024-04-03');
     assert.equal(persisted.updates.length, 1);
     assert.equal(persisted.listings.length, 1);
