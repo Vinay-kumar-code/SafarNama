@@ -1,4 +1,5 @@
-import { ArrowUpRight, Bell, CalendarDays, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowUpRight, Bell, BellRing, CalendarDays, MapPin } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
@@ -14,6 +15,28 @@ export function FollowAccount({ id, label }: { id: string; label?: string }) {
   return <button className="sn-button secondary" aria-pressed={following} onClick={() => toggleFollow(id)}>
     <Bell size={15} /> {following ? 'Following' : label ?? 'Follow'}
   </button>;
+}
+
+export function FollowPlace({ id }: { id: string }) {
+  const { state, toggleFollowPlace } = useSocial();
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState('');
+  const following = state.followedPlaces.includes(id);
+
+  async function toggle() {
+    setWorking(true);
+    setError('');
+    try { await toggleFollowPlace(id); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not update your followed places.'); }
+    finally { setWorking(false); }
+  }
+
+  return <div className="sn-place-follow">
+    <button className="sn-button secondary" type="button" aria-pressed={following} disabled={working} onClick={toggle}>
+      {following ? <BellRing size={16} /> : <Bell size={16} />} {following ? 'Following place' : 'Follow place'}
+    </button>
+    {error && <p className="sn-form-feedback" role="alert">{error}</p>}
+  </div>;
 }
 
 export function UpdateCard({ update, showDestination = false }: { update: DestinationUpdate; showDestination?: boolean }) {

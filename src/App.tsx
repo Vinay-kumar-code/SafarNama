@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useEffectEvent, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocialProvider, useSocial } from './context/SocialContext';
@@ -39,7 +39,9 @@ function MainScreen() {
     isWriteReviewModalOpen, closeWriteReviewModal,
   } = useApp();
   const { isAuthModalOpen, closeAuthModal, isOnboardingOpen, closeOnboarding, isAdminPortalOpen, closeAdminPortal } = useAuth();
-  const { composerOpen, notice, notify } = useSocial(); const [sharedPostId, setSharedPostId] = useState('');
+  const { composerOpen, notice, notify } = useSocial();
+  const [sharedPostId, setSharedPostId] = useState('');
+  const openFeed = useEffectEvent(() => setActiveTab('feed'));
   useEffect(() => {
     const showNotice = (event: Event) => notify((event as CustomEvent<string>).detail);
     window.addEventListener('safarnama:notice', showNotice);
@@ -69,9 +71,22 @@ function MainScreen() {
     };
     return () => { delete window.safarnamaBack; };
   });
-  useEffect(() => { if (!notice) return; const timeout = setTimeout(() => notify(''), 6000); return () => clearTimeout(timeout); }, [notice]);
+  useEffect(() => { if (!notice) return; const timeout = setTimeout(() => notify(''), 6000); return () => clearTimeout(timeout); }, [notice, notify]);
   useEffect(() => { window.scrollTo(0, 0); }, [activeTab]);
-  useEffect(() => { function readLink() { const params = new URLSearchParams(window.location.hash.slice(1)); const id = params.get('post'); if (id) { setActiveTab('feed'); setSharedPostId(id); } } readLink(); window.addEventListener('hashchange', readLink); return () => window.removeEventListener('hashchange', readLink); }, []);
+  useEffect(() => {
+    function readLink() {
+      const id = new URLSearchParams(window.location.hash.slice(1)).get('post') ?? '';
+      setSharedPostId(id);
+      if (id) openFeed();
+    }
+    readLink();
+    window.addEventListener('hashchange', readLink);
+    return () => window.removeEventListener('hashchange', readLink);
+  }, []);
+  function closeSharedPost() {
+    setSharedPostId('');
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+  }
   const sharedPost = posts.find(post => post.id === sharedPostId);
   return <div className={`sn-app${isNative ? ' sn-android' : ''}`}><a className="sn-skip-link" href="#main-content">Skip to content</a>{activeTab !== 'map' && <SocialNav />}<main id="main-content" className={`sn-main sn-main-${activeTab}`} tabIndex={-1}>{isOffline && activeTab !== 'map' && <div className="sn-offline" role="status">You’re offline. Saved stories are still here.</div>}<Suspense fallback={<div className="sn-loading" role="status">Finding your next adventure…</div>}>
     {storage.error && activeTab !== 'map' && <div className="sn-offline" role="status">{storage.error} <button onClick={() => void storage.refresh()}>Retry</button></div>}
@@ -80,8 +95,8 @@ function MainScreen() {
     {activeTab === 'studio' && <StudioView />}
   </Suspense></main><AuthModal /><OnboardingModal /><TravelNoteModal /><GearShopModal /><WriteReviewModal /><Suspense fallback={null}><AdminPortal /></Suspense>
     {activeDestination && <PlaceSheet key={activeDestination.id} />}{composerOpen && <CreateStory />}{notice && <div className="sn-toast" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => notify('')}>×</button></div>}
-    {sharedPostId && <Modal title="A story from the road" onClose={() => { setSharedPostId(''); history.replaceState(null, '', window.location.pathname + window.location.search); }}>
-      {sharedPost ? <PostCard post={sharedPost} /> : <div className="sn-empty"><h3>{hasServerStorage && !storage.snapshot && !storage.error ? 'Loading story…' : 'Story unavailable'}</h3><p>{storage.error || (hasServerStorage ? '' : 'Local preview stories are available on the device where they were created.')}</p></div>}
+    {sharedPostId && <Modal title="A story from the road" onClose={closeSharedPost}>
+      {sharedPost ? <PostCard key={sharedPost.id} post={sharedPost} onNavigate={closeSharedPost} /> : <div className="sn-empty"><h3>{hasServerStorage && !storage.snapshot && !storage.error ? 'Loading story…' : 'Story unavailable'}</h3><p>{storage.error || (hasServerStorage ? '' : 'Local preview stories are available on the device where they were created.')}</p></div>}
     </Modal>}
   </div>;
 }

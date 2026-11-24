@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, LogIn, LogOut, MapPin, MessageCircle, Plus, Settings, Sparkles, Workflow } from 'lucide-react';
+import { ArrowUpRight, BookOpen, LogIn, LogOut, MapPin, MessageCircle, Plus, Settings, Sparkles, Workflow } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
@@ -8,8 +8,9 @@ import { accountLabels, isAccountType } from '../../lib/authHelpers';
 import { EmptyState, ProfileAvatar, TravelImage } from './Primitives';
 import { PostCard } from './PostCard';
 import { PassportView } from './PassportView';
+import { FollowPlace } from '../destinations/CommunityCards';
 
-const journalTabs = ['My stories', 'Saved stories', 'Saved places'] as const;
+const journalTabs = ['My stories', 'Saved stories', 'Saved places', 'Followed places'] as const;
 type JournalTab = typeof journalTabs[number] | 'Passport';
 
 export function JournalView() {
@@ -25,6 +26,7 @@ export function JournalView() {
   const saved = posts.filter(post => post.isSaved);
   const displayed = tab === 'My stories' ? own : saved;
   const savedPlaces = destinations.filter(place => state.savedPlaces.includes(place.id));
+  const followedPlaces = destinations.filter(place => state.followedPlaces.includes(place.id));
 
   return <section className="sn-journal">
     {profile ? <>
@@ -47,14 +49,26 @@ export function JournalView() {
       <button onClick={() => setActiveTab('campaigns')}><Sparkles size={20} /><span><strong>Celebrate India</strong></span></button>
       {profile && <button onClick={() => setActiveTab('studio')}><Workflow size={20} /><span><strong>Publishing studio</strong></span></button>}
     </div>
-    {!profile ? <EmptyState title="Make this journal yours" description="Sign in or create an account to publish stories, follow people, and save places." action={<div className="sn-secondary-actions">
+    {!profile ? <EmptyState title="Make this journal yours" description="Sign in or create an account to publish stories and save or follow places." action={<div className="sn-secondary-actions">
       <button className="sn-button" onClick={() => openAuthModal('signup')}>Create account</button><button className="sn-button secondary" onClick={() => openAuthModal()}><LogIn size={15} /> Sign in</button>
     </div>} /> : <>
       <div className="sn-feed-tabs sn-journal-tabs" role="group" aria-label="Your journal tabs">{availableTabs.map(name => <button key={name} aria-pressed={tab === name} className={tab === name ? 'active' : ''} onClick={() => setTab(name)}>{name}</button>)}</div>
-      {tab === 'Passport' ? <PassportView /> : tab === 'Saved places' ? savedPlaces.length ? <div className="sn-saved-places">{savedPlaces.map(place => <button key={place.id} onClick={() => setActiveDestination(place)}><TravelImage src={place.coverImage} alt="" /><strong>{place.name}</strong><small>{place.state}</small></button>)}</div>
+      {tab === 'Followed places' && (followedPlaces.length ? <ul className="sn-panel">
+        {followedPlaces.map(place => <li className="sn-list-row sn-followed-place" key={place.id}>
+          <button className="sn-followed-place-guide" onClick={() => setActiveDestination(place)}>
+            <TravelImage src={place.coverImage} alt="" />
+            <span><strong>{place.name}</strong><small>{place.state}</small></span><ArrowUpRight size={15} />
+          </button>
+          <FollowPlace id={place.id} />
+        </li>)}
+      </ul> : <EmptyState title="Follow places you care about" description="Follow a destination to get its local updates in your Following feed."
+        action={<button className="sn-button secondary" onClick={() => setActiveTab('explore')}>Explore India</button>} />)}
+      {tab === 'Passport' && <PassportView />}
+      {tab === 'Saved places' && (savedPlaces.length ? <div className="sn-saved-places">{savedPlaces.map(place => <button key={place.id} onClick={() => setActiveDestination(place)}><TravelImage src={place.coverImage} alt="" /><strong>{place.name}</strong><small>{place.state}</small></button>)}</div>
         : <EmptyState title="Save places you want to visit" description="Bookmark destinations to find them here." action={<button className="sn-button secondary" onClick={() => setActiveTab('explore')}>Explore India</button>} />
-        : displayed.length ? displayed.map(post => <PostCard post={post} key={post.id} />)
-          : <EmptyState title={tab === 'My stories' ? 'Your first story starts here' : 'Save stories you want to revisit'} description={tab === 'My stories' ? 'Share a photo, note, or reel from a place you’ve explored.' : 'Tap the bookmark on a story to find it again.'} action={<button className="sn-button secondary" onClick={() => tab === 'My stories' ? setComposerOpen(true) : setActiveTab('feed')}>{tab === 'My stories' ? 'Share a story' : 'Browse stories'}</button>} />}
+      )}
+      {(tab === 'My stories' || tab === 'Saved stories') && (displayed.length ? displayed.map(post => <PostCard post={post} key={post.id} />)
+        : <EmptyState title={tab === 'My stories' ? 'Your first story starts here' : 'Save stories you want to revisit'} description={tab === 'My stories' ? 'Share a photo, note, or reel from a place you’ve explored.' : 'Tap the bookmark on a story to find it again.'} action={<button className="sn-button secondary" onClick={() => tab === 'My stories' ? setComposerOpen(true) : setActiveTab('feed')}>{tab === 'My stories' ? 'Share a story' : 'Browse stories'}</button>} />)}
       <div className="sn-account-footer"><button onClick={signOut}><LogOut size={15} />Sign out</button></div>
     </>}
   </section>;

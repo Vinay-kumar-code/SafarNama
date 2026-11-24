@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
 import { useSocial } from '../../context/SocialContext';
 import { DestinationEditor } from '../destinations/DestinationEditor';
-import { FollowAccount, ListingCard, UpdateCard } from '../destinations/CommunityCards';
+import { FollowAccount, FollowPlace, ListingCard, UpdateCard } from '../destinations/CommunityCards';
 import { UpdateEditor } from '../destinations/UpdateEditor';
 import { AddToJourney } from '../trips/AddToJourney';
 import { formatINR } from '../../lib/utils';
@@ -44,6 +44,7 @@ export function PlaceSheet() {
     <div className="sn-place-content">
       <div className="sn-place-controls">
         <button className="sn-button" onClick={() => { openSpotOnMap(place.latitude, place.longitude, place.name); setActiveDestination(null); }}><MapPin size={16} />Find on map</button>
+        <FollowPlace id={place.id} />
         <button className="sn-button secondary" aria-pressed={saved} onClick={() => togglePlace(place.id)}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />{saved ? 'Saved' : 'Save place'}</button>
         {(!profile || profile.activeRole === 'traveler') && <button className={`sn-button secondary sn-visit-action${visited ? ' is-visited' : ''}`} onClick={() => profile ? setEditor('visit') : openAuthModal()}>
           {visited ? <Check size={16} /> : <Stamp size={16} />}{visited ? 'Visited · Edit stamp' : 'Mark visited'}
@@ -67,8 +68,12 @@ export function PlaceSheet() {
         {place.culturalEtiquette && <section className="sn-culture-note"><HeartHandshake size={22} /><div><h3>Local customs</h3><p>{place.culturalEtiquette}</p></div></section>}
         {place.galleryImages.length > 0 && <div className="sn-place-gallery">{place.galleryImages.slice(0, 3).map((src, index) => <TravelImage key={src} src={src} alt={`${place.name}, view ${index + 1}`} />)}</div>}
       </>}
-      {tab === 'Updates' && (placeUpdates.length ? <div className="sn-secondary-stack">{placeUpdates.map(item => <UpdateCard update={item} key={item.id} />)}</div> : <EmptyState title="No updates yet" description="Weather, opening hours, and local news from the destination’s manager will appear here." />)}
-      {tab === 'Stories' && (stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onShowMap={() => setActiveDestination(null)} />) : <EmptyState title="No stories from here yet" description="Choose Create a story and tag this destination to share your experience." />)}
+      {tab === 'Updates' && <>
+        {!state.followedPlaces.includes(place.id) && <p className="sn-secondary-body sn-place-update-note">Follow this place to see its updates under Following on Home.</p>}
+        {placeUpdates.length ? <div className="sn-secondary-stack">{placeUpdates.map(item => <UpdateCard update={item} key={item.id} />)}</div>
+          : <EmptyState title="No updates yet" description="Weather, opening hours, and local news from the destination’s manager will appear here." />}
+      </>}
+      {tab === 'Stories' && (stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onNavigate={target => { if (target === 'map') setActiveDestination(null); }} />) : <EmptyState title="No stories from here yet" description="Choose Create a story and tag this destination to share your experience." />)}
       {(tab === 'Tours' || tab === 'Businesses') && (placeListings.length ? <div className="sn-community-grid">{placeListings.map(listing => <ListingCard listing={listing} key={listing.id} />)}</div> : <EmptyState title={tab === 'Tours' ? 'No tours listed yet' : 'No businesses listed yet'} description={tab === 'Tours' ? 'Tour packages published by local guides will appear here.' : 'Stays, agencies, and services listed for this destination will appear here.'} />)}
       {tab === 'Reviews' && <>
         {profile ? <form className="sn-review-form" onSubmit={async event => {

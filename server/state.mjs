@@ -318,7 +318,7 @@ export function createState(dataDirectory) {
       const place = destination(id);
       value = { destinationId: id, name: place.name, state: place.state, visitedOn: date(body.visitedOn),
         stampedAt: decode(ownerData.get(owner, kind, id))?.stampedAt ?? new Date().toISOString() };
-    } else if (kind === 'savedPlaces') destination(id);
+    } else if (kind === 'savedPlaces' || kind === 'followedPlaces') destination(id);
     else if (kind === 'following') idOf(id, uuidPattern);
     else {
       const target = { likes: 'posts', saves: 'posts', questionVotes: 'questions', replyVotes: 'replies', helpful: 'reviews' }[kind];
@@ -328,7 +328,7 @@ export function createState(dataDirectory) {
   }
 
   const publicKinds = new Set(['posts', 'places', 'updates', 'listings', 'comments', 'questions', 'replies', 'reviews']);
-  const privateKinds = new Set(['trip', 'profile', 'passport', 'following', 'savedPlaces', 'likes', 'saves', 'questionVotes', 'replyVotes', 'helpful']);
+  const privateKinds = new Set(['trip', 'profile', 'passport', 'following', 'followedPlaces', 'savedPlaces', 'likes', 'saves', 'questionVotes', 'replyVotes', 'helpful']);
 
   function mutate(scope, kind, id, body, account, method) {
     ensure((scope === 'public' ? publicKinds : privateKinds).has(kind), 'Unknown resource.', 404);
@@ -348,7 +348,7 @@ export function createState(dataDirectory) {
 
   function snapshot(account) {
     const owner = account?.profile.id;
-    const personal = { passport: [], following: [], savedPlaces: [], likes: [], saves: [], questionVotes: [], replyVotes: [], helpful: [],
+    const personal = { passport: [], following: [], followedPlaces: [], savedPlaces: [], likes: [], saves: [], questionVotes: [], replyVotes: [], helpful: [],
       trip: null, tripVersion: 0, trips: [] };
     if (owner) {
       for (const item of db.prepare('SELECT * FROM private WHERE owner=? ORDER BY rowid DESC').all(owner)) {

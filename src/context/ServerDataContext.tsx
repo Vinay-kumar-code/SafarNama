@@ -19,6 +19,7 @@ interface Snapshot {
   account: {
     passport: PassportVisit[];
     following: string[];
+    followedPlaces?: string[];
     savedPlaces: string[];
     likes: string[];
     saves: string[];

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { getStoredData } from '../lib/utils';
 import { passportStoragePrefix, readPassport, validateVisitDate, type PassportVisit } from '../lib/passport';
 import { useApp } from './AppContext';
@@ -7,10 +7,11 @@ import type { ContentFormat, DestinationHub } from '../types';
 import { hasServerStorage } from '../lib/serverStorage';
 import { reportStorageError, useServerData, type TravelComment } from './ServerDataContext';
 
-interface SocialState { following: string[]; savedPlaces: string[]; comments: TravelComment[] }
-const initial: SocialState = { following: [], savedPlaces: [], comments: [] };
+interface SocialState { following: string[]; followedPlaces: string[]; savedPlaces: string[]; comments: TravelComment[] }
+const initial: SocialState = { following: [], followedPlaces: [], savedPlaces: [], comments: [] };
 const SocialContext = createContext<{
   state: SocialState; toggleFollow: (id: string) => void; togglePlace: (id: string) => void;
+  toggleFollowPlace: (id: string) => Promise<void>;
   addComment: (postId: string, text: string) => Promise<boolean>; composerOpen: boolean;
   composerFormat?: ContentFormat;
   openComposer: (format: ContentFormat) => void;
@@ -28,6 +29,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerFormat, setComposerFormat] = useState<ContentFormat>();
   const [notice, notify] = useState('');
+  const pendingSelections = useRef(new Set<string>());
   const [localPassport, setPassport] = useState(() => hasServerStorage ? [] : readPassport(currentUser.id));
   const passport = hasServerStorage ? snapshot?.account.passport ?? [] : localPassport;
   const accountId = currentUser.id;
@@ -66,6 +68,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const comments = hasServerStorage ? snapshot?.comments ?? [] : Object.values(allStates).flatMap(item => item.comments);
   const state = {
     following: hasServerStorage ? snapshot?.account.following ?? [] : own.following,
+    followedPlaces: hasServerStorage ? snapshot?.account.followedPlaces ?? [] : own.followedPlaces ?? [],
     savedPlaces: hasServerStorage ? snapshot?.account.savedPlaces ?? [] : own.savedPlaces,
     comments: [...comments].sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
   };
@@ -79,11 +82,18 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     });
   };
   const toggle = (items: string[], id: string) => items.includes(id) ? items.filter(value => value !== id) : [...items, id];
-  function toggleSelection(kind: 'following' | 'savedPlaces', id: string) {
+  async function toggleSelection(kind: 'following' | 'savedPlaces' | 'followedPlaces', id: string) {
     if (!profile) { openAuthModal(); return; }
-    if (hasServerStorage) {
-      void write('me', kind, id, state[kind].includes(id) ? undefined : {}).catch(reportStorageError);
-    } else update(previous => ({ ...previous, [kind]: toggle(previous[kind], id) }));
+    if (!hasServerStorage) {
+      update(previous => ({ ...previous, [kind]: toggle(previous[kind] ?? [], id) }));
+      return;
+    }
+    if (!snapshot) throw new Error('Your account is still loading. Try again in a moment.');
+    const key = `${kind}/${id}`;
+    if (pendingSelections.current.has(key)) return;
+    pendingSelections.current.add(key);
+    try { await write('me', kind, id, state[kind].includes(id) ? undefined : {}); }
+    finally { pendingSelections.current.delete(key); }
   }
   return <SocialContext.Provider value={{ state, composerOpen, composerFormat, notice, notify, passport: canStamp ? passport : [], saveVisit, removeVisit,
     setComposerOpen: open => {
@@ -94,8 +104,9 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       if (!profile) { openAuthModal(); return; }
       setComposerFormat(format); setComposerOpen(true);
     },
-    toggleFollow: id => toggleSelection('following', id),
-    togglePlace: id => toggleSelection('savedPlaces', id),
+    toggleFollow: id => void toggleSelection('following', id).catch(reportStorageError),
+    togglePlace: id => void toggleSelection('savedPlaces', id).catch(reportStorageError),
+    toggleFollowPlace: id => toggleSelection('followedPlaces', id),
     addComment: async (postId, text) => {
       if (!text.trim()) return false;
       if (!profile) { openAuthModal(); return false; }

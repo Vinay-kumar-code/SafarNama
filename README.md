@@ -18,6 +18,8 @@ The website and Android app use the same React screens in `src/`. Gradle bundles
 
 In **Map**, switch between places and travel stories, search by name or state, and open directions or a destination guide. The bundled map keeps pins and guides available when live tiles are unavailable. From **My journal**, open **My journeys**, **Conversations**, or **Celebrate India**.
 
+Choose **Follow place** on a destination guide to see its weather, hours, advisories, and local news in **Home → Following**. Manage those destinations in **My journal → Followed places**.
+
 Accounts use Supabase Auth. The [Coolify deployment](./COOLIFY.md) stores published content, uploaded media, and signed-in account activity on the Ubuntu server. Development previews can still run with device-local storage. [Destination photo credits](./public/media/credits.html).
 
 Live maps in the Android app use `VITE_ANDROID_GOOGLE_MAPS_API_KEY` for the Maps JavaScript API, with `https://appassets.androidplatform.net/*` allowed as a referrer. Add `safarnama://auth-callback` and `safarnama-preview://auth-callback` to the Supabase redirect URL allowlist for Google sign-in and email confirmation. Google sign-in opens the device browser and returns to SafarNama.

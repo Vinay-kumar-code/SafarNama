@@ -82,6 +82,11 @@ test('server protects ownership and persists publishing, files, and private acco
     const update = { destinationId: placeId, title: 'Weather update', detail: 'Clear', category: 'Weather' };
     assert.equal((await put('/api/public/updates/' + randomUUID(), update, 'business')).status, 403);
     assert.equal((await put('/api/public/updates/' + randomUUID(), update)).status, 200);
+    const followPlace = '/api/me/followedPlaces/' + placeId;
+    assert.equal((await get(followPlace, null, { method: 'PUT' })).status, 401);
+    assert.equal((await put('/api/me/followedPlaces/' + randomUUID(), {}, 'business')).status, 404);
+    assert.equal((await put(followPlace, {}, 'business')).status, 200);
+    assert.equal((await put(followPlace, {}, 'business')).status, 200);
     const listing = { destinationId: placeId, title: 'Stay', detail: 'A room', category: 'Hotel or stay' };
     assert.equal((await put('/api/public/listings/' + randomUUID(), listing)).status, 403);
     assert.equal((await put('/api/public/listings/' + randomUUID(), listing, 'business')).status, 200);
@@ -118,6 +123,7 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal(guest.reviews[0].rating, 5);
     assert.equal(guest.account.trip, null);
     assert.deepEqual(guest.account.trips, []);
+    assert.deepEqual(guest.account.followedPlaces, []);
     assert.deepEqual(guest.account.passport, []);
     assert.deepEqual((await bootstrap('business')).account.passport, []);
     assert.deepEqual((await bootstrap('business')).account.trips, []);
@@ -137,6 +143,13 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal((await put(weekendPath, { version: 1, trip: weekend })).status, 409);
     assert.deepEqual((await bootstrap('traveler')).account.trips.map(item => item.trip.id), [trip.id]);
     assert.equal(persisted.account.passport[0].visitedOn, '2024-04-03');
+    assert.deepEqual(persisted.account.followedPlaces, []);
+    const businessAccount = (await bootstrap('business')).account;
+    assert.deepEqual(businessAccount.followedPlaces, [placeId]);
+    assert.deepEqual(businessAccount.savedPlaces, []);
+    assert.deepEqual(businessAccount.following, []);
+    assert.equal((await get(followPlace, 'business', { method: 'DELETE' })).status, 200);
+    assert.deepEqual((await bootstrap('business')).account.followedPlaces, []);
     assert.equal(persisted.updates.length, 1);
     assert.equal(persisted.listings.length, 1);
     assert.equal((await get(media)).status, 200);

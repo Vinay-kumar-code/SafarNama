@@ -10,7 +10,7 @@ import { isNative, nativeAction } from '../../lib/device';
 import { hasServerStorage, storyShareUrl } from '../../lib/serverStorage';
 import { AddToJourney } from '../trips/AddToJourney';
 
-export function PostCard({ post, compact = false, onShowMap }: { post: Post; compact?: boolean; onShowMap?: () => void }) {
+export function PostCard({ post, compact = false, onNavigate }: { post: Post; compact?: boolean; onNavigate?: (target: 'map' | 'place') => void }) {
   const { currentUser, toggleLikePost, toggleSavePost, setActiveDestination, openSpotOnMap, journeys, editPost, deletePost } = useApp();
   const { state, toggleFollow, addComment, notify } = useSocial();
   const { destinations } = useCommunity();
@@ -28,7 +28,12 @@ export function PostCard({ post, compact = false, onShowMap }: { post: Post; com
   const destination = destinations.find(place => place.id === post.destinationId);
   function showOnMap() {
     openSpotOnMap(post.latitude, post.longitude, post.spotName);
-    onShowMap?.();
+    onNavigate?.('map');
+  }
+  function showLocation() {
+    if (!destination) { showOnMap(); return; }
+    setActiveDestination(destination);
+    onNavigate?.('place');
   }
   async function share() {
     const url = storyShareUrl(post.id);
@@ -43,7 +48,7 @@ export function PostCard({ post, compact = false, onShowMap }: { post: Post; com
     } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) notify('Could not share this story. Please try again.'); }
   }
   return <article className={`sn-post ${compact ? 'sn-post-compact' : ''}`} id={`post-${post.id}`}>
-    <header className="sn-post-header"><ProfileAvatar className="sn-avatar" profile={post.author} /><div className="sn-author"><strong>{post.author.fullName}{post.author.isVerifiedGuide && <BadgeCheck size={15} className="sn-verified" />}</strong><button onClick={() => destination ? setActiveDestination(destination) : showOnMap()}>{post.spotName}<span> · {timeAgo(post.createdAt)}</span></button></div>
+    <header className="sn-post-header"><ProfileAvatar className="sn-avatar" profile={post.author} /><div className="sn-author"><strong>{post.author.fullName}{post.author.isVerifiedGuide && <BadgeCheck size={15} className="sn-verified" />}</strong><button onClick={showLocation}>{post.spotName}<span> · {timeAgo(post.createdAt)}</span></button></div>
       {post.author.id !== currentUser.id && <button className="sn-follow" aria-pressed={state.following.includes(post.author.id)} onClick={() => toggleFollow(post.author.id)}>{state.following.includes(post.author.id) ? 'Following' : 'Follow'}</button>}
       {currentUser.id && post.author.id === currentUser.id && <button className="sn-icon" aria-label="Edit your story" onClick={() => { setCaption(post.caption); setEditError(''); setConfirmDelete(false); setEditing(true); }}><Ellipsis size={20} /></button>}
     </header>

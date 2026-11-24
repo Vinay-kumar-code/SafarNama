@@ -169,6 +169,6 @@ export function DiscoveryMap() {
       openSpotOnMap(place.latitude, place.longitude, place.name);
       notify('Destination published.');
     }} />}
-    {openedStory && <Modal title={openedStory.spotName} onClose={() => setStoryId('')} className="sn-map-story"><PostCard post={openedStory} onShowMap={() => setStoryId('')} /></Modal>}
+    {openedStory && <Modal title={openedStory.spotName} onClose={() => setStoryId('')} className="sn-map-story"><PostCard post={openedStory} onNavigate={() => setStoryId('')} /></Modal>}
   </section>;
 }
