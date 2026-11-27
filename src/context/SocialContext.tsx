@@ -14,7 +14,8 @@ const SocialContext = createContext<{
   toggleFollowPlace: (id: string) => Promise<void>;
   addComment: (postId: string, text: string) => Promise<boolean>; composerOpen: boolean;
   composerFormat?: ContentFormat;
-  openComposer: (format: ContentFormat) => void;
+  composerDestinationId?: string;
+  openComposer: (format: ContentFormat, destinationId?: string) => void;
   setComposerOpen: (open: boolean) => void; notice: string; notify: (message: string) => void;
   passport: PassportVisit[];
   saveVisit: (destination: Pick<DestinationHub, 'id' | 'name' | 'state'>, visitedOn: string) => Promise<void>;
@@ -28,6 +29,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const [allStates, setAllStates] = useState<Record<string, SocialState>>(() => getStoredData('social_v1', {}));
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerFormat, setComposerFormat] = useState<ContentFormat>();
+  const [composerDestinationId, setComposerDestinationId] = useState<string>();
   const [notice, notify] = useState('');
   const pendingSelections = useRef(new Set<string>());
   const [localPassport, setPassport] = useState(() => hasServerStorage ? [] : readPassport(currentUser.id));
@@ -95,14 +97,14 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     try { await write('me', kind, id, state[kind].includes(id) ? undefined : {}); }
     finally { pendingSelections.current.delete(key); }
   }
-  return <SocialContext.Provider value={{ state, composerOpen, composerFormat, notice, notify, passport: canStamp ? passport : [], saveVisit, removeVisit,
+  return <SocialContext.Provider value={{ state, composerOpen, composerFormat, composerDestinationId, notice, notify, passport: canStamp ? passport : [], saveVisit, removeVisit,
     setComposerOpen: open => {
       if (open && !profile) { openAuthModal(); return; }
-      setComposerFormat(undefined); setComposerOpen(open);
+      setComposerFormat(undefined); setComposerDestinationId(undefined); setComposerOpen(open);
     },
-    openComposer: format => {
+    openComposer: (format, destinationId) => {
       if (!profile) { openAuthModal(); return; }
-      setComposerFormat(format); setComposerOpen(true);
+      setComposerFormat(format); setComposerDestinationId(destinationId); setComposerOpen(true);
     },
     toggleFollow: id => void toggleSelection('following', id).catch(reportStorageError),
     togglePlace: id => void toggleSelection('savedPlaces', id).catch(reportStorageError),

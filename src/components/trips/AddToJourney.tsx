@@ -18,7 +18,7 @@ export function AddToJourney({ stop, onClose }: { stop: JourneyStopInput; onClos
     : target && target.stops.length >= 250 ? 'This journey already has 250 stops.'
     : !target && !canCreate ? 'You can keep up to 20 journeys. Choose an existing journey.' : '';
 
-  return <Modal title="Add to journey" onClose={() => { if (!journeys.saving) onClose(); }}>
+  return <Modal title="Add to journey" onClose={() => { if (!journeys.saving) { journeys.clearError(); onClose(); } }}>
     <form className="sn-secondary-form" onSubmit={async event => {
       event.preventDefault();
       if (!journeys.ready || !canAdd) return;
@@ -42,6 +42,7 @@ export function AddToJourney({ stop, onClose }: { stop: JourneyStopInput; onClos
         <input className="sn-field" type="number" min={1} max={99} required value={day} onChange={event => setDay(event.target.value)} />
       </label>
       {problem && <p className="sn-secondary-body" role="status">{problem}</p>}
+      {journeys.error && <p className="sn-form-feedback" role="alert">{journeys.error}</p>}
       <div className="sn-secondary-actions">
         <button className="sn-button" disabled={!canAdd || !journeys.ready || journeys.saving}>{journeys.saving ? 'Saving…' : 'Add stop'}</button>
       </div>

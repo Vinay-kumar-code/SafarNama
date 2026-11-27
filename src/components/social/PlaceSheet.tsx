@@ -19,7 +19,7 @@ export function PlaceSheet() {
   const { activeDestination, setActiveDestination, posts, openSpotOnMap, getReviewsForDestination, addDestinationReview, journeys } = useApp();
   const { profile, openAuthModal } = useAuth();
   const { destinations, canManage, findManager, updates, listings } = useCommunity();
-  const { state, togglePlace, notify, passport } = useSocial();
+  const { state, togglePlace, notify, passport, openComposer } = useSocial();
   const [tab, setTab] = useState<typeof tabs[number]>('Overview');
   const [editor, setEditor] = useState<'place' | 'update' | 'visit' | 'journey'>();
   const [review, setReview] = useState('');
@@ -49,7 +49,7 @@ export function PlaceSheet() {
         {(!profile || profile.activeRole === 'traveler') && <button className={`sn-button secondary sn-visit-action${visited ? ' is-visited' : ''}`} onClick={() => profile ? setEditor('visit') : openAuthModal()}>
           {visited ? <Check size={16} /> : <Stamp size={16} />}{visited ? 'Visited · Edit stamp' : 'Mark visited'}
         </button>}
-        <button className="sn-button secondary" onClick={() => { if (journeys.requireAccount()) setEditor('journey'); }}><Plus size={16} /> Add to journey</button>
+        <button className="sn-button secondary" onClick={() => { if (journeys.requireAccount()) { journeys.clearError(); setEditor('journey'); } }}><Plus size={16} /> Add to journey</button>
         {managerId && <FollowAccount id={managerId} label="Follow manager" />}
       </div>
       {canManage(place.id) && <div className="sn-secondary-actions sn-place-manage">
@@ -73,7 +73,11 @@ export function PlaceSheet() {
         {placeUpdates.length ? <div className="sn-secondary-stack">{placeUpdates.map(item => <UpdateCard update={item} key={item.id} />)}</div>
           : <EmptyState title="No updates yet" description="Weather, opening hours, and local news from the destination’s manager will appear here." />}
       </>}
-      {tab === 'Stories' && (stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onNavigate={target => { if (target === 'map') setActiveDestination(null); }} />) : <EmptyState title="No stories from here yet" description="Choose Create a story and tag this destination to share your experience." />)}
+      {tab === 'Stories' && <>
+        <div className="sn-secondary-actions sn-place-manage"><button className="sn-button secondary" onClick={() => openComposer('carousel_note', place.id)}><Plus size={16} /> Share a story here</button></div>
+        {stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onNavigate={target => { if (target === 'map') setActiveDestination(null); }} />)
+          : <EmptyState title="No stories from here yet" description="Share what you saw or a tip for the next traveler." />}
+      </>}
       {(tab === 'Tours' || tab === 'Businesses') && (placeListings.length ? <div className="sn-community-grid">{placeListings.map(listing => <ListingCard listing={listing} key={listing.id} />)}</div> : <EmptyState title={tab === 'Tours' ? 'No tours listed yet' : 'No businesses listed yet'} description={tab === 'Tours' ? 'Tour packages published by local guides will appear here.' : 'Stays, agencies, and services listed for this destination will appear here.'} />)}
       {tab === 'Reviews' && <>
         {profile ? <form className="sn-review-form" onSubmit={async event => {

@@ -55,9 +55,9 @@ function Reel({ post }: { post: Post }) {
   </div>;
 }
 export function ReelsView() {
-  const { posts } = useApp(); const { setComposerOpen } = useSocial(); const reels = posts.filter(post => post.format === 'reel' && post.videoUrl);
+  const { posts } = useApp(); const { openComposer } = useSocial(); const reels = posts.filter(post => post.format === 'reel' && post.videoUrl);
   if (!reels.length) return <section className="sn-secondary-page"><header className="sn-page-heading"><div><h1>Travel reels<span>.</span></h1><p>See India through travelers’ short films.</p></div></header>
-    <EmptyState title="No reels yet" description="Share a short video from your travels." action={<button className="sn-button" onClick={() => setComposerOpen(true)}>Create a reel</button>} />
+    <EmptyState title="No reels yet" description="Share a short video from your travels." action={<button className="sn-button" onClick={() => openComposer('reel')}>Create a reel</button>} />
   </section>;
-  return <div className="sn-reels-page"><div className="sn-reels-intro"><h1>Travel reels<span>.</span></h1><button className="sn-button" onClick={() => setComposerOpen(true)}>Share a reel</button></div><div className="sn-reel-scroller" aria-label="Travel reels">{reels.map(post => <Reel key={post.id} post={post} />)}</div></div>;
+  return <div className="sn-reels-page"><div className="sn-reels-intro"><h1>Travel reels<span>.</span></h1><button className="sn-button" onClick={() => openComposer('reel')}>Share a reel</button></div><div className="sn-reel-scroller" aria-label="Travel reels">{reels.map(post => <Reel key={post.id} post={post} />)}</div></div>;
 }

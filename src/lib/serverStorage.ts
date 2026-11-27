@@ -20,9 +20,9 @@ export class StorageError extends Error {
 export async function requestStorage<T>(
   path: string, options: RequestInit = {}, authRequired = false, viewer?: string | null,
 ): Promise<T> {
-  const { data } = await supabase.auth.getSession();
-  if (viewer && data.session?.user.id !== viewer) throw new StorageError('The signed-in account changed. Try again.', 401);
-  const token = viewer === null ? undefined : data.session?.access_token;
+  const session = viewer === null ? null : (await supabase.auth.getSession()).data.session;
+  if (viewer && session?.user.id !== viewer) throw new StorageError('The signed-in account changed. Try again.', 401);
+  const token = session?.access_token;
   if (!token && authRequired) throw new StorageError('Sign in to continue.', 401);
   const headers = new Headers(options.headers);
   if (token) headers.set('Authorization', `Bearer ${token}`);

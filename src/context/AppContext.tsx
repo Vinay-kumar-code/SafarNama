@@ -52,8 +52,8 @@ interface AppContextType {
   clearSelectedMapSpot: () => void;
   journeys: ReturnType<typeof useJourneys>;
   qaThreads: QAThread[];
-  addQAQuestion: (title: string, destination: DestinationHub, category: QAThread['category']) => Promise<boolean>;
-  addQAReply: (threadId: string, replyText: string) => Promise<boolean>;
+  addQAQuestion: (title: string, destination: DestinationHub, category: QAThread['category']) => Promise<void>;
+  addQAReply: (threadId: string, replyText: string) => Promise<void>;
   upvoteQAThread: (threadId: string) => void;
   upvoteQAReply: (threadId: string, replyId: string) => void;
   campaigns: Campaign[];
@@ -185,16 +185,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedMapSpot(null);
   };
 
-  async function writeCommunity(kind: string, id: string, payload: object) {
-    try { await write('public', kind, id, payload); return true; }
-    catch (failure) { reportStorageError(failure); return false; }
-  }
-
   const addQAQuestion = async (title: string, destination: DestinationHub, category: QAThread['category']) => {
-    if (!profile) { openAuthModal(); return false; }
-    if (hasServerStorage) return writeCommunity('questions', crypto.randomUUID(), { title, destinationId: destination.id, category });
+    if (!profile) throw new Error('Sign in to post a question.');
+    if (hasServerStorage) { await write('public', 'questions', crypto.randomUUID(), { title, destinationId: destination.id, category }); return; }
     const newThread: QAThread = {
-      id: `qa-${Date.now()}`,
+      id: crypto.randomUUID(),
       author: currentUser,
       destinationName: destination.name,
       title,
@@ -208,42 +203,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
       replies: [],
     };
-    setQaThreads(prev => {
-      const updated = [newThread, ...prev];
-      setStoredData('qa_cache', updated);
-      return updated;
-    });
-    return true;
+    const next = [newThread, ...localQuestions];
+    localStorage.setItem('safarnama_qa_cache', JSON.stringify(next));
+    setQaThreads(next);
   };
 
   const addQAReply = async (threadId: string, replyText: string) => {
-    if (!profile) { openAuthModal(); return false; }
-    if (hasServerStorage) return writeCommunity('replies', crypto.randomUUID(), { threadId, replyText });
-    setQaThreads(prev => {
-      const updated = prev.map(t => {
-        if (t.id === threadId) {
-          const newReply = {
-            id: `reply-${Date.now()}`,
-            threadId,
-            author: currentUser,
-            replyText,
-            isVerifiedLocalReply: currentUser.isVerifiedGuide,
-            upvotesCount: 1,
-            isUpvoted: true,
-            createdAt: new Date().toISOString(),
-          };
-          return {
-            ...t,
-            repliesCount: t.repliesCount + 1,
-            replies: [...t.replies, newReply],
-          };
-        }
-        return t;
-      });
-      setStoredData('qa_cache', updated);
-      return updated;
-    });
-    return true;
+    if (!profile) throw new Error('Sign in to reply.');
+    if (hasServerStorage) { await write('public', 'replies', crypto.randomUUID(), { threadId, replyText }); return; }
+    if (!localQuestions.some(thread => thread.id === threadId)) throw new Error('This question is unavailable.');
+    const reply = { id: crypto.randomUUID(), threadId, author: currentUser, replyText,
+      isVerifiedLocalReply: currentUser.isVerifiedGuide, upvotesCount: 1, isUpvoted: true, createdAt: new Date().toISOString() };
+    const next = localQuestions.map(thread => thread.id === threadId
+      ? { ...thread, repliesCount: thread.replies.length + 1, replies: [...thread.replies, reply] } : thread);
+    localStorage.setItem('safarnama_qa_cache', JSON.stringify(next));
+    setQaThreads(next);
   };
 
   const upvoteQAThread = (threadId: string) => {

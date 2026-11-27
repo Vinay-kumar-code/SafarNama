@@ -88,8 +88,8 @@ function MainScreen() {
     window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
   }
   const sharedPost = posts.find(post => post.id === sharedPostId);
-  return <div className={`sn-app${isNative ? ' sn-android' : ''}`}><a className="sn-skip-link" href="#main-content">Skip to content</a>{activeTab !== 'map' && <SocialNav />}<main id="main-content" className={`sn-main sn-main-${activeTab}`} tabIndex={-1}>{isOffline && activeTab !== 'map' && <div className="sn-offline" role="status">You’re offline. Saved stories are still here.</div>}<Suspense fallback={<div className="sn-loading" role="status">Finding your next adventure…</div>}>
-    {storage.error && activeTab !== 'map' && <div className="sn-offline" role="status">{storage.error} <button onClick={() => void storage.refresh()}>Retry</button></div>}
+  return <div className={`sn-app${isNative ? ' sn-android' : ''}`}><a className="sn-skip-link" href="#main-content">Skip to content</a>{activeTab !== 'map' && <SocialNav />}<main id="main-content" className={`sn-main sn-main-${activeTab}`} tabIndex={-1}>{isOffline && activeTab !== 'map' && <div className="sn-offline" role="status">{hasServerStorage ? 'You’re offline. Updates will reload when you reconnect.' : 'You’re offline.'}</div>}<Suspense fallback={<div className="sn-loading" role="status">Finding your next adventure…</div>}>
+    {storage.error && activeTab !== 'map' && <div className="sn-offline" role="status">{storage.error} <button disabled={storage.loading} onClick={() => void storage.refresh()}>{storage.loading ? 'Retrying…' : 'Retry'}</button></div>}
     {activeTab === 'feed' && <HomeFeed />}{activeTab === 'explore' && <ExploreView />}{activeTab === 'reels' && <ReelsView />}{activeTab === 'profile' && <JournalView />}
     {activeTab === 'map' && <DiscoveryMap />}{activeTab === 'trips' && <TripBuilder />}{activeTab === 'qa' && <QAFeed />}{activeTab === 'campaigns' && <CampaignHub />}
     {activeTab === 'studio' && <StudioView />}

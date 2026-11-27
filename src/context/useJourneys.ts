@@ -3,7 +3,7 @@ import { hasServerStorage } from '../lib/serverStorage';
 import { getStoredData, setStoredData } from '../lib/utils';
 import type { Trip, TripStop } from '../types';
 import { useAuth } from './AuthContext';
-import { reportStorageError, useServerData, type JourneyRecord } from './ServerDataContext';
+import { useServerData, type JourneyRecord } from './ServerDataContext';
 
 export type JourneyStopInput = Pick<TripStop, 'postId' | 'spotName' | 'state' | 'latitude' | 'longitude' | 'costInInr' | 'thumbnailUrl' | 'notes'>;
 
@@ -33,6 +33,7 @@ export function useJourneys() {
   });
   const [selectedId, setSelectedId] = useState(() => getStoredData(selectionKey, ''));
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const pending = useRef(false);
   const account = snapshot?.account;
   const records: JourneyRecord[] = account?.trips ?? (account?.trip ? [{ recordId: 'current', version: account.tripVersion, trip: account.trip }] : []);
@@ -41,6 +42,7 @@ export function useJourneys() {
   const ready = !hasServerStorage || !profile || Boolean(snapshot);
 
   function selectTrip(id: string) {
+    setError('');
     setSelectedId(id);
     setStoredData(selectionKey, id);
   }
@@ -54,11 +56,12 @@ export function useJourneys() {
   async function mutate(id: string, update: (trip: Trip | undefined) => Trip | undefined) {
     if (!requireAccount() || pending.current) return false;
     if (!ready) {
-      reportStorageError(new Error('Your journeys are still loading. Try again.'));
+      setError('Your journeys are still loading. Try again.');
       return false;
     }
     pending.current = true;
     setSaving(true);
+    setError('');
     try {
       const existing = trips.find(trip => trip.id === id);
       const next = update(existing);
@@ -85,8 +88,8 @@ export function useJourneys() {
         setLocalTrips(updated);
       }
       return true;
-    } catch (error) {
-      reportStorageError(error);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Could not save the journey. Try again.');
       return false;
     } finally {
       pending.current = false;
@@ -142,7 +145,7 @@ export function useJourneys() {
     });
   }
 
-  return { trips, current, ready, saving, selectTrip, requireAccount, createTrip, addStop, editStop, moveStop,
+  return { trips, current, ready, saving, error, clearError: () => setError(''), selectTrip, requireAccount, createTrip, addStop, editStop, moveStop,
     renameTrip: (id: string, title: string) => title.trim()
       ? changeTrip(id, trip => ({ ...trip, title: title.trim().slice(0, 100) })) : Promise.resolve(false),
     deleteTrip: (id: string) => changeTrip(id, () => undefined),

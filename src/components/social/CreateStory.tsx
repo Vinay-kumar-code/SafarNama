@@ -1,72 +1,200 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ImagePlus, PenLine, Clapperboard, Upload, Check, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useSocial } from '../../context/SocialContext';
 import { useCommunity } from '../../context/CommunityContext';
-import { getStoredData } from '../../lib/utils';
 import { storeMedia, removeMedia } from '../../lib/localMedia';
 import { hasServerStorage } from '../../lib/serverStorage';
+import { blankStory, prepareStoryMedia, readStoryDrafts, storyMediaRules, writeStoryDrafts, type StoryDraft } from '../../lib/storyDrafts';
 import { Modal } from './Primitives';
 import type { ContentFormat, Post } from '../../types';
-type Draft = { format: ContentFormat; caption: string; destinationId: string; spot: string; budget: string; tip: string };
-const blank: Draft = { format: 'carousel_note', caption: '', destinationId: '', spot: '', budget: '', tip: '' };
+
+const formats = [
+  { id: 'carousel_note', name: 'Photo story', Icon: ImagePlus },
+  { id: 'quick_tip', name: 'Travel note', Icon: PenLine },
+  { id: 'reel', name: 'Reel', Icon: Clapperboard },
+] as const;
+const noFiles: File[] = [];
+
 export function CreateStory() {
-  const { currentUser, createPost, setActiveTab } = useApp(); const { setComposerOpen, composerFormat, notify } = useSocial();
+  const { currentUser, createPost, setActiveTab, setActiveDestination } = useApp();
+  const { setComposerOpen, composerFormat, composerDestinationId, notify } = useSocial();
   const { destinations } = useCommunity();
-  const storyId = useRef<string | undefined>(undefined);
-  const draftKey = `draft_${currentUser.id}`;
-  const [draft, setDraft] = useState<Draft>(() => {
-    const saved = { ...blank, ...getStoredData(draftKey, {}) };
-    return composerFormat ? { ...saved, format: composerFormat } : saved;
-  });
-  const [files, setFiles] = useState<File[]>([]); const [previews, setPreviews] = useState<string[]>([]);
-  const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
-  useEffect(() => { try { localStorage.setItem(`safarnama_${draftKey}`, JSON.stringify(draft)); } catch { setError('Your draft could not be saved. Browser storage may be full.'); } }, [draft, draftKey]);
-  useEffect(() => { const urls = files.map(file => URL.createObjectURL(file)); setPreviews(urls); return () => urls.forEach(url => URL.revokeObjectURL(url)); }, [files]);
-  const update = (key: keyof Draft, value: string) => setDraft(previous => ({ ...previous, [key]: value }));
-  function selectFiles(selected: FileList | null) {
-    if (!selected) return;
-    const next = Array.from(selected); const video = draft.format === 'reel';
-    if (next.length > (video ? 1 : 6) || next.some(file => !file.type.startsWith(video ? 'video/' : 'image/') || file.size > (video ? 60 : 8) * 1024 * 1024)) {
-      setError(video ? 'Choose one video up to 60 MB.' : 'Choose up to 6 images, each under 8 MB.'); return;
+  const storyIds = useRef<Partial<Record<ContentFormat, string>>>({});
+  const account = currentUser.id;
+  const [drafts, setDrafts] = useState(() => {
+    const saved = readStoryDrafts(account);
+    const active = composerFormat ?? saved.active;
+    const selected = saved.entries[active] ?? blankStory;
+    if (composerDestinationId && !selected.destinationId) {
+      saved.entries[active] = { ...selected, destinationId: composerDestinationId };
     }
-    setFiles(next); setError('');
+    return { ...saved, active };
+  });
+  const { active: format } = drafts;
+  const draft = drafts.entries[format] ?? blankStory;
+  const [attachments, setAttachments] = useState<Partial<Record<ContentFormat, File[]>>>({});
+  const files = attachments[format] ?? noFiles;
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const isReel = format === 'reel';
+  const isNote = format === 'quick_tip';
+  const rules = storyMediaRules(format);
+  const captionLimit = isNote ? 500 : 2200;
+  const contextPlace = destinations.find(place => place.id === composerDestinationId);
+  const hasDraft = Object.values(draft).some(Boolean);
+
+  useEffect(() => {
+    try { writeStoryDrafts(account, drafts); setSaved(true); }
+    catch { setSaved(false); }
+  }, [account, drafts]);
+
+  useEffect(() => {
+    const urls = files.map(file => URL.createObjectURL(file));
+    setPreviews(urls);
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [files]);
+
+  function update(key: keyof StoryDraft, value: string) {
+    setDrafts(previous => ({ ...previous, entries: { ...previous.entries,
+      [format]: { ...(previous.entries[format] ?? blankStory), [key]: value },
+    } }));
+    setError('');
   }
-  async function publish(event: React.FormEvent) {
-    event.preventDefault(); if (busy) return;
+
+  function selectFiles(selected: FileList | null) {
+    if (!selected?.length) return;
+    try {
+      const prepared = prepareStoryMedia(selected, rules);
+      setAttachments(previous => ({ ...previous, [format]: prepared }));
+      setError('');
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open the selected media.'); }
+  }
+
+  function discardDraft() {
+    setDrafts(previous => {
+      const entries = { ...previous.entries };
+      delete entries[format];
+      return { ...previous, entries };
+    });
+    setAttachments(previous => ({ ...previous, [format]: noFiles }));
+    delete storyIds.current[format];
+    setConfirmDiscard(false);
+    setError('');
+  }
+
+  async function publish(event: FormEvent) {
+    event.preventDefault();
+    if (busy || confirmDiscard) return;
     const destination = destinations.find(place => place.id === draft.destinationId);
     if (!destination || !draft.caption.trim()) { setError('Add a destination and a few words about your journey.'); return; }
-    if (draft.format === 'quick_tip' && draft.caption.length > 500) { setError('Travel notes can be up to 500 characters.'); return; }
-    if (draft.format !== 'quick_tip' && !files.length) { setError('Choose your photo or video before sharing.'); return; }
-    if (draft.budget && (!Number.isFinite(Number(draft.budget)) || Number(draft.budget) < 0)) { setError('Enter a valid daily budget.'); return; }
-    setBusy(true); setError('');
+    if (draft.caption.length > captionLimit) { setError('This story type allows up to ' + captionLimit + ' characters.'); return; }
+    if (!isNote && !files.length) { setError('Choose your photo or video before sharing.'); return; }
+    const budget = draft.budget ? Number(draft.budget) : undefined;
+    if (budget !== undefined && (!Number.isFinite(budget) || budget < 0 || budget > 1_000_000)) {
+      setError('Enter a daily budget from ₹0 to ₹10,00,000.'); return;
+    }
+    setBusy(true);
+    setError('');
     const media: string[] = [];
-    let committed = false;
     try {
       for (const file of files) media.push(await storeMedia(file));
-      const post: Post = { id: storyId.current ??= crypto.randomUUID(), author: currentUser, destinationId: destination.id, spotName: draft.spot.trim() || destination.name, state: destination.state, region: destination.region, caption: draft.caption.trim(), format: draft.format,
-        ...(draft.format === 'reel' ? { videoUrl: media[0], thumbnailUrl: destination.coverImage } : { thumbnailUrl: media[0], carouselImages: media }),
-        costInInr: draft.budget ? Number(draft.budget) : undefined, howToReach: draft.tip.trim() || undefined, latitude: destination.latitude, longitude: destination.longitude,
-        likesCount: 0, savesCount: 0, sharesCount: 0, viewsCount: 0, commentsCount: 0, createdAt: new Date().toISOString() };
+      const post: Post = {
+        id: storyIds.current[format] ??= crypto.randomUUID(),
+        author: currentUser, destinationId: destination.id, spotName: draft.spot.trim() || destination.name,
+        state: destination.state, region: destination.region, caption: draft.caption.trim(), format,
+        ...(isReel ? { videoUrl: media[0], thumbnailUrl: destination.coverImage } : { thumbnailUrl: media[0], carouselImages: media }),
+        costInInr: budget, howToReach: draft.tip.trim() || undefined,
+        latitude: destination.latitude, longitude: destination.longitude,
+        likesCount: 0, savesCount: 0, sharesCount: 0, viewsCount: 0, commentsCount: 0, createdAt: new Date().toISOString(),
+      };
       await createPost(post);
-      committed = true;
-      localStorage.removeItem(`safarnama_${draftKey}`);
-      setActiveTab('feed'); setComposerOpen(false); notify(hasServerStorage ? 'Story published.' : 'Story saved on this device.');
     } catch (failure) {
-      if (!committed) {
-        await Promise.allSettled(media.map(removeMedia));
-        setError(failure instanceof Error && hasServerStorage ? failure.message : 'Could not save your story. Your text draft is safe.');
-      } else {
-        setComposerOpen(false);
-        notify(hasServerStorage ? 'Story published.' : 'Story saved on this device.');
-      }
+      await Promise.allSettled(media.map(removeMedia));
+      setError(failure instanceof Error && hasServerStorage ? failure.message : 'Could not save your story. You can retry.');
       setBusy(false);
+      return;
     }
+
+    const entries = { ...drafts.entries };
+    delete entries[format];
+    let message = hasServerStorage ? 'Story published.' : 'Story saved on this device.';
+    try { writeStoryDrafts(account, { ...drafts, entries }); }
+    catch { message += ' The text draft could not be cleared.'; }
+    setActiveTab('feed');
+    setActiveDestination(null);
+    setComposerOpen(false);
+    notify(message);
   }
-  return <Modal title="A story worth sharing" onClose={() => { if (!busy) setComposerOpen(false); }} className="sn-create-modal"><form onSubmit={publish} className="sn-create-form"><div className="sn-format-picker">{([{ id: 'carousel_note', name: 'Photo story', Icon: ImagePlus }, { id: 'quick_tip', name: 'Travel note', Icon: PenLine }, { id: 'reel', name: 'Reel', Icon: Clapperboard }] as const).map(({ id, name, Icon }) => <button type="button" key={id} disabled={busy} aria-pressed={draft.format === id} className={draft.format === id ? 'active' : ''} onClick={() => { update('format', id); setFiles([]); setError(''); }}><Icon size={20} />{name}</button>)}</div>
-    {draft.format !== 'quick_tip' && <div className="sn-upload"><label htmlFor="story-media"><Upload size={24} /><strong>{files.length ? `${files.length} ${draft.format === 'reel' ? 'video' : 'photo(s)'} selected · change` : draft.format === 'reel' ? 'Bring your journey to life' : 'Every photo has a story'}<input id="story-media" type="file" accept={draft.format === 'reel' ? 'video/*' : 'image/*'} multiple={draft.format !== 'reel'} disabled={busy} onChange={event => selectFiles(event.target.files)} /></strong><span>{draft.format === 'reel' ? 'One video · up to 60 MB' : 'Up to 6 photos · 8 MB each'}</span></label>{previews.length > 0 && <div className="sn-upload-previews">{previews.map((url, index) => draft.format === 'reel' ? <video src={url} controls key={url} /> : <img src={url} key={url} alt={`Selected photograph ${index + 1}`} />)}<button type="button" aria-label="Remove selected media" disabled={busy} onClick={() => setFiles([])}><X size={16} /></button></div>}</div>}
-    <label>Your story<textarea autoFocus value={draft.caption} maxLength={draft.format === 'quick_tip' ? 500 : 2200} rows={4} required placeholder={draft.format === 'quick_tip' ? 'A little observation, a useful tip, a moment from the road…' : 'What made this moment stay with you?'} onChange={event => update('caption', event.target.value)} disabled={busy} /><span className="sn-input-hint">{draft.caption.length} / {draft.format === 'quick_tip' ? 500 : 2200}</span></label>
-    <div className="sn-form-row"><label>Destination<select value={draft.destinationId} required disabled={busy} onChange={event => update('destinationId', event.target.value)}><option value="">Choose a place</option>{destinations.map(place => <option value={place.id} key={place.id}>{place.name}</option>)}</select></label><label>A little more specific<input value={draft.spot} maxLength={100} disabled={busy} placeholder="A street, a café, a viewpoint…" onChange={event => update('spot', event.target.value)} /></label></div>
-    {draft.format !== 'quick_tip' && <details className="sn-optional"><summary>Add helpful travel details <span>optional</span></summary><label>Daily budget in ₹<input type="number" min="0" max="1000000" value={draft.budget} onChange={event => update('budget', event.target.value)} /></label><label>Getting there / your tip<textarea rows={2} maxLength={500} value={draft.tip} onChange={event => update('tip', event.target.value)} /></label></details>}
-    {error && <p role="alert" className="sn-error">{error}</p>}<div className="sn-publish-footer"><p><Check size={14} />Text draft saved as you write.<small>{hasServerStorage ? 'Published stories appear in the community feed.' : 'Preview stories stay on this device.'}</small></p><button type="submit" className="sn-button" disabled={busy}>{busy ? 'Saving your story…' : 'Share story'}</button></div></form></Modal>;
+
+  return <Modal title="A story worth sharing" onClose={() => { if (!busy) setComposerOpen(false); }} className="sn-create-modal">
+    <form onSubmit={publish} className="sn-create-form">
+      <div className="sn-format-picker">{formats.map(({ id, name, Icon }) =>
+        <button type="button" key={id} disabled={busy} aria-pressed={format === id} className={format === id ? 'active' : ''} onClick={() => {
+          setDrafts(previous => ({ ...previous, active: id, entries: contextPlace && !previous.entries[id]?.destinationId
+            ? { ...previous.entries, [id]: { ...(previous.entries[id] ?? blankStory), destinationId: contextPlace.id } } : previous.entries }));
+          setConfirmDiscard(false);
+          setError('');
+        }}><Icon size={20} />{name}</button>,
+      )}</div>
+      {!isNote && <div className="sn-upload">
+        <label htmlFor="story-media"><Upload size={24} />
+          <strong>{files.length ? files.length + (isReel ? ' video selected' : ' photo(s) selected') + ' · change' : isReel ? 'Choose a video' : 'Choose photos'}
+            <input id="story-media" type="file" accept={rules.accept} multiple={!isReel} disabled={busy} onChange={event => {
+              selectFiles(event.currentTarget.files);
+              event.currentTarget.value = '';
+            }} />
+          </strong><span>{rules.hint}</span>
+        </label>
+        {previews.length > 0 && <div className="sn-upload-previews">
+          {previews.map((url, index) => isReel ? <video src={url} controls key={url} /> : <img src={url} key={url} alt={'Selected photograph ' + (index + 1)} />)}
+          <button type="button" aria-label="Remove selected media" disabled={busy} onClick={() => {
+            setAttachments(previous => ({ ...previous, [format]: noFiles }));
+            setError('');
+          }}><X size={16} /></button>
+        </div>}
+      </div>}
+      <label>Your story<textarea autoFocus value={draft.caption} maxLength={captionLimit} rows={4} required
+        placeholder={isNote ? 'A useful tip or a moment from the road…' : 'What made this moment stay with you?'}
+        onChange={event => update('caption', event.target.value)} disabled={busy} />
+        <span className="sn-input-hint">{draft.caption.length} / {captionLimit}</span>
+      </label>
+      <div className="sn-form-row">
+        <label>Destination<select value={draft.destinationId} required disabled={busy} onChange={event => update('destinationId', event.target.value)}>
+          <option value="">Choose a place</option>{destinations.map(place => <option value={place.id} key={place.id}>{place.name}</option>)}
+        </select></label>
+        <label>A little more specific<input value={draft.spot} maxLength={100} disabled={busy}
+          placeholder="A street, a café, a viewpoint…" onChange={event => update('spot', event.target.value)} /></label>
+      </div>
+      {contextPlace && draft.destinationId !== contextPlace.id && <button type="button" className="sn-button secondary" disabled={busy}
+        onClick={() => update('destinationId', contextPlace.id)}>Use {contextPlace.name} as the destination</button>}
+      {!isNote && <details className="sn-optional"><summary>Add helpful travel details <span>optional</span></summary>
+        <label>Daily budget in ₹<input type="number" min="0" max="1000000" step="0.01" disabled={busy}
+          value={draft.budget} onChange={event => update('budget', event.target.value)} /></label>
+        <label>Getting there / your tip<textarea rows={2} maxLength={500} value={draft.tip} disabled={busy}
+          onChange={event => update('tip', event.target.value)} /></label>
+      </details>}
+      {error && <p role="alert" className="sn-error">{error}</p>}
+      {!saved && <p role="alert" className="sn-error">Draft storage is unavailable. Keep this editor open to keep your changes.</p>}
+      {confirmDiscard && <div className="sn-panel sn-panel-padding sn-secondary-stack" role="group" aria-label="Discard this draft?">
+        <p>Discard the text and selected files for this story type?</p>
+        <div className="sn-secondary-actions">
+          <button type="button" className="sn-button secondary" onClick={() => setConfirmDiscard(false)}>Keep editing</button>
+          <button type="button" className="sn-button" onClick={discardDraft}>Discard draft</button>
+        </div>
+      </div>}
+      <div className="sn-publish-footer">
+        <div className="sn-secondary-stack">
+          {saved && hasDraft && <p><Check size={14} /> Text draft saved on this device.</p>}
+          {files.length > 0 && <p>Selected files stay in this editor until you close it.</p>}
+          {!confirmDiscard && (hasDraft || files.length > 0) && <button type="button" className="sn-community-link" disabled={busy}
+            onClick={() => setConfirmDiscard(true)}>Discard draft</button>}
+        </div>
+        <button type="submit" className="sn-button" disabled={busy || confirmDiscard}>{busy ? 'Saving your story…' : 'Share story'}</button>
+      </div>
+    </form>
+  </Modal>;
 }

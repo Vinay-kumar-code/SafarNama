@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
 import { useSocial } from '../../context/SocialContext';
 import type { DestinationHub, Post } from '../../types';
-import { haversineDistanceKm } from '../../lib/utils';
+import { haversineDistanceKm, matchesSearch, normalizeSearch } from '../../lib/utils';
 import { DestinationEditor } from '../destinations/DestinationEditor';
 import { EmptyState, Modal, TravelImage } from '../social/Primitives';
 import { PostCard } from '../social/PostCard';
@@ -45,10 +45,11 @@ export function DiscoveryMap() {
   const activeMode = linked ? linked.story ? 'Stories' : 'Places' : mode;
   const entries = activeMode === 'Places' ? places : stories;
   const activeFocus = linked ? undefined : focus;
+  const terms = keyword.split(' ').filter(Boolean);
   const results = activeFocus ? entries.map(entry => ({
     ...entry, distance: haversineDistanceKm(activeFocus.latitude, activeFocus.longitude, entry.latitude, entry.longitude),
   })).filter(entry => entry.distance <= radius).sort((a, b) => a.distance - b.distance)
-    : entries.filter(entry => linked || !keyword || `${entry.name} ${entry.state} ${entry.guide?.region ?? ''}`.toLowerCase().includes(keyword));
+    : entries.filter(entry => linked || matchesSearch(terms, entry.name, entry.state, entry.guide?.region));
   const selected = linked ?? results.find(entry => entry.id === selectedId);
   const pins: MapEntry[] = linked && !results.some(entry => entry.id === linked.id) ? [linked, ...results] : results;
   const searchPin = activeFocus ? { ...activeFocus, id: 'search-center', anchor: true } : undefined;
@@ -81,8 +82,7 @@ export function DiscoveryMap() {
     if (current !== request.current) return;
     setSearching(false);
     setFocus(location);
-    setKeyword(location ? '' : term.toLowerCase());
-    if (!location) setFeedback('No location found. Try a city, a destination name, or latitude and longitude.');
+    setKeyword(location ? '' : normalizeSearch(term) || term);
     setExpanded(true);
   }
 

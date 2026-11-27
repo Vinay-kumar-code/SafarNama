@@ -1,5 +1,6 @@
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
 import type { DestinationHub } from '../../types';
+import { normalizeSearch } from '../../lib/utils';
 
 export interface SearchLocation {
   name: string;
@@ -37,8 +38,6 @@ const regions: SearchLocation[] = [
   { name: 'Shillong', state: 'Meghalaya', latitude: 25.5788, longitude: 91.8933 },
 ];
 
-const normalize = (value: string) => value.trim().toLowerCase().replace(/[,\s]+/g, ' ');
-
 export function localLocation(query: string, places: DestinationHub[]): SearchLocation | undefined {
   const coordinate = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
   if (coordinate) {
@@ -47,11 +46,11 @@ export function localLocation(query: string, places: DestinationHub[]): SearchLo
       return { name: `${lat}, ${lng}`, state: '', latitude: Number(lat), longitude: Number(lng) };
     }
   }
-  const keyword = normalize(query);
+  const keyword = normalizeSearch(query);
   if (!keyword) return;
   const searchable = [...places, ...regions];
-  return searchable.find(place => normalize(place.name) === keyword || normalize(`${place.name}, ${place.state}`) === keyword)
-    ?? searchable.find(place => normalize(place.state) === keyword || keyword === 'bangalore' && place.name === 'Bengaluru');
+  return searchable.find(place => normalizeSearch(place.name) === keyword || normalizeSearch(`${place.name}, ${place.state}`) === keyword)
+    ?? searchable.find(place => normalizeSearch(place.state) === keyword || keyword === 'bangalore' && place.name === 'Bengaluru');
 }
 
 export async function searchLocation(query: string, places: DestinationHub[]): Promise<SearchLocation | undefined> {

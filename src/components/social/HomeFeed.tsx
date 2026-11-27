@@ -4,6 +4,8 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
 import { useSocial } from '../../context/SocialContext';
+import { useServerData } from '../../context/ServerDataContext';
+import { hasServerStorage } from '../../lib/serverStorage';
 import { UpdateCard } from '../destinations/CommunityCards';
 import { PostCard } from './PostCard';
 import { EmptyState, TravelImage } from './Primitives';
@@ -13,6 +15,7 @@ export function HomeFeed() {
   const { openAuthModal } = useAuth();
   const { destinations, updates } = useCommunity();
   const { state, setComposerOpen, openComposer } = useSocial();
+  const { snapshot, error } = useServerData();
   const [filter, setFilter] = useState('For you');
   const [placeId, setPlaceId] = useState('');
   const place = destinations.find(item => item.id === placeId);
@@ -41,7 +44,8 @@ export function HomeFeed() {
     </div></div>
     <div className="sn-feed-tabs" role="group" aria-label="Feed filter">{['For you', 'Following', 'Travel notes'].map(tab => <button aria-pressed={filter === tab} key={tab} className={filter === tab ? 'active' : ''} onClick={() => setFilter(tab)}>{tab}</button>)}</div>
     {place && <div className="sn-filter-summary">From {place.name}<button onClick={() => setPlaceId('')}>Clear filter</button></div>}
-    {timeline.length ? <div className="sn-community-timeline">{timeline.map(item => item.component)}</div>
+    {hasServerStorage && !snapshot ? !error && <p className="sn-loading" role="status">Loading the feed…</p>
+      : timeline.length ? <div className="sn-community-timeline">{timeline.map(item => item.component)}</div>
       : place ? <EmptyState title="No matching posts or updates" description={`There’s nothing in this feed for ${place.name} yet.`}
         action={<button className="sn-button secondary" onClick={() => setPlaceId('')}>Show all places</button>} />
       : filter === 'Following' ? <EmptyState title="Keep up with your favorite places" description={currentUser.id

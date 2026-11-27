@@ -23,6 +23,8 @@
 .sn-place-follow { display: grid; gap: 4px; justify-items: start; min-width: 0; }
 .sn-place-follow .sn-button[aria-pressed="true"] { border-color: #a5af99; background: #edf1e7; color: #354c3b; }
 .sn-place-update-note { margin-bottom: 12px; }
+.sn-directory-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: 520px; margin-top: 12px; }
+.sn-directory-filters select { min-width: 0; }
 .sn-followed-place { flex-wrap: wrap; }
 .sn-followed-place-guide { display: flex; flex: 1 1 140px; min-width: 0; align-items: center; gap: 10px; text-align: left; }
 .sn-followed-place-guide > :is(img, .sn-image-fallback) { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: 0 0 48px; }

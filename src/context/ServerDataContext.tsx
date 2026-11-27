@@ -32,6 +32,7 @@ interface Snapshot {
 interface ServerData {
   snapshot?: Snapshot;
   error: string;
+  loading: boolean;
   refresh: () => Promise<void>;
   write: (scope: 'public' | 'me', kind: string, id: string, payload?: object) => Promise<Snapshot>;
 }
@@ -41,8 +42,10 @@ export function ServerDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const accountId = user?.id;
   const activeId = useRef(accountId);
+  const pendingRefresh = useRef<AbortController | null>(null);
   const [data, setData] = useState<{ id?: string; snapshot: Snapshot }>();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(hasServerStorage);
 
   const apply = useCallback((id: string | undefined, snapshot: Snapshot) => {
     if (id !== activeId.current) return;
@@ -50,15 +53,34 @@ export function ServerDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    if (!hasServerStorage) return;
+    if (!hasServerStorage || signal?.aborted) return;
+    pendingRefresh.current?.abort();
+    const request = new AbortController();
+    pendingRefresh.current = request;
+    const stillCurrent = () => pendingRefresh.current === request && accountId === activeId.current;
+    const cancel = () => request.abort();
+    signal?.addEventListener('abort', cancel, { once: true });
+    const timer = window.setTimeout(() => {
+      if (stillCurrent()) {
+        pendingRefresh.current = null;
+        setError('The server took too long to respond.');
+        setLoading(false);
+      }
+      cancel();
+    }, 12000);
+    setLoading(true);
     try {
-      const result = await requestStorage<Snapshot>('bootstrap', { signal }, false, accountId ?? null);
-      if (signal?.aborted) return;
+      const result = await requestStorage<Snapshot>('bootstrap', { signal: request.signal }, false, accountId ?? null);
+      if (request.signal.aborted || !stillCurrent()) return;
       apply(accountId, result);
-      if (accountId === activeId.current) setError('');
+      setError('');
     } catch (failure) {
-      if (signal?.aborted || accountId !== activeId.current) return;
+      if (!stillCurrent() || request.signal.aborted) return;
       setError(failure instanceof Error ? failure.message : 'Could not load the server data.');
+    } finally {
+      window.clearTimeout(timer);
+      signal?.removeEventListener('abort', cancel);
+      if (stillCurrent()) { pendingRefresh.current = null; setLoading(false); }
     }
   }, [accountId, apply]);
 
@@ -74,6 +96,8 @@ export function ServerDataProvider({ children }: { children: ReactNode }) {
     const interval = window.setInterval(visible, 60_000);
     return () => {
       controller.abort();
+      pendingRefresh.current?.abort();
+      pendingRefresh.current = null;
       window.clearInterval(interval);
       window.removeEventListener('online', reload);
       document.removeEventListener('visibilitychange', visible);
@@ -95,7 +119,7 @@ export function ServerDataProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <ServerDataContext.Provider value={{ snapshot: data?.id === accountId ? data?.snapshot : undefined, error, refresh, write }}>
+  return <ServerDataContext.Provider value={{ snapshot: data?.id === accountId ? data?.snapshot : undefined, error, loading, refresh, write }}>
     {children}
   </ServerDataContext.Provider>;
 }

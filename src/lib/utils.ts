@@ -5,6 +5,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function normalizeSearch(value: string) {
+  return value.normalize('NFKD').toLowerCase().replace(/\p{M}/gu, '').replace(/&/g, ' and ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+export function matchesSearch(terms: string[], ...fields: Array<string | undefined>) {
+  if (!terms.length) return true;
+  const text = normalizeSearch(fields.join(' '));
+  return terms.every(term => text.includes(term));
+}
+
 export function formatINR(amount?: number): string {
   if (amount === undefined || amount === null) return '₹0';
   return new Intl.NumberFormat('en-IN', {
