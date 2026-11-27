@@ -17,6 +17,10 @@ import {
 import confetti from 'canvas-confetti';
 import { useApp } from '../../context/AppContext';
 import { DESTINATION_HUBS } from '../../data/destinations';
+import { removeMedia, storeMedia } from '../../lib/localMedia';
+import { serverMediaUrl } from '../../lib/serverStorage';
+import { DestinationPicker } from '../common/DestinationPicker';
+import { MediaPicker } from '../common/MediaPicker';
 import { DestinationHub } from '../../types';
 
 interface WriteReviewModalProps {
@@ -93,9 +97,16 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   const [visitMonth, setVisitMonth] = useState<string>(VISIT_MONTH_OPTIONS[1]); // e.g. January 2026
   const [travelType, setTravelType] = useState<'Solo' | 'Family' | 'Couple' | 'Friends'>('Solo');
   const [photos, setPhotos] = useState<string[]>([]);
-  const [customPhotoUrl, setCustomPhotoUrl] = useState<string>('');
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const urls = photoFiles.map(file => URL.createObjectURL(file));
+    setPhotoPreviews(urls);
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [photoFiles]);
 
   if (!isModalOpen) return null;
 
@@ -120,19 +131,40 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
     }
   };
 
-  const handleAddPhotoUrl = () => {
-    if (!customPhotoUrl.trim()) return;
-    if (photos.includes(customPhotoUrl.trim())) return;
-    setPhotos(prev => [...prev, customPhotoUrl.trim()]);
-    setCustomPhotoUrl('');
+  const handleSelectPhotoFiles = (selected: FileList | null) => {
+    if (!selected?.length) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const remaining = 6 - (photos.length + photoFiles.length);
+    if (remaining <= 0) {
+      setErrorMsg('You can attach up to 6 photos per review.');
+      return;
+    }
+    const next: File[] = [];
+    for (const file of Array.from(selected).slice(0, remaining)) {
+      if (!allowed.includes(file.type) && !/\.(jpe?g|png|webp|gif)$/i.test(file.name)) {
+        setErrorMsg('Choose JPG, PNG, WebP, or GIF photos.');
+        return;
+      }
+      if (file.size === 0 || file.size > 8 * 1024 * 1024) {
+        setErrorMsg('Each photo must be under 8 MB.');
+        return;
+      }
+      next.push(file);
+    }
+    setErrorMsg(null);
+    setPhotoFiles(prev => [...prev, ...next]);
   };
 
   const handleRemovePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleRemovePhotoFile = (index: number) => {
+    setPhotoFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleAddPresetPhoto = (url: string) => {
-    if (photos.includes(url)) return;
+    if (photos.includes(url) || photos.length + photoFiles.length >= 6) return;
     setPhotos(prev => [...prev, url]);
   };
 
@@ -150,8 +182,13 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
       return;
     }
 
+    const uploadedUrls: string[] = [];
     try {
       setIsSubmitting(true);
+      for (const file of photoFiles) {
+        uploadedUrls.push(await storeMedia(file));
+      }
+      const allPhotos = [...photos, ...uploadedUrls];
 
       await addDestinationReview({
         destinationId: targetDestination.id,
@@ -159,7 +196,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
         rating,
         title: title.trim(),
         reviewText: reviewText.trim(),
-        photos: photos.length > 0 ? photos : undefined,
+        photos: allPhotos.length > 0 ? allPhotos : undefined,
         visitMonth,
         travelType,
         travelTips: travelTips.trim() ? travelTips.trim() : undefined,
@@ -181,10 +218,12 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
       setReviewText('');
       setTravelTips('');
       setPhotos([]);
+      setPhotoFiles([]);
       setIsSubmitting(false);
 
       handleClose();
     } catch (err: any) {
+      await Promise.allSettled(uploadedUrls.map(removeMedia));
       setIsSubmitting(false);
       setErrorMsg(err?.message || 'Failed to submit review. Please try again.');
     }
@@ -233,23 +272,16 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
             </div>
           )}
 
-          {/* Destination Selector if multiple available */}
-          <div>
-            <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
-              Select Destination
-            </label>
-            <select
-              value={selectedDestId}
-              onChange={(e) => setSelectedDestId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:border-orange-500 transition-all"
-            >
-              {DESTINATION_HUBS.map(dest => (
-                <option key={dest.id} value={dest.id} className="bg-slate-900 text-white">
-                  {dest.name} ({dest.region}, {dest.state})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Destination Selector with search */}
+          <DestinationPicker
+            destinations={DESTINATION_HUBS}
+            value={selectedDestId}
+            onChange={setSelectedDestId}
+            label="Select Destination"
+            placeholder="Search destination by name or state…"
+            required
+            variant="dark"
+          />
 
           {/* Interactive Star Rating */}
           <div className="bg-slate-900/90 rounded-2xl p-4 border border-white/5 space-y-2">
@@ -382,28 +414,21 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                 <span>Add Ground Photos</span>
               </label>
               <span className="text-[10px] text-slate-400">
-                {photos.length} photo{photos.length !== 1 ? 's' : ''} attached
+                {photos.length + photoFiles.length} photo{photos.length + photoFiles.length !== 1 ? 's' : ''} attached
               </span>
             </div>
 
-            {/* Custom URL input */}
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={customPhotoUrl}
-                onChange={(e) => setCustomPhotoUrl(e.target.value)}
-                placeholder="Paste direct photo image URL (https://...)"
-                className="flex-1 px-3 py-2 rounded-xl bg-slate-800/80 border border-white/10 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-all"
-              />
-              <button
-                type="button"
-                onClick={handleAddPhotoUrl}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-white/10 flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
-              </button>
-            </div>
+            <MediaPicker
+              variant="compact"
+              accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+              captureKind="image"
+              multiple
+              disabled={isSubmitting}
+              fileLabel="Choose from files or gallery"
+              cameraLabel="Take photo"
+              hint="Up to 6 JPG, PNG, WebP or GIF photos, 8 MB each"
+              onSelect={handleSelectPhotoFiles}
+            />
 
             {/* Preset Suggestions for convenience */}
             {presets.length > 0 && (
@@ -423,7 +448,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
                           isSelected ? 'border-orange-500 scale-95 ring-2 ring-orange-500/30' : 'border-white/10 opacity-70 hover:opacity-100'
                         }`}
                       >
-                        <img src={url} alt="preset" className="w-full h-full object-cover" />
+                        <img src={serverMediaUrl(url)} alt="preset" className="w-full h-full object-cover" />
                         {isSelected && (
                           <div className="absolute inset-0 bg-orange-600/40 flex items-center justify-center">
                             <CheckCircle2 className="w-4 h-4 text-white" />
@@ -437,14 +462,26 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
             )}
 
             {/* Selected Photos Gallery */}
-            {photos.length > 0 && (
+            {(photos.length > 0 || photoPreviews.length > 0) && (
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5">
                 {photos.map((url, index) => (
-                  <div key={index} className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-white/10 group">
-                    <img src={url} alt={`preview-${index}`} className="w-full h-full object-cover" />
+                  <div key={`preset-${index}`} className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-white/10 group">
+                    <img src={serverMediaUrl(url)} alt={`preview-${index}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(index)}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center shadow opacity-90 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {photoPreviews.map((url, index) => (
+                  <div key={`file-${index}`} className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-white/10 group">
+                    <img src={url} alt={`selected-${index}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhotoFile(index)}
                       className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center shadow opacity-90 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -458,7 +495,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
           {/* Author Badge Info */}
           <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-slate-900/60 border border-white/5 text-xs text-slate-400">
             <img
-              src={currentUser.avatarUrl}
+              src={serverMediaUrl(currentUser.avatarUrl)}
               alt={currentUser.fullName}
               className="w-6 h-6 rounded-full object-cover border border-orange-500/40"
             />

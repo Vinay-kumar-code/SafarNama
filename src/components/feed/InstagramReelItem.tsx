@@ -570,19 +570,19 @@ export const InstagramReelItem: React.FC<InstagramReelItemProps> = ({
               <span>{post.region}, {post.state}</span>
               <span className="text-[10px] text-amber-400 font-bold ml-0.5">★ Hub</span>
             </button>
-          ) : (
+          ) : typeof post.latitude === 'number' && typeof post.longitude === 'number' ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 triggerHaptic('light');
-                onOpenMap(post.latitude, post.longitude, post.spotName);
+                onOpenMap(post.latitude!, post.longitude!, post.spotName);
               }}
               className="glass-pill px-2.5 py-0.5 rounded-full text-white text-[11px] font-semibold flex items-center gap-1 active:scale-95 transition-transform"
             >
               <MapPin className="w-3 h-3 text-orange-400" />
               <span>{post.region}, {post.state}</span>
             </button>
-          )}
+          ) : null}
 
           {post.costInInr !== undefined && (
             <span className="glass-pill px-2.5 py-0.5 rounded-full text-emerald-400 text-[11px] font-bold flex items-center gap-0.5">
@@ -663,17 +663,19 @@ export const InstagramReelItem: React.FC<InstagramReelItemProps> = ({
             )}
           </button>
 
+          {typeof post.latitude === 'number' && typeof post.longitude === 'number' && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               triggerHaptic('light');
-              onOpenMap(post.latitude, post.longitude, post.spotName);
+              onOpenMap(post.latitude!, post.longitude!, post.spotName);
             }}
             className="py-2 px-3 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-all"
           >
             <Navigation className="w-3.5 h-3.5 text-orange-400" />
             <span>View on Map</span>
           </button>
+          )}
         </div>
 
       </div>

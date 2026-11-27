@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, open, readdir, rename, stat, statfs, unlink } from 'node:fs/promises';
+import { mkdir, open, readdir, rename, stat, statfs, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Transform } from 'node:stream';
@@ -22,6 +22,10 @@ const fileTypes = {
   '.svg': 'image/svg+xml', '.json': 'application/json', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8', '.mp4': 'video/mp4',
+};
+const extToMime = {
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+  '.webp': 'image/webp', '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm',
 };
 const oneDay = 86_400_000;
 
@@ -67,6 +71,21 @@ async function streamFile(request, response, filename, mime, bytes, cache) {
   });
   if (request.method === 'HEAD') response.end();
   else await pipeline(createReadStream(filename, range ?? undefined), response);
+}
+
+async function streamBuffer(request, response, buffer, mime, cache) {
+  const bytes = buffer.byteLength;
+  const range = rangeOf(request.headers.range, bytes);
+  response.setHeader('Accept-Ranges', 'bytes');
+  response.setHeader('Cache-Control', cache);
+  if (range === null) {
+    response.writeHead(416, { 'Content-Range': `bytes */${bytes}` }).end();
+    return;
+  }
+  if (range) response.setHeader('Content-Range', `bytes ${range.start}-${range.end}/${bytes}`);
+  const slice = range ? buffer.subarray(range.start, range.end + 1) : buffer;
+  response.writeHead(range ? 206 : 200, { 'Content-Type': mime, 'Content-Length': slice.byteLength });
+  response.end(request.method === 'HEAD' ? undefined : slice);
 }
 
 export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, origins = [], reserveMiB = 5120 }) {
@@ -139,6 +158,83 @@ export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, or
     }
   }
 
+  function parseMultipart(buffer, boundary) {
+    const marker = Buffer.from(`--${boundary}`);
+    const parts = [];
+    let pos = buffer.indexOf(marker);
+    while (pos !== -1) {
+      pos += marker.length;
+      if (buffer.subarray(pos, pos + 2).equals(Buffer.from('--'))) break;
+      if (buffer.subarray(pos, pos + 2).equals(Buffer.from('\r\n'))) pos += 2;
+      const next = buffer.indexOf(marker, pos);
+      if (next === -1) break;
+      const rawPart = buffer.subarray(pos, next >= 2 && buffer[next - 2] === 13 && buffer[next - 1] === 10 ? next - 2 : next);
+      const sepIdx = rawPart.indexOf('\r\n\r\n');
+      if (sepIdx !== -1) {
+        const headersText = rawPart.subarray(0, sepIdx).toString('utf8');
+        const content = rawPart.subarray(sepIdx + 4);
+        const disp = /content-disposition:[^\r\n]*filename="([^"]*)"/i.exec(headersText);
+        const typeMatch = /content-type:\s*([^\r\n;]+)/i.exec(headersText);
+        if (disp) parts.push({ filename: disp[1], contentType: typeMatch?.[1]?.trim().toLowerCase() ?? '', content });
+      }
+      pos = next;
+    }
+    return parts;
+  }
+
+  async function uploadMultipart(request, account) {
+    const contentType = request.headers['content-type'] ?? '';
+    const boundaryMatch = /boundary=(?:"([^"]+)"|([^;\s]+))/i.exec(contentType);
+    if (!boundaryMatch) return upload(request, account);
+    const boundary = boundaryMatch[1] ?? boundaryMatch[2];
+    const maxTotal = 62 * MiB;
+    const supplied = Number(request.headers['content-length']);
+    if (Number.isFinite(supplied) && supplied > maxTotal) throw new InputError('Upload exceeds 60 MB.', 413);
+    if (activeUploads >= 4) throw new InputError('Uploads are busy. Try again in a moment.', 429);
+    const reservation = Number.isFinite(supplied) && supplied > 0 ? supplied : maxTotal;
+    activeUploads++;
+    reserved += reservation;
+    const saved = [];
+    try {
+      const disk = await statfs(uploads);
+      if (disk.bavail * disk.bsize < reserveMiB * MiB + reserved) throw new InputError('The server is low on upload space.', 507);
+      let bytes = 0;
+      const chunks = [];
+      for await (const chunk of request) {
+        bytes += chunk.length;
+        if (bytes > maxTotal || bytes > reservation) throw new InputError('Upload exceeds 60 MB.', 413);
+        chunks.push(chunk);
+      }
+      const parts = parseMultipart(Buffer.concat(chunks), boundary);
+      if (!parts.length) throw new InputError('Choose at least one photo or video to upload.');
+      if (parts.length > 7) throw new InputError('Choose up to 7 files at once.');
+      const files = [];
+      for (const part of parts) {
+        let mime = part.contentType;
+        if (!mime || mime === 'application/octet-stream') mime = extToMime[extname(part.filename).toLowerCase()] ?? '';
+        if (!Object.hasOwn(mediaTypes, mime)) throw new InputError('Use a JPG, PNG, WebP, GIF, MP4, or WebM file.', 415);
+        const [limitMiB, matches] = mediaTypes[mime];
+        if (part.content.length < 12 || part.content.length > limitMiB * MiB) throw new InputError(`File exceeds ${limitMiB} MB.`, 413);
+        if (!matches(part.content.subarray(0, 512))) throw new InputError('This file does not match its media type.', 415);
+        const id = randomUUID();
+        const temp = join(uploads, id + '.part');
+        const final = join(uploads, id);
+        await writeFile(temp, part.content, { flag: 'wx', mode: 0o600 });
+        await rename(temp, final);
+        saved.push({ id, final });
+        state.addMedia(id, account.profile.id, mime, part.content.length);
+        files.push({ url: `/media/uploads/${id}`, mime, bytes: part.content.length });
+      }
+      return { url: files[0].url, urls: files.map(f => f.url), files };
+    } catch (error) {
+      for (const item of saved) await unlink(item.final).catch(() => {});
+      throw error;
+    } finally {
+      reserved -= reservation;
+      activeUploads--;
+    }
+  }
+
   async function prune() {
     const cutoff = Date.now() - oneDay;
     const stale = state.pruneMedia(cutoff);
@@ -166,7 +262,7 @@ export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, or
       catch { throw new InputError('Invalid URL.'); }
       const origin = request.headers.origin;
       const api = pathname.startsWith('/api/');
-      const mediaPath = pathname.startsWith('/media/uploads/');
+      const mediaPath = pathname.startsWith('/media/');
       if ((api || mediaPath) && origin && origins.includes(origin)) {
         response.setHeader('Access-Control-Allow-Origin', origin);
         response.setHeader('Vary', 'Origin');
@@ -178,6 +274,21 @@ export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, or
       if (pathname === '/api/health' && method === 'GET') { json(response, 200, { ok: true }); return; }
       if (pathname === '/api/bootstrap' && method === 'GET') { json(response, 200, state.snapshot(await signedIn(request, false))); return; }
 
+      const destPhoto = /^\/api\/destinations\/([a-z\d-]{1,80})\/photo$/i.exec(pathname);
+      if (destPhoto && (method === 'GET' || method === 'HEAD')) {
+        const photo = state.destinationCoverPhoto(destPhoto[1]);
+        if (!photo) throw new InputError('Photo not found.', 404);
+        await streamBuffer(request, response, photo.bytes, photo.mime, 'public, max-age=3600');
+        return;
+      }
+
+      if (pathname === '/api/upload' && method === 'POST') {
+        const account = await signedIn(request, true);
+        const isMultipart = request.headers['content-type']?.toLowerCase().startsWith('multipart/form-data');
+        const result = isMultipart ? await uploadMultipart(request, account) : await upload(request, account);
+        json(response, 201, result);
+        return;
+      }
       if (pathname === '/api/media' && method === 'POST') {
         const account = await signedIn(request, true);
         json(response, 201, await upload(request, account));
@@ -201,19 +312,20 @@ export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, or
       if (api) throw new InputError('Resource not found.', 404);
       if (method !== 'GET' && method !== 'HEAD') throw new InputError('Method not allowed.', 405);
 
-      if (pathname.startsWith('/media/destinations/gallery/')) {
+      if (pathname.startsWith('/media/')) {
+        if (pathname.startsWith('/media/uploads/')) {
+          const id = pathname.slice('/media/uploads/'.length);
+          const item = uuidPattern.test(id) ? state.media(id) : null;
+          if (!item) throw new InputError('Media not found.', 404);
+          await streamFile(request, response, join(uploads, id), item.mime, item.bytes, 'public, max-age=300');
+          return;
+        }
         const photo = state.destinationPhoto(pathname);
-        if (!photo) throw new InputError('Photo not found.', 404);
-        response.writeHead(200, { 'Content-Type': 'image/webp', 'Content-Length': photo.byteLength, 'Cache-Control': 'public, max-age=3600' });
-        response.end(method === 'GET' ? photo : undefined);
-        return;
-      }
-      if (mediaPath) {
-        const id = pathname.slice('/media/uploads/'.length);
-        const item = uuidPattern.test(id) ? state.media(id) : null;
-        if (!item) throw new InputError('Media not found.', 404);
-        await streamFile(request, response, join(uploads, id), item.mime, item.bytes, 'public, max-age=300');
-        return;
+        if (photo) {
+          await streamBuffer(request, response, photo.bytes, photo.mime, 'public, max-age=3600');
+          return;
+        }
+        if (pathname.startsWith('/media/destinations/')) throw new InputError('Photo not found.', 404);
       }
       let file = resolve(dist, '.' + pathname);
       if (file !== dist && !file.startsWith(dist + sep)) throw new InputError('Resource not found.', 404);

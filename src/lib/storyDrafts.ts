@@ -37,6 +37,21 @@ export function writeStoryDrafts(account: string, drafts: StoryDrafts) {
 const photoTypes = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const reelTypes = { mp4: 'video/mp4', webm: 'video/webm' };
 
+export function normalizeMediaFile(file: File, allowVideo = false): File {
+  const extensions: Record<string, string> = allowVideo ? { ...photoTypes, ...reelTypes } : photoTypes;
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const mime = !file.type || file.type === 'application/octet-stream'
+    ? (Object.hasOwn(extensions, extension) ? extensions[extension] : '') : file.type;
+  if (!mime || !Object.values(extensions).includes(mime)) {
+    throw new Error(allowVideo ? 'Use a JPG, PNG, WebP, GIF, MP4, or WebM file.' : 'Choose a JPG, PNG, WebP, or GIF image.');
+  }
+  const maxBytes = (mime.startsWith('video/') ? 60 : 8) * 1024 * 1024;
+  if (file.size === 0 || file.size > maxBytes) {
+    throw new Error(mime.startsWith('video/') ? 'Video must be under 60 MB.' : 'Image must be under 8 MB.');
+  }
+  return mime === file.type ? file : new File([file], file.name, { type: mime, lastModified: file.lastModified });
+}
+
 export function storyMediaRules(format: ContentFormat) {
   const reel = format === 'reel';
   const extensions: Record<string, string> = reel ? reelTypes : photoTypes;

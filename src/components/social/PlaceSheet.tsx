@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BellPlus, Bookmark, CalendarDays, Check, Clock, HeartHandshake, IndianRupee, MapPin, Pencil, Plus, Share2, Stamp } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { BellPlus, Bookmark, CalendarDays, Check, Clock, HeartHandshake, IndianRupee, MapPin, Pencil, Plus, Share2, Stamp, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
@@ -9,6 +9,9 @@ import { FollowAccount, FollowPlace, ListingCard, UpdateCard } from '../destinat
 import { UpdateEditor } from '../destinations/UpdateEditor';
 import { AddToJourney } from '../trips/AddToJourney';
 import { formatINR } from '../../lib/utils';
+import { removeMedia, storeMedia } from '../../lib/localMedia';
+import { normalizeMediaFile } from '../../lib/storyDrafts';
+import { MediaPicker } from '../common/MediaPicker';
 import { Modal, TravelImage, EmptyState } from './Primitives';
 import { PostCard } from './PostCard';
 import { VisitEditor } from './VisitEditor';
@@ -28,7 +31,28 @@ export function PlaceSheet({ destination, onClose }: { destination: DestinationH
   const [editor, setEditor] = useState<'place' | 'update' | 'visit' | 'journey'>();
   const [review, setReview] = useState('');
   const [rating, setRating] = useState('5');
+  const [reviewFiles, setReviewFiles] = useState<File[]>([]);
+  const [reviewPreviews, setReviewPreviews] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const urls = reviewFiles.map(file => URL.createObjectURL(file));
+    setReviewPreviews(urls);
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [reviewFiles]);
+
+  function selectReviewPhotos(selected: FileList | null) {
+    if (!selected?.length) return;
+    const remaining = 6 - reviewFiles.length;
+    if (remaining <= 0) { setError('You can attach up to 6 photos.'); return; }
+    try {
+      const next = Array.from(selected).slice(0, remaining).map(file => normalizeMediaFile(file, false));
+      setError('');
+      setReviewFiles(prev => [...prev, ...next]);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Choose JPG, PNG, WebP, or GIF photos under 8 MB.');
+    }
+  }
   const [error, setError] = useState('');
   const [shareStatus, setShareStatus] = useState('');
   const place = destinations.find(item => item.id === destination.id) ?? destination;
@@ -108,14 +132,44 @@ export function PlaceSheet({ destination, onClose }: { destination: DestinationH
       {tab === 'Reviews' && <>
         {profile ? <form className="sn-review-form" onSubmit={async event => {
           event.preventDefault(); if (!review.trim() || busy) return; setBusy(true); setError('');
-          try { await addDestinationReview({ destinationId: place.id, destinationName: place.name, rating: Number(rating), title: 'My experience', reviewText: review.trim() }); setReview(''); }
-          catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not save your review.'); }
+          const uploaded: string[] = [];
+          try {
+            for (const file of reviewFiles) uploaded.push(await storeMedia(file));
+            await addDestinationReview({
+              destinationId: place.id, destinationName: place.name, rating: Number(rating), title: 'My experience',
+              reviewText: review.trim(), photos: uploaded.length ? uploaded : undefined,
+            });
+            setReview('');
+            setReviewFiles([]);
+          }
+          catch (failure) {
+            await Promise.allSettled(uploaded.map(removeMedia));
+            setError(failure instanceof Error ? failure.message : 'Could not save your review.');
+          }
           finally { setBusy(false); }
         }}><label>Rating<select aria-label="Your rating" value={rating} onChange={event => setRating(event.target.value)}>{[5, 4, 3, 2, 1].map(value => <option value={value} key={value}>{value} {value === 1 ? 'star' : 'stars'}</option>)}</select></label>
           <textarea aria-label="Your experience" placeholder="What should another traveler know?" value={review} maxLength={1500} required onChange={event => setReview(event.target.value)} />
+          <MediaPicker
+            variant="compact"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+            captureKind="image"
+            multiple
+            disabled={busy}
+            fileLabel="Add photos from files / gallery"
+            cameraLabel="Take photo"
+            onSelect={selectReviewPhotos}
+          />
+          {reviewPreviews.length > 0 && <div className="sn-review-photo-strip">
+            {reviewPreviews.map((url, idx) => <div className="sn-review-thumb" key={url}>
+              <img src={url} alt={`Review upload ${idx + 1}`} />
+              <button type="button" aria-label="Remove review photo" disabled={busy} onClick={() => setReviewFiles(prev => prev.filter((_, i) => i !== idx))}><X size={14} /></button>
+            </div>)}
+          </div>}
           <button className="sn-button" disabled={!review.trim() || busy}>{busy ? 'Saving…' : 'Add review'}</button>{error && <p role="alert">{error}</p>}
         </form> : <button className="sn-button secondary" onClick={() => openAuthModal()}>Sign in to review</button>}
-        {reviews.map(item => <article className="sn-review" key={item.id}><strong>{item.author.fullName}<span>{'★'.repeat(item.rating)}</span></strong><p>{item.reviewText}</p></article>)}
+        {reviews.map(item => <article className="sn-review" key={item.id}><strong>{item.author.fullName}<span>{'★'.repeat(item.rating)}</span></strong><p>{item.reviewText}</p>
+          {item.photos && item.photos.length > 0 && <div className="sn-review-photos">{item.photos.map(photo => <TravelImage key={photo} src={photo} alt={`${place.name} traveler photo`} />)}</div>}
+        </article>)}
       </>}
     </div>
     {editor === 'place' && <DestinationEditor place={place} onClose={() => setEditor(undefined)} onSave={() => { setEditor(undefined); notify('Destination updated.'); }} />}

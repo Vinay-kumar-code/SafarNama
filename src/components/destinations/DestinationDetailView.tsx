@@ -28,6 +28,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { serverMediaUrl } from '../../lib/serverStorage';
 import { formatINR } from '../../lib/utils';
 import type { SponsoredStay } from '../../types';
 import { DestinationHub } from '../../types';
@@ -171,7 +172,7 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
         {/* ================= HERO SECTION ================= */}
         <div className="relative h-64 sm:h-80 w-full shrink-0">
           <img
-            src={destination.coverImage}
+            src={serverMediaUrl(destination.coverImage)}
             alt={destination.name}
             className="w-full h-full object-cover"
           />
@@ -345,10 +346,10 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
                   {allGalleryPhotos.slice(0, 4).map((url, idx) => (
                     <div
                       key={idx}
-                      onClick={() => setActiveLightboxImg(url)}
+                      onClick={() => setActiveLightboxImg(serverMediaUrl(url) ?? url)}
                       className="relative aspect-video rounded-xl overflow-hidden bg-slate-900 border border-white/10 cursor-pointer group"
                     >
-                      <img src={url} alt={`gallery-${idx}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img src={serverMediaUrl(url)} alt={`gallery-${idx}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                         <Maximize2 className="w-4 h-4 text-white" />
                       </div>
@@ -592,7 +593,7 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <img
-                            src={review.author.avatarUrl}
+                            src={serverMediaUrl(review.author.avatarUrl)}
                             alt={review.author.fullName}
                             className="w-10 h-10 rounded-full object-cover border border-orange-500/50 shadow"
                           />
@@ -664,10 +665,10 @@ export const DestinationDetailView: React.FC<DestinationDetailViewProps> = ({
                           {review.photos.map((photoUrl, pIdx) => (
                             <div
                               key={pIdx}
-                              onClick={() => setActiveLightboxImg(photoUrl)}
+                              onClick={() => setActiveLightboxImg(serverMediaUrl(photoUrl) ?? photoUrl)}
                               className="relative w-24 h-16 rounded-xl overflow-hidden shrink-0 bg-slate-950 border border-white/10 cursor-pointer group"
                             >
-                              <img src={photoUrl} alt="review pic" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                              <img src={serverMediaUrl(photoUrl)} alt="review pic" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 <Maximize2 className="w-3.5 h-3.5 text-white" />
                               </div>

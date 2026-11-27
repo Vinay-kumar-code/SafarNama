@@ -6,6 +6,7 @@ import { useCommunity } from '../../context/CommunityContext';
 import { useSocial } from '../../context/SocialContext';
 import { accountLabels } from '../../lib/authHelpers';
 import type { DestinationHub, DestinationListing } from '../../types';
+import { DestinationPicker } from '../common/DestinationPicker';
 import { UpdateEditor } from './UpdateEditor';
 import { DestinationEditor } from './DestinationEditor';
 import { ListingCard, UpdateCard } from './CommunityCards';
@@ -15,6 +16,7 @@ const businessCategories: DestinationListing['category'][] = ['Hotel or stay', '
 
 function ListingEditor({ tour, listing, onClose, onSave }: { tour: boolean; listing?: DestinationListing; onClose: () => void; onSave: () => void }) {
   const { destinations, publishListing } = useCommunity();
+  const [destinationId, setDestinationId] = useState(listing?.destinationId ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   async function publish(event: FormEvent<HTMLFormElement>) {
@@ -38,7 +40,7 @@ function ListingEditor({ tour, listing, onClose, onSave }: { tour: boolean; list
   return <Modal title={listing ? 'Edit listing' : tour ? 'Add a tour package' : 'Promote your business'} onClose={() => { if (!busy) onClose(); }}>
     <form className="sn-secondary-form" onSubmit={publish}>
       <label className="sn-secondary-label">{tour ? 'Tour name' : 'Business name'}<input className="sn-field" name="title" defaultValue={listing?.title} required maxLength={100} autoFocus /></label>
-      <label className="sn-secondary-label">Destination<select className="sn-field" name="destination" defaultValue={listing?.destinationId ?? ''} required><option value="">Choose a destination</option>{destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label>
+      <DestinationPicker destinations={destinations} value={destinationId} onChange={setDestinationId} name="destination" required disabled={busy} placeholder="Search destinations by name or state…" />
       {!tour && <label className="sn-secondary-label">Business category<select className="sn-field" name="category" defaultValue={listing?.category}>{businessCategories.map(category => <option key={category}>{category}</option>)}</select></label>}
       <label className="sn-secondary-label">{tour ? 'Itinerary and what’s included' : 'What do you offer?'}<textarea className="sn-field" name="detail" rows={5} defaultValue={listing?.detail} required maxLength={2800} /></label>
       <div className="sn-account-fields">

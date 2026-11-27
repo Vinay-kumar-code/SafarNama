@@ -39,16 +39,22 @@ export function useMediaSource(source?: string) {
   return source?.startsWith('local-media:') ? resolved : serverMediaUrl(source);
 }
 export function TravelImage({ src, alt, className = '' }: { src?: string; alt: string; className?: string }) {
-  const url = useMediaSource(src); const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  return url && !failed ? <img className={className} src={url} alt={alt} loading="lazy" onError={() => setFailed(true)} /> : <div role="img" aria-label={alt} className={`sn-image-fallback ${className}`}><ImageOff size={24} /><span>{alt}</span></div>;
+  const url = useMediaSource(src);
+  const [fallbackLevel, setFallbackLevel] = useState<0 | 1 | 2>(0);
+  useEffect(() => setFallbackLevel(0), [src, url]);
+  const activeUrl = fallbackLevel === 0 ? url : fallbackLevel === 1 && src?.startsWith('/media/') && url !== src ? src : undefined;
+  return activeUrl ? <img className={className} src={activeUrl} alt={alt} loading="lazy" onError={() => {
+    if (fallbackLevel === 0 && src?.startsWith('/media/') && url !== src) setFallbackLevel(1);
+    else setFallbackLevel(2);
+  }} /> : <div role="img" aria-label={alt} className={`sn-image-fallback ${className}`}><ImageOff size={24} /><span>{alt}</span></div>;
 }
 export function ProfileAvatar({ profile, className = '' }: { profile: Profile; className?: string }) {
+  const url = useMediaSource(profile.avatarUrl);
   const [failedUrl, setFailedUrl] = useState('');
   const initials = profile.fullName.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
   return <span className={`sn-profile-initial ${className}`} aria-hidden="true">
-    {profile.avatarUrl && failedUrl !== profile.avatarUrl
-      ? <img src={profile.avatarUrl} alt="" onError={() => setFailedUrl(profile.avatarUrl)} />
+    {url && failedUrl !== url
+      ? <img src={url} alt="" onError={() => setFailedUrl(url)} />
       : initials || <User size={17} />}
   </span>;
 }

@@ -33,9 +33,43 @@
 .sn-social-input { display: grid; gap: 6px; min-width: 0; }
 .sn-social-input > label { font-size: 13px; font-weight: 650; }
 .sn-social-tools { display: flex; align-items: center; justify-content: space-between; }
-.sn-emoji-picker { display: flex; flex-wrap: wrap; gap: 4px; padding: 5px; background: #f6f6ef; border-radius: 9px; }
-.sn-emoji-picker button { min-width: 40px; min-height: 40px; font-size: 20px; border-radius: 8px; }
+.sn-emoji-drawer { display: grid; gap: 6px; padding: 6px; background: #f6f6ef; border-radius: 9px; }
+.sn-emoji-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.sn-emoji-tabs button { padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--muted); background: transparent; }
+.sn-emoji-tabs button[aria-selected="true"] { background: #3f5146; color: #fff; }
+.sn-emoji-picker { display: flex; flex-wrap: wrap; gap: 3px; max-height: 150px; overflow-y: auto; padding: 2px; background: #f6f6ef; border-radius: 7px; }
+.sn-emoji-picker button { min-width: 38px; min-height: 38px; font-size: 20px; border-radius: 8px; }
 .sn-emoji-picker button:hover { background: #e8ede1; }
+.sn-dest-picker { display: grid; gap: 6px; min-width: 0; }
+.sn-dest-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sn-dest-picker-head label { font-size: 11px; color: #707c63; font-weight: 500; }
+.sn-dest-selected { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 11px; border: 1px solid #d4ded4; border-radius: 8px; background: #f7f9f4; }
+.sn-dest-selected-info { display: flex; align-items: center; gap: 8px; min-width: 0; color: #3b5545; }
+.sn-dest-selected-info div { display: grid; min-width: 0; }
+.sn-dest-selected-info strong { font-size: 12px; color: var(--ink); overflow-wrap: anywhere; }
+.sn-dest-selected-info span { font-size: 11px; color: var(--muted); }
+.sn-dest-search-wrap { position: relative; display: grid; gap: 4px; }
+.sn-dest-search-box { display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #e3e8db; border-radius: 8px; background: #fff; color: var(--muted); }
+.sn-dest-search-box input.sn-field { border: 0; margin: 0; padding: 9px 2px; background: transparent; box-shadow: none; flex: 1; min-width: 0; }
+.sn-dest-dropdown { display: grid; max-height: 210px; overflow-y: auto; border: 1px solid var(--line); border-radius: 9px; background: #fff; box-shadow: 0 8px 24px #16231018; }
+.sn-dest-option { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--line); }
+.sn-dest-option:hover, .sn-dest-option.active { background: #f3f6ef; }
+.sn-dest-option strong { font-size: 12px; color: var(--ink); }
+.sn-dest-option span { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.sn-dest-more { padding: 8px 11px; font-size: 11px; color: var(--muted); margin: 0; }
+.sn-dest-close { padding: 8px 11px; font-size: 11px; font-weight: 650; color: #7e452f; text-align: center; border-top: 1px solid var(--line); background: #fafbf7; }
+.sn-dest-picker-dark .sn-dest-picker-head label { color: #cbd5e1; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.sn-dest-picker-dark .sn-dest-selected { background: rgba(30, 41, 59, 0.8); border-color: rgba(255, 255, 255, 0.1); }
+.sn-dest-picker-dark .sn-dest-selected-info, .sn-dest-picker-dark .sn-dest-selected-info strong { color: #fff; }
+.sn-dest-picker-dark .sn-dest-selected-info span { color: #94a3b8; }
+.sn-dest-picker-dark .sn-dest-search-box { background: rgba(30, 41, 59, 0.8); border-color: rgba(255, 255, 255, 0.1); color: #94a3b8; }
+.sn-dest-picker-dark .sn-dest-search-box input.sn-field { color: #fff; }
+.sn-dest-picker-dark .sn-dest-dropdown { background: #0f172a; border-color: rgba(255, 255, 255, 0.14); }
+.sn-dest-picker-dark .sn-dest-option { border-color: rgba(255, 255, 255, 0.08); }
+.sn-dest-picker-dark .sn-dest-option:hover, .sn-dest-picker-dark .sn-dest-option.active { background: #1e293b; }
+.sn-dest-picker-dark .sn-dest-option strong { color: #f8fafc; }
+.sn-dest-picker-dark .sn-dest-option span, .sn-dest-picker-dark .sn-dest-more { color: #94a3b8; }
+.sn-dest-picker-dark .sn-dest-close { background: #1e293b; border-color: rgba(255, 255, 255, 0.1); color: #fb923c; }
 .sn-mention-list { display: grid; border: 1px solid var(--line); border-radius: 9px; }
 .sn-mention-list button { text-align: left; min-height: 42px; padding: 8px 10px; overflow-wrap: anywhere; }
 .sn-mention-list button + button { border-top: 1px solid var(--line); }
@@ -80,6 +114,18 @@
 .sn-studio-place > .sn-secondary-actions { justify-content: flex-end; }
 .sn-studio > .sn-secondary-stack { gap: 25px; }
 .sn-journal-shortcuts { grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); }
+.sn-media-picker { display: grid; gap: 8px; padding: 14px; }
+.sn-media-picker-compact { padding: 0; }
+.sn-media-picker-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sn-media-picker-btn { position: relative; overflow: hidden; cursor: pointer; }
+.sn-media-picker-btn input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.sn-media-picker-hint { font-size: 11px; color: var(--muted); }
+.sn-review-photo-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sn-review-thumb { position: relative; width: 78px; height: 78px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.sn-review-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.sn-review-thumb button { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, 0.92); color: var(--ink); }
+.sn-review-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-top: 10px; }
+.sn-review-photos > :is(img, .sn-image-fallback) { width: 100%; height: 96px; object-fit: cover; border-radius: 8px; }
 @media (max-width: 767px) {
   .sn-brand .sn-brand-mark { width: 30px; height: 30px; }
   .sn-profile .sn-profile-avatar { width: 80px; height: 80px; }

@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ImagePlus, PenLine, Clapperboard, Upload, Check, X } from 'lucide-react';
+import { ImagePlus, PenLine, Clapperboard, Check, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useSocial } from '../../context/SocialContext';
 import { useCommunity } from '../../context/CommunityContext';
 import { storeMedia, removeMedia } from '../../lib/localMedia';
-import { hasServerStorage } from '../../lib/serverStorage';
+import { hasServerStorage, StorageError } from '../../lib/serverStorage';
 import { blankStory, prepareStoryMedia, readStoryDrafts, storyMediaRules, writeStoryDrafts, type StoryDraft } from '../../lib/storyDrafts';
+import { DestinationPicker } from '../common/DestinationPicker';
+import { MediaPicker } from '../common/MediaPicker';
 import { Modal } from './Primitives';
 import type { ContentFormat, Post } from '../../types';
-import { SocialTextInput, StickerPicker, StorySticker } from './SocialText';
+import { SocialTextInput } from './SocialText';
 
 const formats = [
   { id: 'carousel_note', name: 'Photo story', Icon: ImagePlus },
@@ -90,8 +92,8 @@ export function CreateStory({ onPublished }: { onPublished: () => void }) {
   async function publish(event: FormEvent) {
     event.preventDefault();
     if (busy || confirmDiscard) return;
-    const destination = destinations.find(place => place.id === draft.destinationId);
-    if (!destination || !draft.caption.trim()) { setError('Add a destination and a few words about your journey.'); return; }
+    const destination = draft.destinationId ? destinations.find(place => place.id === draft.destinationId) : undefined;
+    if (!draft.caption.trim()) { setError('Write a few words about your journey.'); return; }
     if (draft.caption.length > captionLimit) { setError('This story type allows up to ' + captionLimit + ' characters.'); return; }
     if (!isNote && !files.length) { setError('Choose your photo or video before sharing.'); return; }
     const budget = draft.budget ? Number(draft.budget) : undefined;
@@ -105,18 +107,27 @@ export function CreateStory({ onPublished }: { onPublished: () => void }) {
       for (const file of files) media.push(await storeMedia(file));
       const post: Post = {
         id: storyIds.current[format] ??= crypto.randomUUID(),
-        author: currentUser, destinationId: destination.id, spotName: draft.spot.trim() || destination.name,
-        state: destination.state, region: destination.region, caption: draft.caption.trim(), format,
-        sticker: draft.sticker || undefined,
-        ...(isReel ? { videoUrl: media[0], thumbnailUrl: destination.coverImage } : { thumbnailUrl: media[0], carouselImages: media }),
-        costInInr: budget, howToReach: draft.tip.trim() || undefined,
-        latitude: destination.latitude, longitude: destination.longitude,
+        author: currentUser,
+        destinationId: destination?.id,
+        spotName: draft.spot.trim() || destination?.name || 'Across India',
+        state: destination?.state ?? '',
+        region: destination?.region ?? '',
+        caption: draft.caption.trim(),
+        format,
+        ...(isReel ? { videoUrl: media[0], thumbnailUrl: destination?.coverImage ?? '' } : { thumbnailUrl: media[0], carouselImages: media }),
+        costInInr: budget,
+        howToReach: draft.tip.trim() || undefined,
+        latitude: destination?.latitude,
+        longitude: destination?.longitude,
         likesCount: 0, savesCount: 0, sharesCount: 0, viewsCount: 0, commentsCount: 0, createdAt: new Date().toISOString(),
       };
       await createPost(post);
     } catch (failure) {
       await Promise.allSettled(media.map(removeMedia));
-      setError(failure instanceof Error && hasServerStorage ? failure.message : 'Could not save your story. You can retry.');
+      const msg = failure instanceof StorageError && !destination && failure.status === 400
+        ? 'The live server needs to be updated before publishing without a destination. Please choose a destination or redeploy the server.'
+        : failure instanceof Error && hasServerStorage ? failure.message : 'Could not save your story. You can retry.';
+      setError(msg);
       setBusy(false);
       return;
     }
@@ -143,14 +154,16 @@ export function CreateStory({ onPublished }: { onPublished: () => void }) {
         }}><Icon size={20} />{name}</button>,
       )}</div>
       {!isNote && <div className="sn-upload">
-        <label htmlFor="story-media"><Upload size={24} />
-          <strong>{files.length ? files.length + (isReel ? ' video selected' : ' photo(s) selected') + ' · change' : isReel ? 'Choose a video' : 'Choose photos'}
-            <input id="story-media" type="file" accept={rules.accept} multiple={!isReel} disabled={busy} onChange={event => {
-              selectFiles(event.currentTarget.files);
-              event.currentTarget.value = '';
-            }} />
-          </strong><span>{rules.hint}</span>
-        </label>
+        <MediaPicker
+          accept={rules.accept}
+          captureKind={isReel ? 'video' : 'image'}
+          multiple={!isReel}
+          disabled={busy}
+          fileLabel={files.length ? `${files.length} ${isReel ? 'video' : 'photo(s)'} selected · change` : isReel ? 'Choose video from gallery / files' : 'Choose photos from gallery / files'}
+          cameraLabel={isReel ? 'Record video' : 'Take photo'}
+          hint={rules.hint}
+          onSelect={selectFiles}
+        />
         {previews.length > 0 && <div className="sn-upload-previews">
           {previews.map((url, index) => isReel ? <video src={url} controls key={url} /> : <img src={url} key={url} alt={'Selected photograph ' + (index + 1)} />)}
           <button type="button" aria-label="Remove selected media" disabled={busy} onClick={() => {
@@ -162,12 +175,15 @@ export function CreateStory({ onPublished }: { onPublished: () => void }) {
       <SocialTextInput label="Your story" value={draft.caption} limit={captionLimit} rows={4} autoFocus
         placeholder={isNote ? 'A useful tip or a moment from the road…' : 'What made this moment stay with you?'}
         change={value => update('caption', value)} disabled={busy} />
-      <StickerPicker value={draft.sticker} change={value => update('sticker', value)} disabled={busy} />
-      <StorySticker sticker={draft.sticker} />
       <div className="sn-form-row">
-        <label>Destination<select value={draft.destinationId} required disabled={busy} onChange={event => update('destinationId', event.target.value)}>
-          <option value="">Choose a place</option>{destinations.map(place => <option value={place.id} key={place.id}>{place.name}</option>)}
-        </select></label>
+        <DestinationPicker
+          destinations={destinations}
+          value={draft.destinationId}
+          onChange={id => update('destinationId', id)}
+          optional
+          disabled={busy}
+          placeholder="Search a destination (optional)…"
+        />
         <label>A little more specific<input value={draft.spot} maxLength={100} disabled={busy}
           placeholder="A street, a café, a viewpoint…" onChange={event => update('spot', event.target.value)} /></label>
       </div>

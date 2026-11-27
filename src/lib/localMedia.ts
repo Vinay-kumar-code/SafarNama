@@ -1,4 +1,5 @@
-import { hasServerStorage, requestStorage } from './serverStorage';
+import { hasServerStorage, requestStorage, StorageError } from './serverStorage';
+import { normalizeMediaFile } from './storyDrafts';
 
 // Local previews keep binary uploads in IndexedDB.
 function openMediaDB(): Promise<IDBDatabase> {
@@ -10,11 +11,24 @@ function openMediaDB(): Promise<IDBDatabase> {
   });
 }
 export async function storeMedia(file: File): Promise<string> {
+  const prepared = normalizeMediaFile(file, true);
   if (hasServerStorage) {
-    const result = await requestStorage<{ url: string }>('media', {
-      method: 'POST', headers: { 'Content-Type': file.type }, body: file,
-    }, true);
-    return result.url;
+    const body = new FormData();
+    body.append('file', prepared, prepared.name || 'upload');
+    try {
+      const result = await requestStorage<{ url: string }>('upload', {
+        method: 'POST', body,
+      }, true);
+      return result.url;
+    } catch (error) {
+      if (error instanceof StorageError && error.status === 404) {
+        const fallback = await requestStorage<{ url: string }>('media', {
+          method: 'POST', headers: { 'Content-Type': prepared.type }, body: prepared,
+        }, true);
+        return fallback.url;
+      }
+      throw error;
+    }
   }
   const db = await openMediaDB();
   const id = crypto.randomUUID();

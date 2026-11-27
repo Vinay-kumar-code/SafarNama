@@ -1,10 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useSocial } from '../../context/SocialContext';
 import { useServerData } from '../../context/ServerDataContext';
 import { hasServerStorage } from '../../lib/serverStorage';
 import { accountLabels, isAccountType } from '../../lib/authHelpers';
+import { removeMedia, storeMedia } from '../../lib/localMedia';
+import { normalizeMediaFile } from '../../lib/storyDrafts';
 import type { AccountType, Profile } from '../../types';
+import { MediaPicker } from '../common/MediaPicker';
 import { Modal, ProfileAvatar } from '../social/Primitives';
 
 export function OnboardingModal() {
@@ -19,6 +22,25 @@ function ProfileEditor({ profile }: { profile: Profile }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [avatar, setAvatar] = useState(profile.avatarUrl);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
+  function handleSelectAvatar(files: FileList | null) {
+    const raw = files?.[0];
+    if (!raw) return;
+    try {
+      const file = normalizeMediaFile(raw, false);
+      setAvatarFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setError('');
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Choose a JPG, PNG, WebP, or GIF photo under 8 MB.');
+    }
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,9 +50,12 @@ function ProfileEditor({ profile }: { profile: Profile }) {
     if (!read('name')) { setError('Enter your name or business name.'); return; }
     setBusy(true);
     setError('');
+    let uploaded: string | undefined;
     try {
-      const avatarUrl = read('avatar');
-      if (avatarUrl && !['http:', 'https:'].includes(new URL(avatarUrl).protocol)) throw new Error('Use a web address for your profile photo.');
+      if (avatarFile) {
+        uploaded = await storeMedia(avatarFile);
+      }
+      const avatarUrl = uploaded ?? avatar;
       const result = await updateProfile({
         fullName: read('name'), username: read('username').toLowerCase(), bio: read('bio'), homeCity: read('city'), avatarUrl,
         languagesSpoken: [...new Set(read('languages').split(',').map(language => language.trim()).filter(Boolean))],
@@ -43,16 +68,28 @@ function ProfileEditor({ profile }: { profile: Profile }) {
       }
       closeOnboarding();
       notify('Profile settings saved.');
-    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not save your profile.'); }
-    finally { setBusy(false); }
+    } catch (failure) {
+      if (uploaded) await removeMedia(uploaded).catch(() => {});
+      setError(failure instanceof Error ? failure.message : 'Could not save your profile.');
+    } finally { setBusy(false); }
   }
 
   return <Modal title="Profile settings" onClose={() => { if (!busy) closeOnboarding(); }}>
     <form className="sn-secondary-form sn-account-dialog" onSubmit={save}>
       <div className="sn-profile-photo-settings">
-        <ProfileAvatar profile={{ ...profile, avatarUrl: avatar.trim() }} />
-        <label className="sn-secondary-label">Profile photo URL<input className="sn-field" name="avatar" type="url" value={avatar} onChange={event => setAvatar(event.target.value)} placeholder="https://…" /></label>
-        {avatar && <button className="sn-button secondary" type="button" onClick={() => setAvatar('')}>Remove photo</button>}
+        <ProfileAvatar profile={{ ...profile, avatarUrl: previewUrl || avatar }} />
+        <div className="sn-secondary-stack">
+          <MediaPicker
+            variant="compact"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+            captureKind="image"
+            disabled={busy}
+            fileLabel={avatarFile || avatar ? 'Change photo' : 'Choose from gallery / files'}
+            cameraLabel="Take photo"
+            onSelect={handleSelectAvatar}
+          />
+          {(avatarFile || avatar) && <button className="sn-button secondary" type="button" disabled={busy} onClick={() => { setAvatarFile(null); setPreviewUrl(''); setAvatar(''); }}>Remove photo</button>}
+        </div>
       </div>
       <div className="sn-account-fields">
         <label className="sn-secondary-label">Display name<input className="sn-field" name="name" autoComplete="name" defaultValue={profile.fullName} maxLength={80} required /></label>

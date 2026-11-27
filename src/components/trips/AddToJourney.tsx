@@ -28,7 +28,7 @@ export function AddToJourney({ stop, onClose }: { stop: JourneyStopInput; onClos
       notify(`Added ${stop.spotName} to ${target?.title ?? title.trim()}.`);
       onClose();
     }}>
-      <p className="sn-secondary-body">{stop.spotName}, {stop.state}</p>
+      <p className="sn-secondary-body">{stop.spotName}{stop.state ? `, ${stop.state}` : ''}</p>
       {journeys.trips.length > 0 && <label className="sn-secondary-label">Journey
         <select className="sn-field" value={tripId} onChange={event => setTripId(event.target.value)}>
           <option value="" disabled={!canCreate}>New journey</option>

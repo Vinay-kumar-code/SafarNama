@@ -84,8 +84,8 @@ export interface Post {
   safetyTips?: string;
   howToReach?: string;
   connectivitySignal?: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   taggedGear?: GearTag[];
   likesCount: number;
   savesCount: number;

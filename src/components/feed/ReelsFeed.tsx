@@ -562,13 +562,15 @@ export const ReelsFeed: React.FC = () => {
                     )}
                   </button>
 
+                  {typeof currentActivePost.latitude === 'number' && typeof currentActivePost.longitude === 'number' && (
                   <button
-                    onClick={() => openSpotOnMap(currentActivePost.latitude, currentActivePost.longitude, currentActivePost.spotName)}
+                    onClick={() => openSpotOnMap(currentActivePost.latitude!, currentActivePost.longitude!, currentActivePost.spotName)}
                     className="py-3 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-zinc-200 transition-all shadow-xs cursor-pointer"
                   >
                     <Navigation className="w-3.5 h-3.5 text-blue-500" />
                     <span>View Map</span>
                   </button>
+                  )}
 
                   <button
                     onClick={() => handleOpenComments(currentActivePost)}

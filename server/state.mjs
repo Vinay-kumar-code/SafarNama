@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DESTINATION_HUBS, INDIA_DESTINATIONS } from '../src/data/destinations.ts';
+import { DESTINATION_HUBS } from '../src/data/destinations.ts';
 
 export class InputError extends Error {
   constructor(message, status = 400) {
@@ -32,8 +32,9 @@ function enumValue(value, choices) {
 }
 
 export const uuidPattern = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
-const idPattern = /^(?:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|dest-[a-z0-9-]{1,60})$/i;
+const idPattern = /^(?:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|dest-[a-z0-9-]{1,80})$/i;
 const mediaPrefix = '/media/uploads/';
+const uploadPathPattern = /^\/media\/uploads\/[a-f\d-]{36}$/i;
 const stockMedia = new Set(DESTINATION_HUBS.flatMap(place => [place.coverImage, ...place.galleryImages]));
 const stickers = ['Mountains', 'Beach day', 'Food stop', 'Heritage', 'On the road', 'Hidden gem'];
 const starterPlaces = new Map(DESTINATION_HUBS.map(place => [place.id, place]));
@@ -63,7 +64,11 @@ export function principal(user) {
   const account = meta.account_type ?? meta.role;
   const role = user.app_metadata?.role === 'admin' ? 'admin' : roles.includes(account) ? account : 'traveler';
   let avatar = '';
-  try { avatar = httpsUrl(details.avatarUrl ?? meta.avatar_url ?? meta.picture); } catch { /* Ignore unusable old avatar URLs. */ }
+  const rawAvatar = details.avatarUrl ?? meta.avatar_url ?? meta.picture;
+  if (typeof rawAvatar === 'string' && uploadPathPattern.test(rawAvatar.trim())) avatar = rawAvatar.trim();
+  else {
+    try { avatar = httpsUrl(rawAvatar); } catch { /* Ignore unusable old avatar URLs. */ }
+  }
   return {
     assigned: Array.isArray(user.app_metadata?.managed_destination_ids) ? user.app_metadata.managed_destination_ids : [],
     profile: {
@@ -106,7 +111,7 @@ export function createState(dataDirectory, assetDirectory) {
     CREATE TABLE IF NOT EXISTS media (
       id TEXT PRIMARY KEY, owner TEXT NOT NULL, mime TEXT NOT NULL, bytes INTEGER NOT NULL, created INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS destination_photos (path TEXT PRIMARY KEY, webp BLOB NOT NULL);
+    CREATE TABLE IF NOT EXISTS destination_photos (path TEXT PRIMARY KEY, webp BLOB NOT NULL, mime TEXT NOT NULL DEFAULT 'image/webp');
     CREATE TABLE IF NOT EXISTS media_refs (
       kind TEXT NOT NULL, record_id TEXT NOT NULL, media_id TEXT NOT NULL REFERENCES media(id),
       PRIMARY KEY(kind,record_id,media_id),
@@ -116,36 +121,43 @@ export function createState(dataDirectory, assetDirectory) {
     CREATE TABLE IF NOT EXISTS revisions (id INTEGER PRIMARY KEY CHECK(id = 1), value INTEGER NOT NULL);
     INSERT OR IGNORE INTO revisions VALUES (1,0);
   `);
+  try { db.exec("ALTER TABLE destination_photos ADD COLUMN mime TEXT NOT NULL DEFAULT 'image/webp'"); } catch { /* Column already exists. */ }
 
   const seedPlace = db.prepare("INSERT OR IGNORE INTO records (kind,id,owner,data) VALUES ('places',?,'',?)");
   const readPlace = db.prepare("SELECT data FROM records WHERE kind='places' AND id=?");
   const updatePlace = db.prepare("UPDATE records SET data=? WHERE kind='places' AND id=?");
   const hasPhoto = db.prepare('SELECT 1 FROM destination_photos WHERE path=?');
-  const seedPhoto = db.prepare('INSERT INTO destination_photos (path,webp) VALUES (?,?)');
-  const readPhoto = db.prepare('SELECT webp FROM destination_photos WHERE path=?');
+  const seedPhoto = db.prepare('INSERT INTO destination_photos (path,webp,mime) VALUES (?,?,?)');
+  const readPhoto = db.prepare('SELECT webp, mime FROM destination_photos WHERE path=?');
+  function loadBundledAsset(assetPath) {
+    try { return readFileSync(join(assetDirectory, assetPath.slice(1))); }
+    catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      // The development backend can run before Vite has built dist.
+      return readFileSync(new URL('../public' + assetPath, import.meta.url));
+    }
+  }
+  function detectImageMime(assetPath, bytes) {
+    if (bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+    if (bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) return 'image/jpeg';
+    if (bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png';
+    throw new Error(`Invalid bundled destination photo: ${assetPath}`);
+  }
   db.exec('BEGIN IMMEDIATE');
   try {
     let imported = 0;
-    for (const place of INDIA_DESTINATIONS) {
+    for (const place of DESTINATION_HUBS) {
       const added = seedPlace.run(place.id, JSON.stringify(place)).changes;
       imported += Number(added);
-      if (!place.galleryPhotos?.length) continue;
-      for (const photo of place.galleryPhotos) {
-        if (hasPhoto.get(photo.src)) continue;
-        let bytes;
-        try { bytes = readFileSync(join(assetDirectory, photo.src.slice(1))); }
-        catch (error) {
-          if (error.code !== 'ENOENT') throw error;
-          // The development backend can run before Vite has built dist.
-          bytes = readFileSync(new URL('../public' + photo.src, import.meta.url));
-        }
-        if (bytes.toString('ascii', 0, 4) !== 'RIFF' || bytes.toString('ascii', 8, 12) !== 'WEBP') {
-          throw new Error(`Invalid bundled destination photo: ${photo.src}`);
-        }
-        seedPhoto.run(photo.src, bytes);
+      const assetPaths = [place.coverImage, ...(place.galleryPhotos?.map(photo => photo.src) ?? [])].filter(Boolean);
+      for (const assetPath of assetPaths) {
+        if (!assetPath.startsWith('/media/') || hasPhoto.get(assetPath)) continue;
+        const bytes = loadBundledAsset(assetPath);
+        const mime = detectImageMime(assetPath, bytes);
+        seedPhoto.run(assetPath, bytes, mime);
         imported++;
       }
-      if (added) continue;
+      if (!place.galleryPhotos?.length || added) continue;
       const previous = JSON.parse(readPlace.get(place.id).data);
       const newPaths = place.galleryImages.filter(path => !previous.galleryImages?.includes(path));
       const newPhotos = place.galleryPhotos.filter(photo => !previous.galleryPhotos?.some(saved => saved.src === photo.src));
@@ -172,7 +184,7 @@ export function createState(dataDirectory, assetDirectory) {
   const countTrips = db.prepare("SELECT count(*) AS n FROM private WHERE owner=? AND kind='trip'");
   const putPrivate = db.prepare(`INSERT INTO private VALUES (?,?,?,?) ON CONFLICT(owner,kind,id) DO UPDATE SET data=excluded.data`);
   const removePrivate = db.prepare('DELETE FROM private WHERE owner=? AND kind=? AND id=?');
-  const list = db.prepare('SELECT * FROM records WHERE kind=? ORDER BY rowid DESC LIMIT 500');
+  const list = db.prepare('SELECT * FROM records WHERE kind=? ORDER BY rowid DESC LIMIT 5000');
   const clearSelections = db.prepare('DELETE FROM private WHERE kind=? AND id=?');
   const readRevision = db.prepare('SELECT value FROM revisions WHERE id=1');
   const getFile = db.prepare('SELECT * FROM media WHERE id=?');
@@ -282,7 +294,7 @@ export function createState(dataDirectory, assetDirectory) {
           [previous.thumbnailUrl, previous.videoUrl, ...(previous.carouselImages ?? [])]);
         return;
       }
-      const place = destination(body.destinationId);
+      const place = body.destinationId ? destination(body.destinationId) : undefined;
       const format = enumValue(body.format, ['quick_tip', 'carousel_note', 'reel']);
       const images = body.carouselImages ?? [];
       ensure(Array.isArray(images) && images.length <= 6, 'Choose up to six images.');
@@ -291,16 +303,16 @@ export function createState(dataDirectory, assetDirectory) {
       ensure(carouselImages.every(url => url.startsWith(mediaPrefix) && getFile.get(url.slice(mediaPrefix.length))?.mime.startsWith('image/')), 'Upload supported photos.');
       const videoUrl = format === 'reel' ? mediaUrl(body.videoUrl, owner) : '';
       ensure(format !== 'reel' || (videoUrl.startsWith(mediaPrefix) && getFile.get(videoUrl.slice(mediaPrefix.length))?.mime.startsWith('video/')), 'Upload a supported video.');
-      const thumbnailUrl = carouselImages[0] || (format === 'reel' ? place.coverImage : '');
+      const thumbnailUrl = carouselImages[0] || (format === 'reel' ? (place?.coverImage ?? '') : '');
       const post = {
-        id, destinationId: place.id, format, createdAt, caption: str(body.caption, format === 'quick_tip' ? 500 : 2200, true),
+        id, destinationId: place?.id, format, createdAt, caption: str(body.caption, format === 'quick_tip' ? 500 : 2200, true),
         sticker: body.sticker ? enumValue(body.sticker, stickers) : undefined,
-        spotName: str(body.spotName, 100) || place.name, state: place.state, region: place.region,
-        latitude: place.latitude, longitude: place.longitude, costInInr: number(body.costInInr, 0, 1_000_000, null) ?? undefined,
+        spotName: str(body.spotName, 100) || place?.name || 'Across India', state: place?.state ?? '', region: place?.region ?? '',
+        latitude: place?.latitude, longitude: place?.longitude, costInInr: number(body.costInInr, 0, 1_000_000, null) ?? undefined,
         howToReach: str(body.howToReach, 500), videoUrl: videoUrl || undefined, thumbnailUrl, carouselImages,
         likesCount: 0, savesCount: 0, sharesCount: 0, viewsCount: 0, commentsCount: 0,
       };
-      write(kind, id, owner, place.id, post, [thumbnailUrl, videoUrl, ...carouselImages]);
+      write(kind, id, owner, place?.id ?? '', post, [thumbnailUrl, videoUrl, ...carouselImages].filter(Boolean));
       return;
     }
 
@@ -421,7 +433,12 @@ export function createState(dataDirectory, assetDirectory) {
     ensure(body && typeof body === 'object' && !Array.isArray(body), 'Invalid request body.');
     db.exec('BEGIN IMMEDIATE');
     try {
-      upsertAuthor.run(account.profile.id, JSON.stringify(account.profile));
+      const profile = { ...account.profile };
+      if (profile.avatarUrl.startsWith(mediaPrefix)) {
+        const file = getFile.get(profile.avatarUrl.slice(mediaPrefix.length));
+        if (!file || file.owner !== profile.id) profile.avatarUrl = '';
+      }
+      upsertAuthor.run(profile.id, JSON.stringify(profile));
       if (scope === 'public') publicMutation(kind, id, body, account, method);
       else privateMutation(kind, id, body, account, method);
       db.exec('UPDATE revisions SET value=value+1 WHERE id=1');
@@ -477,11 +494,29 @@ export function createState(dataDirectory, assetDirectory) {
 
   return {
     mutate, snapshot, close: () => db.close(),
-    destinationPhoto: path => readPhoto.get(path)?.webp,
+    destinationPhoto: path => {
+      const row = readPhoto.get(path);
+      return row ? { bytes: row.webp, mime: row.mime || 'image/webp' } : undefined;
+    },
+    destinationCoverPhoto: id => {
+      if (!idPattern.test(id)) return undefined;
+      const place = decode(find.get('places', id)) ?? starterPlaces.get(id);
+      if (!place?.coverImage) return undefined;
+      const row = readPhoto.get(place.coverImage);
+      return row ? { bytes: row.webp, mime: row.mime || 'image/webp' } : undefined;
+    },
     hasMedia: id => Boolean(getFile.get(id)),
     addMedia: (id, owner, mime, bytes) => db.prepare('INSERT INTO media VALUES (?,?,?,?,?)').run(id, owner, mime, bytes, Date.now()),
-    media: id => db.prepare('SELECT * FROM media WHERE id=? AND EXISTS(SELECT 1 FROM media_refs WHERE media_id=?)').get(id,id),
-    removeMedia: (id, owner) => db.prepare('DELETE FROM media WHERE id=? AND owner=? AND NOT EXISTS(SELECT 1 FROM media_refs WHERE media_id=?)').run(id,owner,id).changes > 0,
-    pruneMedia: (before) => db.prepare('DELETE FROM media WHERE created < ? AND NOT EXISTS(SELECT 1 FROM media_refs WHERE media_id=media.id) RETURNING id').all(before),
+    media: id => db.prepare(`SELECT * FROM media WHERE id=? AND (
+      EXISTS(SELECT 1 FROM media_refs WHERE media_id=?)
+      OR EXISTS(SELECT 1 FROM authors WHERE json_extract(profile,'$.avatarUrl')='/media/uploads/' || ?)
+    )`).get(id, id, id),
+    removeMedia: (id, owner) => db.prepare(`DELETE FROM media WHERE id=? AND owner=?
+      AND NOT EXISTS(SELECT 1 FROM media_refs WHERE media_id=?)
+      AND NOT EXISTS(SELECT 1 FROM authors WHERE json_extract(profile,'$.avatarUrl')='/media/uploads/' || ?)`).run(id, owner, id, id).changes > 0,
+    pruneMedia: (before) => db.prepare(`DELETE FROM media WHERE created < ?
+      AND NOT EXISTS(SELECT 1 FROM media_refs WHERE media_id=media.id)
+      AND NOT EXISTS(SELECT 1 FROM authors WHERE json_extract(profile,'$.avatarUrl')='/media/uploads/' || media.id)
+      RETURNING id`).all(before),
   };
 }

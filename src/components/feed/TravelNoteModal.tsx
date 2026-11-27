@@ -18,6 +18,7 @@ import {
   Star
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { serverMediaUrl } from '../../lib/serverStorage';
 import { formatINR } from '../../lib/utils';
 import { DESTINATION_HUBS } from '../../data/destinations';
 
@@ -58,7 +59,7 @@ export const TravelNoteModal: React.FC = () => {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-[#0d0f17]/90 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-2.5">
             <img
-              src={activeTravelNote.author.avatarUrl}
+              src={serverMediaUrl(activeTravelNote.author.avatarUrl)}
               alt={activeTravelNote.author.fullName}
               className="w-8 h-8 rounded-full object-cover border border-orange-500/50"
             />
@@ -91,7 +92,7 @@ export const TravelNoteModal: React.FC = () => {
           {/* Photo Carousel */}
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 shadow-inner group">
             <img
-              src={images[activeImageIndex]}
+              src={serverMediaUrl(images[activeImageIndex])}
               alt={activeTravelNote.spotName}
               className="w-full h-full object-cover transition-transform duration-300"
             />
@@ -303,10 +304,11 @@ export const TravelNoteModal: React.FC = () => {
               )}
             </button>
 
+            {typeof activeTravelNote.latitude === 'number' && typeof activeTravelNote.longitude === 'number' && (
             <button
               onClick={() => {
-                const lat = activeTravelNote.latitude;
-                const lng = activeTravelNote.longitude;
+                const lat = activeTravelNote.latitude!;
+                const lng = activeTravelNote.longitude!;
                 const name = activeTravelNote.spotName;
                 setActiveTravelNote(null);
                 openSpotOnMap(lat, lng, name);
@@ -316,6 +318,7 @@ export const TravelNoteModal: React.FC = () => {
               <Navigation className="w-4 h-4 text-orange-400" />
               <span>View On Map</span>
             </button>
+            )}
           </div>
 
         </div>

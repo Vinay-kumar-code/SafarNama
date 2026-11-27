@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { serverMediaUrl } from '../../lib/serverStorage';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { UserRole } from '../../types';
 
@@ -193,7 +194,7 @@ export const ProfileView: React.FC = () => {
             <div className="md:col-span-4 flex items-center md:flex-col md:items-start gap-4">
               <div className="relative shrink-0">
                 <img
-                  src={currentUser.avatarUrl}
+                  src={serverMediaUrl(currentUser.avatarUrl)}
                   alt={currentUser.fullName}
                   className={`w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-3xl object-cover border-2 shadow-md ${
                     activeRole === 'local_guide' ? 'border-emerald-500' : 'border-orange-500'
@@ -383,7 +384,7 @@ export const ProfileView: React.FC = () => {
                     className="p-3.5 rounded-2xl bg-white border border-zinc-200 hover:border-orange-400 flex items-center gap-3.5 shadow-xs transition-all group"
                   >
                     <img
-                      src={post.thumbnailUrl || post.carouselImages?.[0]}
+                      src={serverMediaUrl(post.thumbnailUrl || post.carouselImages?.[0])}
                       alt={post.spotName}
                       className="w-16 h-16 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform border border-zinc-100"
                     />

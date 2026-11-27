@@ -1,10 +1,12 @@
-import { useState, type FormEvent } from 'react';
-import { MapPin } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { MapPin, X } from 'lucide-react';
 import { useCommunity, type DestinationInput } from '../../context/CommunityContext';
 import type { DestinationHub } from '../../types';
 import type { SearchLocation } from '../map/locationSearch';
-import { Modal } from '../social/Primitives';
+import { MediaPicker } from '../common/MediaPicker';
+import { Modal, TravelImage } from '../social/Primitives';
 import { storeMedia, removeMedia } from '../../lib/localMedia';
+import { normalizeMediaFile } from '../../lib/storyDrafts';
 
 export function DestinationEditor({ place, location, onClose, onSave }: {
   place?: DestinationHub;
@@ -15,6 +17,27 @@ export function DestinationEditor({ place, location, onClose, onSave }: {
   const { saveDestination } = useCommunity();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [existingCover, setExistingCover] = useState(place?.coverImage ?? '');
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+
+  function handleSelectCover(selected: FileList | null) {
+    const raw = selected?.[0];
+    if (!raw) return;
+    try {
+      const file = normalizeMediaFile(raw, false);
+      setPhotoFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setError('');
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Choose a JPG, PNG, WebP, or GIF image under 8 MB.');
+    }
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -23,20 +46,15 @@ export function DestinationEditor({ place, location, onClose, onSave }: {
     const read = (key: string) => String(fields.get(key) ?? '').trim();
     const latitude = Number(read('latitude'));
     const longitude = Number(read('longitude'));
-    const coverImage = read('cover') || read('existing-cover');
-    const photo = fields.get('cover-file');
     let uploaded: string | undefined;
     setBusy(true);
     try {
-      if (photo instanceof File && photo.size > 0) {
-        if (!photo.type.startsWith('image/') || photo.size > 8 * 1024 * 1024) throw new Error('Choose an image under 8 MB.');
-        uploaded = await storeMedia(photo);
-      } else if (coverImage && coverImage !== place?.coverImage && !['https:', 'http:'].includes(new URL(coverImage).protocol)) {
-        throw new Error('Use a web address for the cover photo.');
+      if (photoFile) {
+        uploaded = await storeMedia(photoFile);
       }
       const input: DestinationInput = {
         name: read('name'), state: read('state'), region: read('region') || read('state'), overview: read('overview'),
-        tagline: read('tagline') || read('overview').slice(0, 120), coverImage: uploaded ?? coverImage,
+        tagline: read('tagline') || read('overview').slice(0, 120), coverImage: uploaded ?? existingCover,
         latitude, longitude, bestTimeToVisit: read('season'), openingHours: read('hours'),
         estimatedDailyBudgetInr: Number(read('budget')) || 0,
       };
@@ -64,9 +82,27 @@ export function DestinationEditor({ place, location, onClose, onSave }: {
       </fieldset>
       <label className="sn-secondary-label">Short introduction<input className="sn-field" name="tagline" defaultValue={place?.tagline} maxLength={120} /></label>
       <label className="sn-secondary-label">About the destination<textarea className="sn-field" name="overview" defaultValue={place?.overview} rows={4} maxLength={2500} required /></label>
-      <label className="sn-secondary-label">Cover photo<input className="sn-field" name="cover-file" type="file" accept="image/*" /></label>
-      <label className="sn-secondary-label">Or use a photo URL<input className="sn-field" name="cover" placeholder="https://…" defaultValue={place?.coverImage.startsWith('local-media:') ? '' : place?.coverImage} /></label>
-      {place?.coverImage.startsWith('local-media:') && <input type="hidden" name="existing-cover" value={place.coverImage} />}
+      <div className="sn-secondary-label">
+        <span>Cover photo</span>
+        <MediaPicker
+          variant="compact"
+          accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+          captureKind="image"
+          disabled={busy}
+          fileLabel={photoFile ? 'Change photo' : 'Choose from files or gallery'}
+          cameraLabel="Take photo"
+          hint="JPG, PNG, WebP or GIF up to 8 MB"
+          onSelect={handleSelectCover}
+        />
+        {(previewUrl || existingCover) && (
+          <div className="sn-upload-previews">
+            {previewUrl ? <img src={previewUrl} alt="Selected destination cover" /> : <TravelImage src={existingCover} alt="Current destination cover" />}
+            <button type="button" aria-label="Remove cover photo" disabled={busy} onClick={() => { setPhotoFile(null); setPreviewUrl(''); setExistingCover(''); }}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
       <div className="sn-account-fields">
         <label className="sn-secondary-label">Opening hours<input className="sn-field" name="hours" defaultValue={place?.openingHours} maxLength={180} /></label>
         <label className="sn-secondary-label">Best time to visit<input className="sn-field" name="season" defaultValue={place?.bestTimeToVisit} maxLength={180} /></label>

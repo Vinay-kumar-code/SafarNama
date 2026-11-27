@@ -7,9 +7,12 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 internal const val APP_HOST = "appassets.androidplatform.net"
 internal const val APP_ORIGIN = "https://$APP_HOST"
@@ -24,6 +27,12 @@ internal class BundledWebClient(
     private val openExternal: (Uri) -> Unit
 ) : WebViewClientCompat() {
     private val assets = context.assets
+    private val apiOrigin: String? = runCatching {
+        assets.open("web/android-config.json").bufferedReader().use { reader ->
+            val raw = JSONObject(reader.readText()).optString("apiOrigin").trim().trimEnd('/')
+            raw.takeIf { it.startsWith("https://") }
+        }
+    }.getOrNull()
     private val packagedAssets = WebViewAssetLoader.AssetsPathHandler(context)
     private val assetLoader = WebViewAssetLoader.Builder()
         .addPathHandler("/") { path ->
@@ -43,13 +52,57 @@ internal class BundledWebClient(
 
     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
         if (!isAppOrigin(request.url)) return null
-        val videoPath = request.url.path?.takeIf { it.matches(Regex("/media/[a-z-]+-preview\\.mp4")) }
+        val path = request.url.path ?: return emptyResponse(404, "Not Found")
+        val videoPath = path.takeIf { it.matches(Regex("/media/[a-z-]+-preview\\.mp4")) }
         if (videoPath != null) return openVideo(
             "web$videoPath",
             request.requestHeaders.entries.firstOrNull { it.key.equals("Range", ignoreCase = true) }?.value,
             request.method == "HEAD"
         )
-        return assetLoader.shouldInterceptRequest(request.url) ?: emptyResponse(404, "Not Found")
+        val bundled = assetLoader.shouldInterceptRequest(request.url)
+        if (bundled != null) return bundled
+        if (apiOrigin != null && (path.startsWith("/media/") || path.startsWith("/api/")) &&
+            (request.method == "GET" || request.method == "HEAD")
+        ) {
+            return streamFromApi(request)
+        }
+        return emptyResponse(404, "Not Found")
+    }
+
+    private fun streamFromApi(request: WebResourceRequest): WebResourceResponse {
+        val base = apiOrigin ?: return emptyResponse(404, "Not Found")
+        val path = request.url.encodedPath ?: return emptyResponse(404, "Not Found")
+        val query = request.url.encodedQuery?.let { "?$it" } ?: ""
+        return runCatching {
+            val connection = (URL("$base$path$query").openConnection() as HttpURLConnection).apply {
+                requestMethod = request.method
+                instanceFollowRedirects = false
+                connectTimeout = 8_000
+                readTimeout = 15_000
+                request.requestHeaders.entries.firstOrNull { it.key.equals("Range", ignoreCase = true) }
+                    ?.value?.let { setRequestProperty("Range", it) }
+            }
+            val status = connection.responseCode
+            val reason = connection.responseMessage.ifBlank { if (status == 206) "Partial Content" else "OK" }
+            val contentType = connection.contentType ?: "application/octet-stream"
+            val mime = contentType.substringBefore(';').trim()
+            val encoding = contentType.substringAfter("charset=", "").substringBefore(';').trim().ifEmpty { null }
+            val headers = mutableMapOf<String, String>()
+            connection.getHeaderField("Accept-Ranges")?.let { headers["Accept-Ranges"] = it }
+            connection.getHeaderField("Content-Range")?.let { headers["Content-Range"] = it }
+            connection.getHeaderField("Content-Length")?.let { headers["Content-Length"] = it }
+            connection.getHeaderField("Cache-Control")?.let { headers["Cache-Control"] = it }
+            val stream = if (request.method == "HEAD") {
+                connection.disconnect()
+                ByteArrayInputStream(byteArrayOf())
+            } else {
+                val raw = if (status in 200..299) connection.inputStream else connection.errorStream
+                raw ?: ByteArrayInputStream(byteArrayOf())
+            }
+            WebResourceResponse(mime, encoding, status, reason, headers, stream)
+        }.getOrElse {
+            emptyResponse(502, "Upstream Unavailable")
+        }
     }
 
     private fun openVideo(assetPath: String, rangeHeader: String?, head: Boolean): WebResourceResponse {

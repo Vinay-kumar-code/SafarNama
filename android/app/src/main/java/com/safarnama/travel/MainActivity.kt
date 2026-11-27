@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -16,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -28,10 +30,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private var filesCallback: ValueCallback<Array<Uri>>? = null
+    private var pendingCameraUri: Uri? = null
+    private var pendingCameraFile: File? = null
     private var pendingExport: ExportRequest? = null
     private var pendingAuth: JSONObject? = null
     private var webReady = false
@@ -47,11 +52,51 @@ class MainActivity : AppCompatActivity() {
     private data class ExportRequest(val json: String, val id: String, val reply: JavaScriptReplyProxy)
 
     private val chooseFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val files = WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
+        val parsed = WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
             ?.filter { it.scheme == "content" }
             ?.take(7)?.toTypedArray()
-        filesCallback?.onReceiveValue(files?.takeIf { it.isNotEmpty() })
+        val captured = if (parsed.isNullOrEmpty() && result.resultCode == RESULT_OK) {
+            val file = pendingCameraFile
+            val uri = pendingCameraUri
+            if (file != null && uri != null && file.exists() && file.length() > 0L) arrayOf(uri) else null
+        } else {
+            pendingCameraFile?.delete()
+            null
+        }
+        val files = parsed?.takeIf { it.isNotEmpty() } ?: captured
+        filesCallback?.onReceiveValue(files)
         filesCallback = null
+        pendingCameraUri = null
+        pendingCameraFile = null
+    }
+
+    private fun createCameraCaptureIntent(video: Boolean): Intent? {
+        val folder = File(cacheDir, "camera").apply { mkdirs() }
+        val ext = if (video) ".mp4" else ".jpg"
+        val file = runCatching { File.createTempFile("capture_", ext, folder) }.getOrNull() ?: return null
+        val uri = runCatching { FileProvider.getUriForFile(this, "${applicationContext.packageName}.fileprovider", file) }.getOrNull()
+        if (uri == null) {
+            file.delete()
+            return null
+        }
+        pendingCameraFile = file
+        pendingCameraUri = uri
+        return Intent(if (video) MediaStore.ACTION_VIDEO_CAPTURE else MediaStore.ACTION_IMAGE_CAPTURE).apply {
+            putExtra(MediaStore.EXTRA_OUTPUT, uri)
+            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
+    private fun normalizeMimeTypes(acceptTypes: Array<String>): List<String> {
+        val extMap = mapOf(
+            ".jpg" to "image/jpeg", ".jpeg" to "image/jpeg", ".png" to "image/png",
+            ".webp" to "image/webp", ".gif" to "image/gif", ".mp4" to "video/mp4", ".webm" to "video/webm"
+        )
+        return acceptTypes
+            .flatMap { it.split(',') }
+            .map { it.trim().lowercase() }
+            .mapNotNull { token -> extMap[token] ?: token.takeIf { it.startsWith("image/") || it.startsWith("video/") } }
+            .distinct()
     }
 
     private val saveItinerary = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -99,19 +144,47 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean {
                     filesCallback?.onReceiveValue(null)
                     filesCallback = callback
-                    val types = params.acceptTypes.filter { it.startsWith("image/") || it.startsWith("video/") }
-                    val picker = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                        type = types.singleOrNull() ?: "*/*"
-                        if (types.size > 1) putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
-                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                    pendingCameraFile?.delete()
+                    pendingCameraFile = null
+                    pendingCameraUri = null
+                    val types = normalizeMimeTypes(params.acceptTypes)
+                    val wantsImage = types.isEmpty() || types.any { it.startsWith("image/") }
+                    val wantsVideo = types.isEmpty() || types.any { it.startsWith("video/") }
+                    val launchIntent: Intent = if (params.isCaptureEnabled && (wantsImage || wantsVideo)) {
+                        createCameraCaptureIntent(video = !wantsImage && wantsVideo) ?: Intent(Intent.ACTION_OPEN_DOCUMENT)
+                    } else {
+                        val picker = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = when {
+                                wantsImage && wantsVideo -> "*/*"
+                                wantsVideo -> "video/*"
+                                wantsImage -> "image/*"
+                                else -> "*/*"
+                            }
+                            if (types.isNotEmpty()) putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
+                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                        }
+                        val extraIntents = buildList {
+                            if (wantsImage && !wantsVideo) createCameraCaptureIntent(video = false)?.let { add(it) }
+                            else if (wantsVideo && !wantsImage) createCameraCaptureIntent(video = true)?.let { add(it) }
+                        }
+                        if (extraIntents.isNotEmpty()) {
+                            Intent.createChooser(picker, "Choose from Gallery or Camera").apply {
+                                putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toTypedArray())
+                            }
+                        } else {
+                            picker
+                        }
                     }
                     try {
-                        chooseFiles.launch(picker)
+                        chooseFiles.launch(launchIntent)
                     } catch (_: ActivityNotFoundException) {
                         filesCallback?.onReceiveValue(null)
                         filesCallback = null
-                        Toast.makeText(this@MainActivity, "No file picker is available", Toast.LENGTH_SHORT).show()
+                        pendingCameraFile?.delete()
+                        pendingCameraFile = null
+                        pendingCameraUri = null
+                        Toast.makeText(this@MainActivity, "No file picker or camera is available", Toast.LENGTH_SHORT).show()
                     }
                     return true
                 }

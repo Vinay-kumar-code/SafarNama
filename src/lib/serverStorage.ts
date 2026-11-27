@@ -4,7 +4,11 @@ const configuredUrl = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/
 export const hasServerStorage = Boolean(configuredUrl || (import.meta.env.MODE !== 'android' && import.meta.env.VITE_SERVER_STORAGE === '1'));
 
 export function serverMediaUrl(source?: string) {
-  return source?.startsWith('/media/uploads/') ? configuredUrl + source : source;
+  if (!source) return source;
+  if (configuredUrl && (source.startsWith('/media/') || source.startsWith('/api/'))) {
+    return configuredUrl + source;
+  }
+  return source;
 }
 
 export function storyShareUrl(id: string) {

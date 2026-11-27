@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowUpRight, ChevronDown, ChevronUp, LocateFixed, MapPin, Navigation, Plus, Search, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -14,12 +14,13 @@ import { searchLocation, type SearchLocation } from './locationSearch';
 import './discovery.css';
 
 type MapEntry = MapPinItem & { guide?: DestinationHub; story?: Post; distance?: number };
+const PAGE_SIZE = 24;
 
 export function DiscoveryMap() {
   const { posts, selectedMapSpot, clearSelectedMapSpot, setActiveDestination, closeMap, openSpotOnMap } = useApp();
   const { destinations } = useCommunity();
   const { profile, openAuthModal } = useAuth();
-  const { notify, isVisible } = useSocial();
+  const { notify, isVisible, passport } = useSocial();
   const [query, setQuery] = useState('');
   const [keyword, setKeyword] = useState('');
   const [focus, setFocus] = useState<SearchLocation>();
@@ -33,26 +34,62 @@ export function DiscoveryMap() {
   const [searching, setSearching] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [overviewRevision, setOverviewRevision] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [isCompact, setIsCompact] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 760);
   const request = useRef(0);
 
-  const places: MapEntry[] = destinations.map(guide => ({ ...guide, guide }));
-  const stories: MapEntry[] = posts.filter(post => isVisible(post) && Number.isFinite(post.latitude) && Number.isFinite(post.longitude))
-    .map(story => ({ ...story, name: story.spotName, story }));
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)');
+    const sync = () => setIsCompact(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
+  const visitedIds = useMemo(() => new Set(passport.map(visit => visit.destinationId)), [passport]);
+  const places = useMemo<MapEntry[]>(
+    () => destinations.map(guide => ({ ...guide, guide, visited: visitedIds.has(guide.id) })),
+    [destinations, visitedIds],
+  );
+  const stories = useMemo<MapEntry[]>(
+    () => posts
+      .filter((post): post is Post & { latitude: number; longitude: number } =>
+        isVisible(post) && Number.isFinite(post.latitude) && Number.isFinite(post.longitude))
+      .map(story => ({ ...story, name: story.spotName, story, visited: Boolean(story.destinationId && visitedIds.has(story.destinationId)) })),
+    [posts, isVisible, visitedIds],
+  );
   const openedStory = posts.find(post => post.id === storyId);
-  const linked: MapEntry | undefined = selectedMapSpot ? [...places, ...stories].find(pin => pin.name === selectedMapSpot.spotName &&
+  const linked = useMemo<MapEntry | undefined>(() => selectedMapSpot ? [...places, ...stories].find(pin => pin.name === selectedMapSpot.spotName &&
     haversineDistanceKm(pin.latitude, pin.longitude, selectedMapSpot.lat, selectedMapSpot.lng) < 0.2) ??
-      { id: 'linked-spot', name: selectedMapSpot.spotName, state: '', latitude: selectedMapSpot.lat, longitude: selectedMapSpot.lng } : undefined;
+      { id: 'linked-spot', name: selectedMapSpot.spotName, state: '', latitude: selectedMapSpot.lat, longitude: selectedMapSpot.lng } : undefined, [places, stories, selectedMapSpot]);
   const activeMode = linked ? linked.story ? 'Stories' : 'Places' : mode;
   const entries = activeMode === 'Places' ? places : stories;
   const activeFocus = linked ? undefined : focus;
-  const terms = keyword.split(' ').filter(Boolean);
-  const results = activeFocus ? entries.map(entry => ({
-    ...entry, distance: haversineDistanceKm(activeFocus.latitude, activeFocus.longitude, entry.latitude, entry.longitude),
-  })).filter(entry => entry.distance <= radius).sort((a, b) => a.distance - b.distance)
-    : entries.filter(entry => linked || matchesSearch(terms, entry.name, entry.state, entry.guide?.region));
+  const results = useMemo(() => {
+    const terms = keyword.split(' ').filter(Boolean);
+    if (activeFocus) {
+      return entries.map(entry => ({
+        ...entry, distance: haversineDistanceKm(activeFocus.latitude, activeFocus.longitude, entry.latitude, entry.longitude),
+      })).filter(entry => entry.distance <= radius).sort((a, b) => a.distance - b.distance);
+    }
+    return entries.filter(entry => linked || matchesSearch(terms, entry.name, entry.state, entry.guide?.region));
+  }, [activeFocus, entries, keyword, linked, radius]);
+
   const selected = linked ?? results.find(entry => entry.id === selectedId);
-  const pins: MapEntry[] = linked && !results.some(entry => entry.id === linked.id) ? [linked, ...results] : results;
-  const searchPin = activeFocus ? { ...activeFocus, id: 'search-center', anchor: true } : undefined;
+  const pins = useMemo<MapEntry[]>(
+    () => linked && !results.some(entry => entry.id === linked.id) ? [linked, ...results] : results,
+    [linked, results],
+  );
+  const searchPin = useMemo(
+    () => activeFocus ? { ...activeFocus, id: 'search-center', anchor: true } : undefined,
+    [activeFocus],
+  );
+  const mapPins = useMemo(
+    () => searchPin ? [searchPin, ...pins] : pins,
+    [searchPin, pins],
+  );
+  const showCards = !isCompact || expanded;
+  const shownResults = useMemo(() => results.slice(0, visibleCount), [results, visibleCount]);
 
   function clearSearch() {
     request.current++;
@@ -62,6 +99,7 @@ export function DiscoveryMap() {
     setFocus(undefined);
     setSelectedId('');
     setFeedback('');
+    setVisibleCount(PAGE_SIZE);
     clearSelectedMapSpot();
     setOverviewRevision(value => value + 1);
   }
@@ -75,6 +113,7 @@ export function DiscoveryMap() {
     clearSelectedMapSpot();
     setSelectedId('');
     setFeedback('');
+    setVisibleCount(PAGE_SIZE);
     setSearching(true);
     let location: SearchLocation | undefined;
     try { location = await searchLocation(term, destinations); }
@@ -108,7 +147,7 @@ export function DiscoveryMap() {
 
   return <section className="sn-map-full" aria-label="Explore the map">
     <GoogleMapView
-      pins={searchPin ? [searchPin, ...pins] : pins}
+      pins={mapPins}
       selected={selected}
       focus={searchPin}
       radius={radius}
@@ -135,31 +174,40 @@ export function DiscoveryMap() {
         <div><h1>{activeFocus ? 'Destinations nearby' : 'Explore the map'}</h1><p>{activeFocus ? activeFocus.name : `${results.length} ${activeMode.toLowerCase()}`}</p></div>
         <button className="sn-icon sn-map-tray-toggle" aria-expanded={expanded} aria-label={expanded ? 'Collapse map results' : 'Expand map results'} onClick={() => setExpanded(!expanded)}>{expanded ? <ChevronDown size={22} /> : <ChevronUp size={22} />}</button>
       </div>
-      <div className="sn-map-tray-content">
+      {showCards && <div className="sn-map-tray-content">
         <div className="sn-row-heading">
           <div className="sn-segment" role="group" aria-label="Show on the map">
             {(['Places', 'Stories'] as const).map(label => <button key={label} aria-pressed={activeMode === label} onClick={() => {
-              setMode(label); clearSelectedMapSpot(); setSelectedId(''); setExpanded(true);
+              setMode(label); clearSelectedMapSpot(); setSelectedId(''); setVisibleCount(PAGE_SIZE); setExpanded(true);
             }}>{label}</button>)}
           </div>
-          {activeFocus && <select className="sn-field sn-map-radius" aria-label="Search radius" value={radius} onChange={event => setRadius(Number(event.target.value))}>{[25, 50, 100, 250, 500].map(km => <option key={km} value={km}>{km} km</option>)}</select>}
+          {activeFocus && <select className="sn-field sn-map-radius" aria-label="Search radius" value={radius} onChange={event => { setRadius(Number(event.target.value)); setVisibleCount(PAGE_SIZE); }}>{[25, 50, 100, 250, 500].map(km => <option key={km} value={km}>{km} km</option>)}</select>}
+        </div>
+        <div className="sn-map-legend" aria-hidden="true">
+          <span><i style={{ background: '#a74428' }} /> Unvisited</span>
+          <span><i style={{ background: '#16a34a' }} /> Visited / stamped</span>
         </div>
         {feedback && <p className="sn-secondary-body" role="status">{feedback}</p>}
         {selected && <div className="sn-map-selection">
-          <div className="sn-map-selection-title"><div><span className="sn-map-state">{selected.state || 'Selected pin'}</span><h2>{selected.name}</h2></div><button className="sn-icon" aria-label="Clear selected location" onClick={() => { setMode(activeMode); clearSelectedMapSpot(); setSelectedId(''); }}><X size={17} /></button></div>
+          <div className="sn-map-selection-title"><div><span className="sn-map-state">{selected.state || 'Selected pin'}</span><h2>{selected.name}</h2>{selected.visited && <span className="sn-map-visited-badge">Visited</span>}</div><button className="sn-icon" aria-label="Clear selected location" onClick={() => { setMode(activeMode); clearSelectedMapSpot(); setSelectedId(''); }}><X size={17} /></button></div>
           <div className="sn-secondary-actions">
             {(selected.guide || selected.story) && <button className="sn-button" onClick={() => open(selected)}>{selected.guide ? 'Open place guide' : 'Read story'}<ArrowUpRight size={15} /></button>}
             <a className="sn-button secondary" href={`https://www.google.com/maps/dir/?api=1&destination=${selected.latitude},${selected.longitude}`} target="_blank" rel="noopener noreferrer"><Navigation size={15} /> Directions</a>
           </div>
         </div>}
-        {results.length ? <div className="sn-map-cards" role="list">{results.map(entry => <article key={entry.id} className="sn-map-card" data-selected={selected?.id === entry.id} role="listitem">
-          <button className="sn-map-card-pick" aria-pressed={selected?.id === entry.id} aria-label={`Show ${entry.name} on map`} onClick={() => select(entry.id)}>
-            <TravelImage src={entry.guide?.coverImage ?? entry.story?.thumbnailUrl} alt="" className="sn-map-card-image" />
-            <span><span className="sn-map-state">{entry.state}{entry.distance !== undefined && ` · ${entry.distance < 1 ? '<1' : Math.round(entry.distance)} km`}</span><strong>{entry.name}</strong></span>
-          </button>
-          <button className="sn-map-link" aria-label={`Open ${entry.name}`} onClick={() => open(entry)}><ArrowUpRight size={18} /></button>
-        </article>)}</div> : <EmptyState title={activeFocus ? 'No results in this radius' : 'No results'} description={activeFocus ? 'Try a wider search radius or add a destination you know.' : 'Search another location or switch to Places.'} />}
-      </div>
+        {results.length ? <div className="sn-map-cards" role="list">
+          {shownResults.map(entry => <article key={entry.id} className="sn-map-card" data-selected={selected?.id === entry.id} role="listitem">
+            <button className="sn-map-card-pick" aria-pressed={selected?.id === entry.id} aria-label={`Show ${entry.name} on map`} onClick={() => select(entry.id)}>
+              <TravelImage src={entry.guide?.coverImage ?? entry.story?.thumbnailUrl} alt="" className="sn-map-card-image" />
+              <span><span className="sn-map-state">{entry.state}{entry.distance !== undefined && ` · ${entry.distance < 1 ? '<1' : Math.round(entry.distance)} km`}{entry.visited && ' · Visited'}</span><strong>{entry.name}</strong></span>
+            </button>
+            <button className="sn-map-link" aria-label={`Open ${entry.name}`} onClick={() => open(entry)}><ArrowUpRight size={18} /></button>
+          </article>)}
+          {results.length > visibleCount && <button type="button" className="sn-button secondary sn-map-more" onClick={() => setVisibleCount(count => count + PAGE_SIZE)}>
+            Show more ({results.length - visibleCount} remaining)
+          </button>}
+        </div> : <EmptyState title={activeFocus ? 'No results in this radius' : 'No results'} description={activeFocus ? 'Try a wider search radius or add a destination you know.' : 'Search another location or switch to Places.'} />}
+      </div>}
     </section>
     {editor && <DestinationEditor location={editor.location} onClose={() => setEditor(undefined)} onSave={place => {
       setEditor(undefined);

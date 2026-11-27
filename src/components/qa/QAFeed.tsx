@@ -5,6 +5,7 @@ import { useCommunity } from '../../context/CommunityContext';
 import { useAuth } from '../../context/AuthContext';
 import { matchesSearch, normalizeSearch, timeAgo } from '../../lib/utils';
 import type { QAThread } from '../../types';
+import { DestinationPicker } from '../common/DestinationPicker';
 import { EmptyState, Modal, TravelImage } from '../social/Primitives';
 
 const categories: QAThread['category'][] = ['Road Conditions', 'Safety', 'Food & Stays', 'Permits & Weather', 'Local Culture'];
@@ -119,7 +120,7 @@ export function QAFeed() {
       <form className="sn-secondary-form" onSubmit={ask}>
         <fieldset className="sn-secondary-stack sn-form-fields" disabled={posting}>
         <label className="sn-secondary-label">Your question<input className="sn-field" required autoFocus maxLength={200} value={title} onChange={event => setTitle(event.target.value)} placeholder="What would you like to know?" /></label>
-        <label className="sn-secondary-label">Destination<select className="sn-field" value={destinationId} required onChange={event => setDestinationId(event.target.value)}><option value="">Choose a place</option>{destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label>
+        <DestinationPicker destinations={destinations} value={destinationId} onChange={setDestinationId} required disabled={posting} placeholder="Search destinations by name or state…" />
         <label className="sn-secondary-label">Topic<select className="sn-field" value={newCategory} onChange={event => setNewCategory(event.target.value as QAThread['category'])}>{categories.map(topic => <option key={topic}>{topic}</option>)}</select></label>
         </fieldset>
         {questionError && <p className="sn-form-feedback" role="alert">{questionError}</p>}

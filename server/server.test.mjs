@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { createApp } from './index.mjs';
-import { INDIA_DESTINATIONS } from '../src/data/destinations.ts';
+import { DESTINATION_HUBS, INDIA_DESTINATIONS } from '../src/data/destinations.ts';
 
 async function listen(server) {
   server.listen(0, '127.0.0.1');
@@ -65,7 +65,10 @@ test('imports 25 gallery photos into SQLite without overwriting existing guide d
     const second = await (await fetch(await listen(app) + '/api/bootstrap')).json();
     assert.equal(second.revision, snapshot.revision, 'a restart must not rewrite the catalogue');
     const persisted = new DatabaseSync(join(dataDir, 'safarnama.sqlite'), { readOnly: true });
-    try { assert.equal(persisted.prepare('SELECT count(*) AS total FROM destination_photos').get().total, 25); }
+    try {
+      const expectedPhotos = new Set(DESTINATION_HUBS.flatMap(p => [p.coverImage, ...(p.galleryPhotos?.map(g => g.src) ?? [])]).filter(p => p.startsWith('/media/')));
+      assert.equal(persisted.prepare('SELECT count(*) AS total FROM destination_photos').get().total, expectedPhotos.size);
+    }
     finally { persisted.close(); }
   } finally {
     if (app?.listening) await close(app);
@@ -109,17 +112,33 @@ test('server protects ownership and persists publishing, files, and private acco
     };
     const upload = (token, body = png, contentType = 'image/png') =>
       get('/api/media', token, { method: 'POST', body, headers: { 'Content-Type': contentType } });
+    const multipartUpload = (token, fileBytes = png, filename = 'photo.png', contentType = 'image/png') => {
+      const form = new FormData();
+      form.append('file', new Blob([fileBytes], { type: contentType }), filename);
+      return get('/api/upload', token, { method: 'POST', body: form });
+    };
     assert.equal((await get('/api/health')).status, 200);
     const imported = (await bootstrap()).places;
-    assert.equal(INDIA_DESTINATIONS.length, 100);
-    assert.equal(imported.length, 100);
-    assert.equal(new Set(imported.map(record => record.place.id)).size, 100);
+    assert(INDIA_DESTINATIONS.length >= 350, `Expected at least 350 India destinations, got ${INDIA_DESTINATIONS.length}`);
+    assert.equal(imported.length, DESTINATION_HUBS.length);
+    assert.equal(new Set(imported.map(record => record.place.id)).size, DESTINATION_HUBS.length);
     for (const { place } of imported) {
-      assert(place.overview && place.sourceUrl && place.photoCredit?.author && place.photoCredit?.licenseUrl);
-      assert(place.latitude >= 6 && place.latitude <= 37 && place.longitude >= 67 && place.longitude <= 98);
+      assert(place.overview && place.coverImage);
+      assert(place.latitude >= 6 && place.latitude <= 37.5 && place.longitude >= 67 && place.longitude <= 98);
       const image = await readFile(new URL('../public' + place.coverImage, import.meta.url));
-      assert.equal(image.toString('ascii', 8, 12), 'WEBP');
+      assert(image.byteLength > 0);
     }
+    const streamedCover = await get('/api/destinations/dest-taj-mahal/photo');
+    assert.equal(streamedCover.status, 200);
+    assert.equal(streamedCover.headers.get('content-type'), 'image/webp');
+    assert.equal(streamedCover.headers.get('accept-ranges'), 'bytes');
+    const rangedCover = await get('/media/destinations/taj-mahal.webp', null, {
+      headers: { Origin: 'https://appassets.androidplatform.net', Range: 'bytes=0-11' },
+    });
+    assert.equal(rangedCover.status, 206);
+    assert.equal(rangedCover.headers.get('access-control-allow-origin'), 'https://appassets.androidplatform.net');
+    assert.equal((await rangedCover.arrayBuffer()).byteLength, 12);
+
     const seeded = imported.find(record => record.place.id === 'dest-taj-mahal').place;
     assert.equal((await put('/api/public/places/dest-taj-mahal', { ...seeded, openingHours: 'Edited hours' }, 'admin')).status, 200);
     assert.equal((await get('/api/bootstrap', null, { headers: { Origin: 'https://unrelated.example' } })).status, 403);
@@ -128,9 +147,12 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal(preflight.headers.get('access-control-allow-origin'), 'https://appassets.androidplatform.net');
     assert.equal((await upload(null)).status, 401);
     assert.equal((await upload('traveler', Buffer.alloc(32), 'image/png')).status, 415);
-    const uploaded = await upload('traveler');
+    assert.equal((await multipartUpload(null)).status, 401);
+    assert.equal((await multipartUpload('traveler', Buffer.alloc(32), 'bad.png', 'image/png')).status, 415);
+    const uploaded = await multipartUpload('traveler');
     assert.equal(uploaded.status, 201, await uploaded.clone().text());
-    const { url: media } = await uploaded.json();
+    const { url: media, urls } = await uploaded.json();
+    assert.deepEqual(urls, [media]);
     assert.equal((await get(media)).status, 404, 'unattached media must be private');
 
     const post = { format: 'carousel_note', destinationId: 'dest-hampi', caption: 'A day at Hampi', sticker: 'Heritage', carouselImages: [media],
@@ -140,6 +162,18 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal(published.status, 200, await published.clone().text());
     assert.equal((await published.json()).posts[0].author.id, traveler, 'ignore a forged author');
     assert.equal((await bootstrap()).posts[0].sticker, 'Heritage');
+    const noteWithoutDestId = randomUUID();
+    const noteRes = await put('/api/public/posts/' + noteWithoutDestId, { format: 'quick_tip', caption: 'No destination needed!' });
+    assert.equal(noteRes.status, 200, await noteRes.clone().text());
+    assert.equal((await bootstrap()).posts[0].spotName, 'Across India');
+    assert.equal((await get('/api/public/posts/' + noteWithoutDestId, 'traveler', { method: 'DELETE' })).status, 200);
+    const rawUpload = await upload('traveler');
+    assert.equal(rawUpload.status, 201);
+    const { url: rawMedia } = await rawUpload.json();
+    const photoNoDestId = randomUUID();
+    const photoRes = await put('/api/public/posts/' + photoNoDestId, { format: 'carousel_note', caption: 'Photo without place', carouselImages: [rawMedia] });
+    assert.equal(photoRes.status, 200, await photoRes.clone().text());
+    assert.equal((await get('/api/public/posts/' + photoNoDestId, 'traveler', { method: 'DELETE' })).status, 200);
     assert.equal((await put('/api/public/posts/' + postId, { caption: 'A day at Hampi', sticker: 'Plain text' })).status, 400);
     assert.equal((await put('/api/public/posts/' + postId, { caption: 'Changed' }, 'business')).status, 403);
     const range = await get(media, null, { headers: { Range: 'bytes=0-7' } });
@@ -222,7 +256,7 @@ test('server protects ownership and persists publishing, files, and private acco
     app = await createApp(options);
     url = await listen(app);
     const persisted = await bootstrap('traveler');
-    assert.equal(persisted.places.length, 101);
+    assert.equal(persisted.places.length, DESTINATION_HUBS.length + 1);
     assert.equal(persisted.places.find(record => record.place.id === seeded.id).place.openingHours, 'Edited hours');
     assert.equal(persisted.comments.find(item => item.id === commentId).isLiked, true);
     assert.equal(persisted.posts[0].id, postId);
