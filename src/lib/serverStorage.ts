@@ -8,8 +8,16 @@ export function serverMediaUrl(source?: string) {
 }
 
 export function storyShareUrl(id: string) {
+  return shareUrl('post', id);
+}
+
+export function placeShareUrl(id: string) {
+  return shareUrl('place', id);
+}
+
+function shareUrl(kind: 'post' | 'place', id: string) {
   const url = new URL(configuredUrl || window.location.origin);
-  url.hash = `post=${encodeURIComponent(id)}`;
+  url.hash = `${kind}=${encodeURIComponent(id)}`;
   return url.href;
 }
 

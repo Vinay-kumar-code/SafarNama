@@ -74,6 +74,7 @@ export interface Post {
   state: string;
   region: string;
   caption: string;
+  sticker?: string;
   format: ContentFormat;
   videoUrl?: string; // Cloudflare Stream adaptive HLS or fallback MP4
   thumbnailUrl?: string;
@@ -136,6 +137,8 @@ export interface DestinationHub {
   averageRating?: number;
   reviewsCount?: number;
   openingHours?: string;
+  sourceUrl?: string;
+  photoCredit?: { author: string; source: string; license: string; licenseUrl: string };
 }
 
 export interface DestinationUpdate {

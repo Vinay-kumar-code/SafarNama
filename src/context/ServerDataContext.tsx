@@ -4,7 +4,10 @@ import type { DestinationHub, DestinationListing, DestinationReview, Destination
 import type { PassportVisit } from '../lib/passport';
 import { useAuth } from './AuthContext';
 
-export interface TravelComment { id: string; postId: string; author: Profile; text: string; createdAt: string }
+export interface TravelComment {
+  id: string; postId: string; author: Profile; text: string; createdAt: string;
+  replyTo?: string; editedAt?: string; deleted?: boolean; likesCount?: number; isLiked?: boolean;
+}
 export interface JourneyRecord { trip: Trip; version: number; recordId: string }
 
 interface Snapshot {
@@ -16,6 +19,7 @@ interface Snapshot {
   questions: QAThread[];
   reviews: DestinationReview[];
   comments: TravelComment[];
+  profiles?: Profile[];
   account: {
     passport: PassportVisit[];
     following: string[];
@@ -23,6 +27,8 @@ interface Snapshot {
     savedPlaces: string[];
     likes: string[];
     saves: string[];
+    hiddenPosts?: string[];
+    mutedAuthors?: string[];
     trip: Trip | null;
     tripVersion: number;
     trips?: JourneyRecord[];

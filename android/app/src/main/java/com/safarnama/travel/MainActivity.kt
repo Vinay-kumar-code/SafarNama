@@ -1,6 +1,8 @@
 package com.safarnama.travel
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -168,6 +170,13 @@ class MainActivity : AppCompatActivity() {
                             putExtra(Intent.EXTRA_TEXT, text)
                         }
                         startActivity(Intent.createChooser(share, null))
+                        reply(proxy, id, true)
+                    }
+                    "copy" -> {
+                        val text = request.optString("text").take(2048)
+                        require(text.isNotBlank()) { "There is nothing to copy" }
+                        val clipboard = requireNotNull(getSystemService(ClipboardManager::class.java)) { "Clipboard is unavailable" }
+                        clipboard.setPrimaryClip(ClipData.newPlainText("SafarNama link", text))
                         reply(proxy, id, true)
                     }
                     "exportItinerary" -> {

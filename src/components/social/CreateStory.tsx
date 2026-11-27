@@ -8,6 +8,7 @@ import { hasServerStorage } from '../../lib/serverStorage';
 import { blankStory, prepareStoryMedia, readStoryDrafts, storyMediaRules, writeStoryDrafts, type StoryDraft } from '../../lib/storyDrafts';
 import { Modal } from './Primitives';
 import type { ContentFormat, Post } from '../../types';
+import { SocialTextInput, StickerPicker, StorySticker } from './SocialText';
 
 const formats = [
   { id: 'carousel_note', name: 'Photo story', Icon: ImagePlus },
@@ -16,8 +17,8 @@ const formats = [
 ] as const;
 const noFiles: File[] = [];
 
-export function CreateStory() {
-  const { currentUser, createPost, setActiveTab, setActiveDestination } = useApp();
+export function CreateStory({ onPublished }: { onPublished: () => void }) {
+  const { currentUser, createPost, setActiveTab } = useApp();
   const { setComposerOpen, composerFormat, composerDestinationId, notify } = useSocial();
   const { destinations } = useCommunity();
   const storyIds = useRef<Partial<Record<ContentFormat, string>>>({});
@@ -106,6 +107,7 @@ export function CreateStory() {
         id: storyIds.current[format] ??= crypto.randomUUID(),
         author: currentUser, destinationId: destination.id, spotName: draft.spot.trim() || destination.name,
         state: destination.state, region: destination.region, caption: draft.caption.trim(), format,
+        sticker: draft.sticker || undefined,
         ...(isReel ? { videoUrl: media[0], thumbnailUrl: destination.coverImage } : { thumbnailUrl: media[0], carouselImages: media }),
         costInInr: budget, howToReach: draft.tip.trim() || undefined,
         latitude: destination.latitude, longitude: destination.longitude,
@@ -125,7 +127,7 @@ export function CreateStory() {
     try { writeStoryDrafts(account, { ...drafts, entries }); }
     catch { message += ' The text draft could not be cleared.'; }
     setActiveTab('feed');
-    setActiveDestination(null);
+    onPublished();
     setComposerOpen(false);
     notify(message);
   }
@@ -157,11 +159,11 @@ export function CreateStory() {
           }}><X size={16} /></button>
         </div>}
       </div>}
-      <label>Your story<textarea autoFocus value={draft.caption} maxLength={captionLimit} rows={4} required
+      <SocialTextInput label="Your story" value={draft.caption} limit={captionLimit} rows={4} autoFocus
         placeholder={isNote ? 'A useful tip or a moment from the road…' : 'What made this moment stay with you?'}
-        onChange={event => update('caption', event.target.value)} disabled={busy} />
-        <span className="sn-input-hint">{draft.caption.length} / {captionLimit}</span>
-      </label>
+        change={value => update('caption', value)} disabled={busy} />
+      <StickerPicker value={draft.sticker} change={value => update('sticker', value)} disabled={busy} />
+      <StorySticker sticker={draft.sticker} />
       <div className="sn-form-row">
         <label>Destination<select value={draft.destinationId} required disabled={busy} onChange={event => update('destinationId', event.target.value)}>
           <option value="">Choose a place</option>{destinations.map(place => <option value={place.id} key={place.id}>{place.name}</option>)}

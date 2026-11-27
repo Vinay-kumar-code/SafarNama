@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BellPlus, Bookmark, CalendarDays, Check, Clock, HeartHandshake, IndianRupee, MapPin, Pencil, Plus, Stamp } from 'lucide-react';
+import { BellPlus, Bookmark, CalendarDays, Check, Clock, HeartHandshake, IndianRupee, MapPin, Pencil, Plus, Share2, Stamp } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCommunity } from '../../context/CommunityContext';
@@ -12,23 +12,27 @@ import { formatINR } from '../../lib/utils';
 import { Modal, TravelImage, EmptyState } from './Primitives';
 import { PostCard } from './PostCard';
 import { VisitEditor } from './VisitEditor';
+import type { DestinationHub } from '../../types';
+import { hasServerStorage, placeShareUrl } from '../../lib/serverStorage';
+import { isNative } from '../../lib/device';
+import { shareLink } from '../../lib/share';
 
 const tabs = ['Overview', 'Updates', 'Stories', 'Tours', 'Businesses', 'Reviews'] as const;
 
-export function PlaceSheet() {
-  const { activeDestination, setActiveDestination, posts, openSpotOnMap, getReviewsForDestination, addDestinationReview, journeys } = useApp();
+export function PlaceSheet({ destination, onClose }: { destination: DestinationHub; onClose: () => void }) {
+  const { posts, openSpotOnMap, getReviewsForDestination, addDestinationReview, journeys } = useApp();
   const { profile, openAuthModal } = useAuth();
   const { destinations, canManage, findManager, updates, listings } = useCommunity();
-  const { state, togglePlace, notify, passport, openComposer } = useSocial();
+  const { state, togglePlace, notify, passport, openComposer, isVisible } = useSocial();
   const [tab, setTab] = useState<typeof tabs[number]>('Overview');
   const [editor, setEditor] = useState<'place' | 'update' | 'visit' | 'journey'>();
   const [review, setReview] = useState('');
   const [rating, setRating] = useState('5');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const place = destinations.find(item => item.id === activeDestination?.id) ?? activeDestination;
-  if (!place) return null;
-  const stories = posts.filter(post => post.destinationId === place.id);
+  const [shareStatus, setShareStatus] = useState('');
+  const place = destinations.find(item => item.id === destination.id) ?? destination;
+  const stories = posts.filter(post => post.destinationId === place.id && isVisible(post));
   const reviews = getReviewsForDestination(place.id);
   const placeUpdates = updates.filter(update => update.destinationId === place.id);
   const placeListings = listings.filter(item => item.destinationId === place.id && (tab === 'Tours' ? item.category === 'Tour package' : item.category !== 'Tour package'));
@@ -36,14 +40,21 @@ export function PlaceSheet() {
   const saved = state.savedPlaces.includes(place.id);
   const visited = passport.some(visit => visit.destinationId === place.id);
 
-  return <Modal title={place.name} onClose={() => setActiveDestination(null)} className="sn-place-modal">
+  return <Modal title={place.name} onClose={onClose} className="sn-place-modal">
     <div className={`sn-place-hero ${place.coverImage ? '' : 'sn-place-no-photo'}`}>
       {place.coverImage && <TravelImage src={place.coverImage} alt={place.name} />}
       <div><span>{place.state}{place.region !== place.state && ` · ${place.region}`}</span><h1>{place.name}</h1><p>{place.tagline}</p></div>
     </div>
     <div className="sn-place-content">
       <div className="sn-place-controls">
-        <button className="sn-button" onClick={() => { openSpotOnMap(place.latitude, place.longitude, place.name); setActiveDestination(null); }}><MapPin size={16} />Find on map</button>
+        <button className="sn-button" onClick={() => { openSpotOnMap(place.latitude, place.longitude, place.name); onClose(); }}><MapPin size={16} />Find on map</button>
+        <button className="sn-button secondary" onClick={async () => {
+          setShareStatus('');
+          try {
+            const url = isNative && !hasServerStorage ? `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}` : placeShareUrl(place.id);
+            if (await shareLink(place.name, url) === 'copied') setShareStatus('Place link copied.');
+          } catch (failure) { if (!(failure instanceof DOMException && failure.name === 'AbortError')) setShareStatus('Could not share this place.'); }
+        }}><Share2 size={16} /> Share place</button>
         <FollowPlace id={place.id} />
         <button className="sn-button secondary" aria-pressed={saved} onClick={() => togglePlace(place.id)}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />{saved ? 'Saved' : 'Save place'}</button>
         {(!profile || profile.activeRole === 'traveler') && <button className={`sn-button secondary sn-visit-action${visited ? ' is-visited' : ''}`} onClick={() => profile ? setEditor('visit') : openAuthModal()}>
@@ -52,6 +63,7 @@ export function PlaceSheet() {
         <button className="sn-button secondary" onClick={() => { if (journeys.requireAccount()) { journeys.clearError(); setEditor('journey'); } }}><Plus size={16} /> Add to journey</button>
         {managerId && <FollowAccount id={managerId} label="Follow manager" />}
       </div>
+      {shareStatus && <p className="sn-secondary-body" role="status">{shareStatus}</p>}
       {canManage(place.id) && <div className="sn-secondary-actions sn-place-manage">
         <button className="sn-button secondary" onClick={() => setEditor('place')}><Pencil size={15} /> Edit page</button>
         <button className="sn-button secondary" onClick={() => setEditor('update')}><BellPlus size={15} /> Post update</button>
@@ -59,6 +71,10 @@ export function PlaceSheet() {
       <div className="sn-feed-tabs sn-place-tabs" role="group" aria-label="Destination sections">{tabs.map(name => <button key={name} aria-pressed={tab === name} className={tab === name ? 'active' : ''} onClick={() => setTab(name)}>{name}</button>)}</div>
       {tab === 'Overview' && <>
         <p className="sn-place-overview">{place.overview}</p>
+        {place.sourceUrl && <a className="sn-community-link" href={place.sourceUrl} target="_blank" rel="noopener noreferrer">Destination reference</a>}
+        {place.photoCredit && <p className="sn-secondary-body sn-photo-credit">
+          <a href={place.photoCredit.source} target="_blank" rel="noopener noreferrer">Photo by {place.photoCredit.author}</a> · <a href={place.photoCredit.licenseUrl} target="_blank" rel="noopener noreferrer">{place.photoCredit.license}</a> · resized and converted to WebP
+        </p>}
         {(place.estimatedDailyBudgetInr > 0 || place.bestTimeToVisit || place.openingHours) && <div className="sn-place-facts">
           {place.estimatedDailyBudgetInr > 0 && <div><IndianRupee size={20} /><span>Daily budget<strong>~ {formatINR(place.estimatedDailyBudgetInr)}</strong></span></div>}
           {place.bestTimeToVisit && <div><CalendarDays size={20} /><span>When to go<strong>{place.bestTimeToVisit}</strong></span></div>}
@@ -75,7 +91,7 @@ export function PlaceSheet() {
       </>}
       {tab === 'Stories' && <>
         <div className="sn-secondary-actions sn-place-manage"><button className="sn-button secondary" onClick={() => openComposer('carousel_note', place.id)}><Plus size={16} /> Share a story here</button></div>
-        {stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onNavigate={target => { if (target === 'map') setActiveDestination(null); }} />)
+        {stories.length ? stories.map(post => <PostCard key={post.id} post={post} compact onNavigate={target => { if (target === 'map') onClose(); }} />)
           : <EmptyState title="No stories from here yet" description="Share what you saw or a tip for the next traveler." />}
       </>}
       {(tab === 'Tours' || tab === 'Businesses') && (placeListings.length ? <div className="sn-community-grid">{placeListings.map(listing => <ListingCard listing={listing} key={listing.id} />)}</div> : <EmptyState title={tab === 'Tours' ? 'No tours listed yet' : 'No businesses listed yet'} description={tab === 'Tours' ? 'Tour packages published by local guides will appear here.' : 'Stays, agencies, and services listed for this destination will appear here.'} />)}

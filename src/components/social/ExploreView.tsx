@@ -8,14 +8,15 @@ import { formatINR, matchesSearch, normalizeSearch } from '../../lib/utils';
 import { ListingCard, UpdateCard } from '../destinations/CommunityCards';
 import { DestinationEditor } from '../destinations/DestinationEditor';
 import { TravelImage, EmptyState } from './Primitives';
+import { StoryResults } from './CommunitySheets';
 
-const views = ['Destinations', 'Tours', 'Businesses', 'Updates'] as const;
+const views = ['Destinations', 'Stories', 'Tours', 'Businesses', 'Updates'] as const;
 
 export function ExploreView() {
-  const { setActiveDestination, setActiveTab } = useApp();
+  const { setActiveDestination, setActiveTab, posts } = useApp();
   const { profile, openAuthModal } = useAuth();
   const { destinations, listings, updates } = useCommunity();
-  const { state, togglePlace, notify } = useSocial();
+  const { state, togglePlace, notify, isVisible } = useSocial();
   const [query, setQuery] = useState('');
   const [view, setView] = useState<typeof views[number]>('Destinations');
   const [adding, setAdding] = useState(false);
@@ -33,14 +34,16 @@ export function ExploreView() {
   const shownListings = listings.filter(listing => (view === 'Tours' ? listing.category === 'Tour package' : listing.category !== 'Tour package') &&
     matches(listing.title, listing.category, listing.author.fullName, destinationName(listing.destinationId), listing.detail));
   const shownUpdates = updates.filter(update => matches(update.title, update.detail, update.category, destinationName(update.destinationId)));
-  const count = view === 'Destinations' ? places.length : view === 'Updates' ? shownUpdates.length : shownListings.length;
+  const stories = view === 'Stories' ? posts.filter(post => isVisible(post) && matches(post.caption, post.spotName, post.state,
+    post.author.fullName, post.author.username, post.sticker)) : [];
+  const count = view === 'Destinations' ? places.length : view === 'Stories' ? stories.length : view === 'Updates' ? shownUpdates.length : shownListings.length;
   const filtered = Boolean(terms.length || (view === 'Destinations' && stateFilter));
   return <section className="sn-explore">
     <header className="sn-page-heading sn-explore-heading"><div><h1>Find your kind of India<span>.</span></h1><p>Explore destinations, local updates, tours, and stays.</p></div>
       <div className="sn-secondary-actions"><button className="sn-button secondary" onClick={() => setActiveTab('map')}><MapIcon size={17} /> Map view</button>
         <button className="sn-button" onClick={() => profile ? setAdding(true) : openAuthModal()}><Plus size={16} /> Add destination</button></div>
     </header>
-    <div className="sn-search"><Search size={20} /><input type="search" aria-label="Search Explore" placeholder="Search a name, place, or state" value={query} onChange={event => setQuery(event.target.value)} />
+    <div className="sn-search"><Search size={20} /><input type="search" aria-label="Search Explore" placeholder={view === 'Stories' ? 'Search by place, creator, or hashtag' : 'Search a name, place, or state'} value={query} onChange={event => setQuery(event.target.value)} />
       {query && <button aria-label="Clear search" onClick={() => setQuery('')}><X size={18} /></button>}</div>
     <div className="sn-segment" role="group" aria-label="Explore categories">{views.map(item => <button key={item} aria-pressed={view === item} onClick={() => setView(item)}>{item}</button>)}</div>
     {view === 'Destinations' && <div className="sn-directory-filters">
@@ -59,7 +62,8 @@ export function ExploreView() {
       {place.estimatedDailyBudgetInr > 0 && <footer><span>~ {formatINR(place.estimatedDailyBudgetInr)} <small>/ day</small></span></footer>}
     </article>)}</div>}
     {view === 'Updates' && <div className="sn-community-grid">{shownUpdates.map(update => <UpdateCard key={update.id} update={update} showDestination />)}</div>}
-    {view !== 'Destinations' && view !== 'Updates' && <div className="sn-community-grid">{shownListings.map(listing => <ListingCard key={listing.id} listing={listing} showDestination />)}</div>}
+    {view === 'Stories' && stories.length > 0 && <StoryResults posts={stories} />}
+    {(view === 'Tours' || view === 'Businesses') && <div className="sn-community-grid">{shownListings.map(listing => <ListingCard key={listing.id} listing={listing} showDestination />)}</div>}
     {count === 0 && <EmptyState title={filtered ? 'No matches' : `No ${view.toLowerCase()} yet`} description={filtered ? 'Change or clear your filters to see more results.' : 'Published information will appear here.'}
       action={filtered ? <button className="sn-button secondary" onClick={() => { setQuery(''); if (view === 'Destinations') setStateFilter(''); }}>Clear filters</button> : undefined} />}
     {adding && <DestinationEditor onClose={() => setAdding(false)} onSave={place => {

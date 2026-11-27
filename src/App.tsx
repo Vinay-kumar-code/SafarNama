@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useEffectEvent, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocialProvider, useSocial } from './context/SocialContext';
-import { CommunityProvider } from './context/CommunityContext';
+import { CommunityProvider, useCommunity } from './context/CommunityContext';
 import { ServerDataProvider, useServerData } from './context/ServerDataContext';
 import { hasServerStorage } from './lib/serverStorage';
 import { SocialNav } from './components/social/SocialNav';
@@ -13,6 +13,7 @@ import { ReelsView } from './components/social/ReelsView';
 import { CreateStory } from './components/social/CreateStory';
 import { PlaceSheet } from './components/social/PlaceSheet';
 import { PostCard } from './components/social/PostCard';
+import { CommunitySheets } from './components/social/CommunitySheets';
 import { Modal } from './components/social/Primitives';
 import { AuthModal } from './components/auth/AuthModal';
 import { OnboardingModal } from './components/auth/OnboardingModal';
@@ -33,15 +34,17 @@ const AdminPortal = lazy(() => import('./components/admin/AdminPortal').then(mod
 const StudioView = lazy(() => import('./components/destinations/StudioView').then(module => ({ default: module.StudioView })));
 function MainScreen() {
   const storage = useServerData();
+  const { destinations } = useCommunity();
   const {
-    activeTab, setActiveTab, closeMap, activeDestination, posts, isOffline,
+    activeTab, setActiveTab, closeMap, activeDestination, setActiveDestination, posts, isOffline,
     activeGearModal, setActiveGearModal, activeTravelNote, setActiveTravelNote,
     isWriteReviewModalOpen, closeWriteReviewModal,
   } = useApp();
   const { isAuthModalOpen, closeAuthModal, isOnboardingOpen, closeOnboarding, isAdminPortalOpen, closeAdminPortal } = useAuth();
   const { composerOpen, notice, notify } = useSocial();
   const [sharedPostId, setSharedPostId] = useState('');
-  const openFeed = useEffectEvent(() => setActiveTab('feed'));
+  const [sharedPlaceId, setSharedPlaceId] = useState('');
+  const openLink = useEffectEvent((tab: 'feed' | 'explore') => { setActiveDestination(null); setActiveTab(tab); });
   useEffect(() => {
     const showNotice = (event: Event) => notify((event as CustomEvent<string>).detail);
     window.addEventListener('safarnama:notice', showNotice);
@@ -75,9 +78,12 @@ function MainScreen() {
   useEffect(() => { window.scrollTo(0, 0); }, [activeTab]);
   useEffect(() => {
     function readLink() {
-      const id = new URLSearchParams(window.location.hash.slice(1)).get('post') ?? '';
-      setSharedPostId(id);
-      if (id) openFeed();
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const post = params.get('post') ?? '';
+      const place = post ? '' : params.get('place') ?? '';
+      setSharedPostId(post);
+      setSharedPlaceId(place);
+      if (post || place) openLink(post ? 'feed' : 'explore');
     }
     readLink();
     window.addEventListener('hashchange', readLink);
@@ -87,17 +93,29 @@ function MainScreen() {
     setSharedPostId('');
     window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
   }
+  function closePlace() {
+    setActiveDestination(null);
+    if (!sharedPlaceId) return;
+    setSharedPlaceId('');
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+  }
   const sharedPost = posts.find(post => post.id === sharedPostId);
+  const place = activeDestination ?? destinations.find(destination => destination.id === sharedPlaceId);
   return <div className={`sn-app${isNative ? ' sn-android' : ''}`}><a className="sn-skip-link" href="#main-content">Skip to content</a>{activeTab !== 'map' && <SocialNav />}<main id="main-content" className={`sn-main sn-main-${activeTab}`} tabIndex={-1}>{isOffline && activeTab !== 'map' && <div className="sn-offline" role="status">{hasServerStorage ? 'You’re offline. Updates will reload when you reconnect.' : 'You’re offline.'}</div>}<Suspense fallback={<div className="sn-loading" role="status">Finding your next adventure…</div>}>
     {storage.error && activeTab !== 'map' && <div className="sn-offline" role="status">{storage.error} <button disabled={storage.loading} onClick={() => void storage.refresh()}>{storage.loading ? 'Retrying…' : 'Retry'}</button></div>}
     {activeTab === 'feed' && <HomeFeed />}{activeTab === 'explore' && <ExploreView />}{activeTab === 'reels' && <ReelsView />}{activeTab === 'profile' && <JournalView />}
     {activeTab === 'map' && <DiscoveryMap />}{activeTab === 'trips' && <TripBuilder />}{activeTab === 'qa' && <QAFeed />}{activeTab === 'campaigns' && <CampaignHub />}
     {activeTab === 'studio' && <StudioView />}
   </Suspense></main><AuthModal /><OnboardingModal /><TravelNoteModal /><GearShopModal /><WriteReviewModal /><Suspense fallback={null}><AdminPortal /></Suspense>
-    {activeDestination && <PlaceSheet key={activeDestination.id} />}{composerOpen && <CreateStory />}{notice && <div className="sn-toast" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => notify('')}>×</button></div>}
+    {place && <PlaceSheet key={place.id} destination={place} onClose={closePlace} />}
+    {sharedPlaceId && !place && <Modal title="Destination guide" onClose={closePlace}><div className="sn-empty">
+      <h3>{storage.loading ? 'Loading place…' : 'Destination unavailable'}</h3>{storage.error && <p>{storage.error}</p>}
+    </div></Modal>}
+    {composerOpen && <CreateStory onPublished={closePlace} />}{notice && <div className="sn-toast" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => notify('')}>×</button></div>}
     {sharedPostId && <Modal title="A story from the road" onClose={closeSharedPost}>
       {sharedPost ? <PostCard key={sharedPost.id} post={sharedPost} onNavigate={closeSharedPost} /> : <div className="sn-empty"><h3>{hasServerStorage && !storage.snapshot && !storage.error ? 'Loading story…' : 'Story unavailable'}</h3><p>{storage.error || (hasServerStorage ? '' : 'Local preview stories are available on the device where they were created.')}</p></div>}
     </Modal>}
+    <CommunitySheets />
   </div>;
 }
 function UserWorkspace() {

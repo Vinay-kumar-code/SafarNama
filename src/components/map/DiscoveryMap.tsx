@@ -19,7 +19,7 @@ export function DiscoveryMap() {
   const { posts, selectedMapSpot, clearSelectedMapSpot, setActiveDestination, closeMap, openSpotOnMap } = useApp();
   const { destinations } = useCommunity();
   const { profile, openAuthModal } = useAuth();
-  const { notify } = useSocial();
+  const { notify, isVisible } = useSocial();
   const [query, setQuery] = useState('');
   const [keyword, setKeyword] = useState('');
   const [focus, setFocus] = useState<SearchLocation>();
@@ -36,7 +36,7 @@ export function DiscoveryMap() {
   const request = useRef(0);
 
   const places: MapEntry[] = destinations.map(guide => ({ ...guide, guide }));
-  const stories: MapEntry[] = posts.filter(post => Number.isFinite(post.latitude) && Number.isFinite(post.longitude))
+  const stories: MapEntry[] = posts.filter(post => isVisible(post) && Number.isFinite(post.latitude) && Number.isFinite(post.longitude))
     .map(story => ({ ...story, name: story.spotName, story }));
   const openedStory = posts.find(post => post.id === storyId);
   const linked: MapEntry | undefined = selectedMapSpot ? [...places, ...stories].find(pin => pin.name === selectedMapSpot.spotName &&

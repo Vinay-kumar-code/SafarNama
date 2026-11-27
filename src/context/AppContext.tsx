@@ -18,7 +18,7 @@ interface AppContextType {
   switchRole: (role: UserRole) => void;
   posts: Post[];
   createPost: (post: Post) => Promise<void>;
-  editPost: (postId: string, caption: string) => Promise<void>;
+  editPost: (postId: string, caption: string, sticker?: string) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   toggleLikePost: (postId: string) => void;
   toggleSavePost: (postId: string) => void;
@@ -162,12 +162,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return post;
   }
 
-  async function editPost(id: string, caption: string) {
-    if (hasServerStorage) { await write('public', 'posts', id, { caption }); return; }
+  async function editPost(id: string, caption: string, sticker?: string) {
+    if (hasServerStorage) { await write('public', 'posts', id, { caption, sticker }); return; }
     const post = getOwnPost(id);
     const text = caption.trim();
     if (!text || text.length > (post.format === 'quick_tip' ? 500 : 2200)) throw new Error('Enter a story within the character limit.');
-    savePosts(basePosts.map(item => item.id === id ? { ...item, caption: text } : item));
+    savePosts(basePosts.map(item => item.id === id ? { ...item, caption: text, sticker: sticker === undefined ? item.sticker : sticker || undefined } : item));
   }
 
   async function deletePost(id: string) {

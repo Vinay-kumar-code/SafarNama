@@ -1,0 +1,1802 @@
+[
+  {
+    "id": "dest-taj-mahal",
+    "slug": "taj-mahal",
+    "name": "Taj Mahal",
+    "state": "Uttar Pradesh",
+    "latitude": 27.175,
+    "longitude": 78.0419,
+    "tagline": "Marble and gardens on the Yamuna",
+    "overview": "Walk the formal gardens for views of the marble mausoleum and its river-facing terrace.",
+    "coverImage": "/media/destinations/taj-mahal.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Taj_Mahal",
+    "photoCredit": {
+      "author": "Yann ; edited by Jim Carter",
+      "source": "https://commons.wikimedia.org/wiki/File:Taj_Mahal_(Edited).jpeg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-agra-fort",
+    "slug": "agra-fort",
+    "name": "Agra Fort",
+    "state": "Uttar Pradesh",
+    "latitude": 27.179542,
+    "longitude": 78.021101,
+    "tagline": "A Mughal fortress above the Yamuna",
+    "overview": "Red sandstone walls enclose courtyards, audience halls, and palaces built and adapted by Mughal rulers.",
+    "coverImage": "/media/destinations/agra-fort.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Agra_Fort",
+    "photoCredit": {
+      "author": "Argha1812",
+      "source": "https://commons.wikimedia.org/wiki/File:Agra_Fort_2.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-fatehpur-sikri",
+    "slug": "fatehpur-sikri",
+    "name": "Fatehpur Sikri",
+    "state": "Uttar Pradesh",
+    "latitude": 27.091,
+    "longitude": 77.661,
+    "tagline": "Akbar’s former imperial capital",
+    "overview": "Explore the sandstone palace precinct, stepped gateways, and the courtyards of the former capital.",
+    "coverImage": "/media/destinations/fatehpur-sikri.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Fatehpur_Sikri",
+    "photoCredit": {
+      "author": "Marcin Białek",
+      "source": "https://commons.wikimedia.org/wiki/File:Fatehput_Sikiri_Buland_Darwaza_gate_2010.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-lucknow",
+    "slug": "lucknow",
+    "name": "Lucknow",
+    "state": "Uttar Pradesh",
+    "latitude": 26.85,
+    "longitude": 80.95,
+    "tagline": "Awadhi food and architectural heritage",
+    "overview": "Pair the Bara Imambara and Rumi Darwaza with a walk through the food streets of the old city.",
+    "coverImage": "/media/destinations/lucknow.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Lucknow",
+    "photoCredit": {
+      "author": "Mohit",
+      "source": "https://commons.wikimedia.org/wiki/File:Harzratganj_Market,_Lucknow.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-sarnath",
+    "slug": "sarnath",
+    "name": "Sarnath",
+    "state": "Uttar Pradesh",
+    "latitude": 25.378,
+    "longitude": 83.0251,
+    "tagline": "Buddhist archaeology near Varanasi",
+    "overview": "See the Dhamek Stupa and excavated monastery grounds at the traditional site of the Buddha’s first sermon.",
+    "coverImage": "/media/destinations/sarnath.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Sarnath",
+    "photoCredit": {
+      "author": "Yusuke Kawasaki",
+      "source": "https://commons.wikimedia.org/wiki/File:Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site,_Sarnath.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "dest-jaipur",
+    "slug": "jaipur",
+    "name": "Jaipur",
+    "state": "Rajasthan",
+    "latitude": 26.915,
+    "longitude": 75.82,
+    "tagline": "Palaces and bazaars in the Pink City",
+    "overview": "Start in the walled city for the Hawa Mahal and market streets, then explore hilltop forts nearby.",
+    "coverImage": "/media/destinations/jaipur.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Jaipur",
+    "photoCredit": {
+      "author": "Chainwit.",
+      "source": "https://commons.wikimedia.org/wiki/File:East_facade_Hawa_Mahal_Jaipur_from_ground_level_(July_2022)_-_img_01.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-amber-fort",
+    "slug": "amber-fort",
+    "name": "Amber Fort",
+    "state": "Rajasthan",
+    "latitude": 26.9859,
+    "longitude": 75.8507,
+    "tagline": "A hilltop palace above Maota Lake",
+    "overview": "Climb through courtyards and decorated palace rooms for views over the lake and surrounding ridges.",
+    "coverImage": "/media/destinations/amber-fort.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Amber_Fort",
+    "photoCredit": {
+      "author": "Jakub Hałun",
+      "source": "https://commons.wikimedia.org/wiki/File:20191219_Fort_Amber,_Amer,_Jaipur_0955_9481.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-udaipur",
+    "slug": "udaipur",
+    "name": "Udaipur",
+    "state": "Rajasthan",
+    "latitude": 24.58,
+    "longitude": 73.68,
+    "tagline": "Lakes and palace terraces",
+    "overview": "Explore the City Palace and the streets around Lake Pichola, with viewpoints from both shores.",
+    "coverImage": "/media/destinations/udaipur.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Udaipur",
+    "photoCredit": {
+      "author": "Geri from Biel/Bienne, Schweiz",
+      "source": "https://commons.wikimedia.org/wiki/File:Evening_view,_City_Palace,_Udaipur.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    }
+  },
+  {
+    "id": "dest-jodhpur",
+    "slug": "jodhpur",
+    "name": "Jodhpur",
+    "state": "Rajasthan",
+    "latitude": 26.28,
+    "longitude": 73.02,
+    "tagline": "Blue lanes below Mehrangarh",
+    "overview": "Spend time in the fort museum and walk the blue-painted lanes and market around the old clock tower.",
+    "coverImage": "/media/destinations/jodhpur.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Jodhpur",
+    "photoCredit": {
+      "author": "Sanhitasinha",
+      "source": "https://commons.wikimedia.org/wiki/File:Mehrangarh_Fort_sanhita.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-jaisalmer",
+    "slug": "jaisalmer",
+    "name": "Jaisalmer",
+    "state": "Rajasthan",
+    "latitude": 26.913,
+    "longitude": 70.915,
+    "tagline": "A sandstone city in the Thar",
+    "overview": "The living fort and carved havelis make a natural pair with an excursion into the desert.",
+    "coverImage": "/media/destinations/jaisalmer.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Jaisalmer",
+    "photoCredit": {
+      "author": "Adrian Sulc",
+      "source": "https://commons.wikimedia.org/wiki/File:Jaisalmer_Fort.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-pushkar",
+    "slug": "pushkar",
+    "name": "Pushkar",
+    "state": "Rajasthan",
+    "latitude": 26.487652,
+    "longitude": 74.555922,
+    "tagline": "A lake town ringed by ghats",
+    "overview": "Walk the lanes around Pushkar Lake and look for views from the hills above the town.",
+    "coverImage": "/media/destinations/pushkar.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pushkar",
+    "photoCredit": {
+      "author": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Pushkar.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-ranthambore-national-park",
+    "slug": "ranthambore-national-park",
+    "name": "Ranthambore National Park",
+    "state": "Rajasthan",
+    "latitude": 26.01733,
+    "longitude": 76.50257,
+    "tagline": "Dry forest and a hilltop fort",
+    "overview": "Explore a landscape of forest, lakes, and ruins; wildlife sightings vary and park access is regulated.",
+    "coverImage": "/media/destinations/ranthambore-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ranthambore_National_Park",
+    "photoCredit": {
+      "author": "THerrington",
+      "source": "https://commons.wikimedia.org/wiki/File:Ranthambore_National_Park.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-dholavira",
+    "slug": "dholavira",
+    "name": "Dholavira",
+    "state": "Gujarat",
+    "latitude": 23.888606,
+    "longitude": 70.213636,
+    "tagline": "A Harappan city on Khadir Island",
+    "overview": "The archaeological site reveals a planned settlement with reservoirs, fortifications, and ceremonial spaces.",
+    "coverImage": "/media/destinations/dholavira.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Dholavira",
+    "photoCredit": {
+      "author": "Lalit Gajjer",
+      "source": "https://commons.wikimedia.org/wiki/File:DHOLAVIRA_SITE_(24).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-champaner-pavagadh-archaeological-park",
+    "slug": "champaner-pavagadh-archaeological-park",
+    "name": "Champaner-Pavagadh Archaeological Park",
+    "state": "Gujarat",
+    "latitude": 22.483333,
+    "longitude": 73.533333,
+    "tagline": "Medieval monuments below Pavagadh Hill",
+    "overview": "Combine the mosques and fortifications at Champaner with a visit to the hill if time allows.",
+    "coverImage": "/media/destinations/champaner-pavagadh-archaeological-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Champaner-Pavagadh_Archaeological_Park",
+    "photoCredit": {
+      "author": "Priyank Singhvi",
+      "source": "https://commons.wikimedia.org/wiki/File:Jain_Temple,_Pavagadh_(cropped).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-rani-ki-vav",
+    "slug": "rani-ki-vav",
+    "name": "Rani ki Vav",
+    "state": "Gujarat",
+    "latitude": 23.858889,
+    "longitude": 72.101667,
+    "tagline": "A sculpted stepwell in Patan",
+    "overview": "The descending terraces frame elaborate stone sculpture and offer a close look at historic water architecture.",
+    "coverImage": "/media/destinations/rani-ki-vav.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Rani_ki_Vav",
+    "photoCredit": {
+      "author": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Rani_ki_vav_02.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-modhera-sun-temple",
+    "slug": "modhera-sun-temple",
+    "name": "Modhera Sun Temple",
+    "state": "Gujarat",
+    "latitude": 23.583806,
+    "longitude": 72.132686,
+    "tagline": "A temple and stepped tank from the Solanki era",
+    "overview": "Walk the temple complex from its ceremonial tank to the carved assembly hall.",
+    "coverImage": "/media/destinations/modhera-sun-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Sun_Temple%2C_Modhera",
+    "photoCredit": {
+      "author": "Musafir kanya",
+      "source": "https://commons.wikimedia.org/wiki/File:Surya_mandhir.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-somnath-temple",
+    "slug": "somnath-temple",
+    "name": "Somnath Temple",
+    "state": "Gujarat",
+    "latitude": 20.888028,
+    "longitude": 70.401389,
+    "tagline": "A coastal pilgrimage stop",
+    "overview": "The seafront temple area pairs walks by the Arabian Sea with the pilgrimage sites around Prabhas Patan.",
+    "coverImage": "/media/destinations/somnath-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Somnath_Temple",
+    "photoCredit": {
+      "author": "B. SurajPatro1997",
+      "source": "https://commons.wikimedia.org/wiki/File:Somanath_mandir_(cropped).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-mumbai",
+    "slug": "mumbai",
+    "name": "Mumbai",
+    "state": "Maharashtra",
+    "latitude": 19.076111,
+    "longitude": 72.8775,
+    "tagline": "Waterfront walks and Victorian streets",
+    "overview": "Explore the harbour edge around Colaba and the historic civic buildings and markets near Fort.",
+    "coverImage": "/media/destinations/mumbai.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Mumbai",
+    "photoCredit": {
+      "author": "Rutiknatekar",
+      "source": "https://commons.wikimedia.org/wiki/File:Mumbai_Bandra-Worli_Sea_Link.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-elephanta-caves",
+    "slug": "elephanta-caves",
+    "name": "Elephanta Caves",
+    "state": "Maharashtra",
+    "latitude": 18.963333,
+    "longitude": 72.931389,
+    "tagline": "Rock-cut shrines on an island",
+    "overview": "A harbour ferry and stepped approach lead to cave temples with large sculptural panels.",
+    "coverImage": "/media/destinations/elephanta-caves.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Elephanta_Caves",
+    "photoCredit": {
+      "author": "Christian Haugen",
+      "source": "https://commons.wikimedia.org/wiki/File:Elephanta_Caves_Trimurti.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "dest-ajanta-caves",
+    "slug": "ajanta-caves",
+    "name": "Ajanta Caves",
+    "state": "Maharashtra",
+    "latitude": 20.553333,
+    "longitude": 75.700278,
+    "tagline": "Buddhist caves above the Waghora River",
+    "overview": "Rock-cut halls and monasteries follow a bend in the gorge; several preserve remarkable murals.",
+    "coverImage": "/media/destinations/ajanta-caves.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ajanta_Caves",
+    "photoCredit": {
+      "author": "No machine-readable author provided. Soman assumed (based on copyright claims).",
+      "source": "https://commons.wikimedia.org/wiki/File:Ajanta_(63).jpg",
+      "license": "CC BY 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5"
+    }
+  },
+  {
+    "id": "dest-ellora-caves",
+    "slug": "ellora-caves",
+    "name": "Ellora Caves",
+    "state": "Maharashtra",
+    "latitude": 20.0268,
+    "longitude": 75.1771,
+    "tagline": "Monumental architecture carved from rock",
+    "overview": "Set aside time for the Kailasa temple and the Buddhist, Hindu, and Jain caves along the ridge.",
+    "coverImage": "/media/destinations/ellora-caves.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ellora_Caves",
+    "photoCredit": {
+      "author": "Krishsa",
+      "source": "https://commons.wikimedia.org/wiki/File:Ellora,_Aurangabad,_Maharashtra.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-old-goa",
+    "slug": "old-goa",
+    "name": "Old Goa",
+    "state": "Goa",
+    "latitude": 15.500872,
+    "longitude": 73.911511,
+    "tagline": "Churches of the former Portuguese capital",
+    "overview": "Explore the basilica and cathedral precinct beside the Mandovi River and leave time for the archaeology museum.",
+    "coverImage": "/media/destinations/old-goa.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Basilica_of_Bom_Jesus",
+    "photoCredit": {
+      "author": "iMahesh",
+      "source": "https://commons.wikimedia.org/wiki/File:Front_Elevation_of_Basilica_of_Bom_Jesus.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-dudhsagar-falls",
+    "slug": "dudhsagar-falls",
+    "name": "Dudhsagar Falls",
+    "state": "Goa",
+    "latitude": 15.31277,
+    "longitude": 74.31416,
+    "tagline": "A waterfall in the Western Ghats",
+    "overview": "The falls descend through forest near the state border. Access routes and conditions can change seasonally.",
+    "coverImage": "/media/destinations/dudhsagar-falls.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Dudhsagar_Falls",
+    "photoCredit": {
+      "author": "Hsp wiki",
+      "source": "https://commons.wikimedia.org/wiki/File:Doodhsagar_Fall.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-palolem-beach",
+    "slug": "palolem-beach",
+    "name": "Palolem Beach",
+    "state": "Goa",
+    "latitude": 15.008889,
+    "longitude": 74.022778,
+    "tagline": "A crescent bay in South Goa",
+    "overview": "Walk the shore early or late and explore the viewpoints around this sheltered coastal bay.",
+    "coverImage": "/media/destinations/palolem-beach.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Palolem_Beach",
+    "photoCredit": {
+      "author": "iMahesh",
+      "source": "https://commons.wikimedia.org/wiki/File:Palolem_Beach,_South_Goa.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-gokarna",
+    "slug": "gokarna",
+    "name": "Gokarna",
+    "state": "Karnataka",
+    "latitude": 14.55,
+    "longitude": 74.31667,
+    "tagline": "Temple lanes and coastal trails",
+    "overview": "Combine the old town’s temple precinct with paths between the headlands and beaches.",
+    "coverImage": "/media/destinations/gokarna.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Gokarna%2C_Karnataka",
+    "photoCredit": {
+      "author": "Aleksriis",
+      "source": "https://commons.wikimedia.org/wiki/File:Delight_india.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-mysuru",
+    "slug": "mysuru",
+    "name": "Mysuru",
+    "state": "Karnataka",
+    "latitude": 12.308611,
+    "longitude": 76.653056,
+    "tagline": "Royal architecture and a lively market",
+    "overview": "Visit Mysore Palace and Devaraja Market, with Chamundi Hill an option for a separate outing.",
+    "coverImage": "/media/destinations/mysuru.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Mysore",
+    "photoCredit": {
+      "author": "Sathyaprakash01",
+      "source": "https://commons.wikimedia.org/wiki/File:Mysuru_Montage.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-badami-cave-temples",
+    "slug": "badami-cave-temples",
+    "name": "Badami Cave Temples",
+    "state": "Karnataka",
+    "latitude": 15.918333,
+    "longitude": 75.684167,
+    "tagline": "Rock-cut temples above a reservoir",
+    "overview": "The stairway above Agastya Lake leads to a series of shrines cut into red sandstone.",
+    "coverImage": "/media/destinations/badami-cave-temples.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Badami_cave_temples",
+    "photoCredit": {
+      "author": "Dineshkannambadi ( talk ) 03:35, 13 August 2008 (UTC)",
+      "source": "https://commons.wikimedia.org/wiki/File:Vishnu_image_inside_cave_number_3_in_Badami.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-pattadakal",
+    "slug": "pattadakal",
+    "name": "Pattadakal",
+    "state": "Karnataka",
+    "latitude": 15.951389,
+    "longitude": 75.814722,
+    "tagline": "Chalukya temples by the Malaprabha",
+    "overview": "Compare the northern and southern architectural forms in this compact temple complex.",
+    "coverImage": "/media/destinations/pattadakal.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pattadakal",
+    "photoCredit": {
+      "author": "Nithin bolar k",
+      "source": "https://commons.wikimedia.org/wiki/File:Pattadakal_000.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-jog-falls",
+    "slug": "jog-falls",
+    "name": "Jog Falls",
+    "state": "Karnataka",
+    "latitude": 14.23,
+    "longitude": 74.812778,
+    "tagline": "The Sharavathi’s plunge into a gorge",
+    "overview": "View the falls from designated viewpoints, where flow can vary widely with the season.",
+    "coverImage": "/media/destinations/jog-falls.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Jog_Falls",
+    "photoCredit": {
+      "author": "Nikhilb239",
+      "source": "https://commons.wikimedia.org/wiki/File:Jog_Falls_05092016.jpg",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "dest-madikeri",
+    "slug": "madikeri",
+    "name": "Madikeri",
+    "state": "Karnataka",
+    "latitude": 12.4209,
+    "longitude": 75.7397,
+    "tagline": "Coffee country in the Kodagu hills",
+    "overview": "Use the town as a base for estate visits, ridge viewpoints, and short forest outings.",
+    "coverImage": "/media/destinations/madikeri.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Madikeri",
+    "photoCredit": {
+      "author": "Pawanrao",
+      "source": "https://commons.wikimedia.org/wiki/File:Raja%27s_Seat_View_Point.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-belur",
+    "slug": "belur",
+    "name": "Belur",
+    "state": "Karnataka",
+    "latitude": 13.1629,
+    "longitude": 75.8571,
+    "tagline": "Hoysala stone carving on a grand scale",
+    "overview": "Walk the Chennakeshava Temple enclosure and look closely at the reliefs and sculpted pillars.",
+    "coverImage": "/media/destinations/belur.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Belur%2C_Karnataka",
+    "photoCredit": {
+      "author": "Jonas Buchholz ( Jbuchholz )",
+      "source": "https://commons.wikimedia.org/wiki/File:Belur_street_towards_Chennakesava_temple.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-fort-kochi",
+    "slug": "fort-kochi",
+    "name": "Fort Kochi",
+    "state": "Kerala",
+    "latitude": 9.9658,
+    "longitude": 76.2421,
+    "tagline": "Port history and seaside lanes",
+    "overview": "Walk between the waterfront, historic churches, and neighbourhood streets shaped by long-distance trade.",
+    "coverImage": "/media/destinations/fort-kochi.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Fort_Kochi",
+    "photoCredit": {
+      "author": "Vyacheslav Argenberg",
+      "source": "https://commons.wikimedia.org/wiki/File:Kochi,_Fishing_nets_at_sunset,_Kerala,_India.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "dest-alappuzha",
+    "slug": "alappuzha",
+    "name": "Alappuzha",
+    "state": "Kerala",
+    "latitude": 9.49,
+    "longitude": 76.33,
+    "tagline": "Canals and backwater villages",
+    "overview": "Explore the waterways near Vembanad Lake by a local ferry or a small organized boat trip.",
+    "coverImage": "/media/destinations/alappuzha.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Alappuzha",
+    "photoCredit": {
+      "author": "Augustus Binu / facebook",
+      "source": "https://commons.wikimedia.org/wiki/File:Alappuzha_Boat_Beauty_W.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-munnar",
+    "slug": "munnar",
+    "name": "Munnar",
+    "state": "Kerala",
+    "latitude": 10.089167,
+    "longitude": 77.059722,
+    "tagline": "Highland tea estates and misty valleys",
+    "overview": "Start with the tea landscapes around town and choose a marked nature walk or nearby viewpoint.",
+    "coverImage": "/media/destinations/munnar.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Munnar",
+    "photoCredit": {
+      "author": "Kondephy",
+      "source": "https://commons.wikimedia.org/wiki/File:Munnar_Overview.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-periyar-national-park",
+    "slug": "periyar-national-park",
+    "name": "Periyar National Park",
+    "state": "Kerala",
+    "latitude": 9.5775,
+    "longitude": 77.18,
+    "tagline": "Lake and forest in the Cardamom Hills",
+    "overview": "Use Thekkady as a base for regulated walks or trips on the lake, with wildlife sightings dependent on conditions.",
+    "coverImage": "/media/destinations/periyar-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Periyar_National_Park",
+    "photoCredit": {
+      "author": "Wouter Hagens",
+      "source": "https://commons.wikimedia.org/wiki/File:Periyar_National_Park.JPG",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Licensing#Public_domain"
+    }
+  },
+  {
+    "id": "dest-varkala",
+    "slug": "varkala",
+    "name": "Varkala",
+    "state": "Kerala",
+    "latitude": 8.743299,
+    "longitude": 76.69684,
+    "tagline": "Coastal cliffs above the Arabian Sea",
+    "overview": "Follow the cliff-top path for views down to the beach and out over the Arabian Sea.",
+    "coverImage": "/media/destinations/varkala.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Varkala",
+    "photoCredit": {
+      "author": "Devender Goyal",
+      "source": "https://commons.wikimedia.org/wiki/File:Varkala_Beach,_Varkala,_Kerala.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-mahabalipuram",
+    "slug": "mahabalipuram",
+    "name": "Mahabalipuram",
+    "state": "Tamil Nadu",
+    "latitude": 12.619722,
+    "longitude": 80.194444,
+    "tagline": "Pallava monuments beside the sea",
+    "overview": "Visit the Shore Temple, monolithic rathas, and open-air reliefs on foot across the town.",
+    "coverImage": "/media/destinations/mahabalipuram.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Mamallapuram",
+    "photoCredit": {
+      "author": "Ms Sarah Welch",
+      "source": "https://commons.wikimedia.org/wiki/File:A_collage_of_Mamallapuram_town_Tamil_Nadu_India.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-brihadisvara-temple",
+    "slug": "brihadisvara-temple",
+    "name": "Brihadisvara Temple",
+    "state": "Tamil Nadu",
+    "latitude": 10.782778,
+    "longitude": 79.131667,
+    "tagline": "A Chola temple in Thanjavur",
+    "overview": "The temple’s tall tower, spacious courtyard, and carved stone are best seen on a slow circuit.",
+    "coverImage": "/media/destinations/brihadisvara-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Brihadisvara_Temple",
+    "photoCredit": {
+      "author": "Original: Rainer Halama Derivative work: UnpetitproleX",
+      "source": "https://commons.wikimedia.org/wiki/File:Brihadisvara_Temple_during_Maha_Shivaratri-WUS03611_(edit).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-meenakshi-temple",
+    "slug": "meenakshi-temple",
+    "name": "Meenakshi Temple",
+    "state": "Tamil Nadu",
+    "latitude": 9.9197,
+    "longitude": 78.1194,
+    "tagline": "A temple complex at the heart of Madurai",
+    "overview": "Walk the streets around the gateway towers and see how the historic city grew around the temple.",
+    "coverImage": "/media/destinations/meenakshi-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Meenakshi_Temple",
+    "photoCredit": {
+      "author": "எஸ்ஸார்",
+      "source": "https://commons.wikimedia.org/wiki/File:An_aerial_view_of_Madurai_city_from_atop_of_Meenakshi_Amman_temple.jpg",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "dest-rameswaram",
+    "slug": "rameswaram",
+    "name": "Rameswaram",
+    "state": "Tamil Nadu",
+    "latitude": 9.288,
+    "longitude": 79.313,
+    "tagline": "Pilgrimage and Pamban Island seascapes",
+    "overview": "Combine the temple precinct with coastal views and a separate outing toward Dhanushkodi.",
+    "coverImage": "/media/destinations/rameswaram.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Rameswaram",
+    "photoCredit": {
+      "author": "Prasanth C7",
+      "source": "https://commons.wikimedia.org/wiki/File:Rameswaram_Morning.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    }
+  },
+  {
+    "id": "dest-ooty",
+    "slug": "ooty",
+    "name": "Ooty",
+    "state": "Tamil Nadu",
+    "latitude": 11.41,
+    "longitude": 76.7,
+    "tagline": "Botanical gardens and Nilgiri viewpoints",
+    "overview": "Visit the gardens and lake, or travel part of the hill railway for a different view of the landscape.",
+    "coverImage": "/media/destinations/ooty.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ooty",
+    "photoCredit": {
+      "author": "Vinayaraj",
+      "source": "https://commons.wikimedia.org/wiki/File:Ooty_lake.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-kodaikanal",
+    "slug": "kodaikanal",
+    "name": "Kodaikanal",
+    "state": "Tamil Nadu",
+    "latitude": 10.23,
+    "longitude": 77.48,
+    "tagline": "A lake town in the Palani Hills",
+    "overview": "Walk the lake and the ridge viewpoints, leaving room for changes in visibility when clouds move in.",
+    "coverImage": "/media/destinations/kodaikanal.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kodaikanal",
+    "photoCredit": {
+      "author": "KARTY JazZ",
+      "source": "https://commons.wikimedia.org/wiki/File:Boating_in_Kodaikanal_Lake_with_Mist.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-kanyakumari",
+    "slug": "kanyakumari",
+    "name": "Kanyakumari",
+    "state": "Tamil Nadu",
+    "latitude": 8.0883,
+    "longitude": 77.5385,
+    "tagline": "A headland at India’s southern tip",
+    "overview": "Spend time on the seafront and look across to the offshore memorials; boat access depends on sea conditions.",
+    "coverImage": "/media/destinations/kanyakumari.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kanyakumari",
+    "photoCredit": {
+      "author": "Ravivg5",
+      "source": "https://commons.wikimedia.org/wiki/File:Vivekananda_Rock_Memorial,_Kanyakumari.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-puducherry",
+    "slug": "puducherry",
+    "name": "Puducherry",
+    "state": "Puducherry",
+    "latitude": 11.934014,
+    "longitude": 79.829028,
+    "tagline": "Coastal streets and a historic promenade",
+    "overview": "Explore the grid of streets near the promenade and the Tamil neighbourhoods farther inland.",
+    "coverImage": "/media/destinations/puducherry.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pondicherry",
+    "photoCredit": {
+      "author": "Karthik Easvur",
+      "source": "https://commons.wikimedia.org/wiki/File:Pondicherry-Rock_beach_aerial_view.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-charminar",
+    "slug": "charminar",
+    "name": "Charminar",
+    "state": "Telangana",
+    "latitude": 17.36163,
+    "longitude": 78.47467,
+    "tagline": "A monument at the heart of old Hyderabad",
+    "overview": "See the monument from the surrounding bazaars and explore the streets leading to nearby historic buildings.",
+    "coverImage": "/media/destinations/charminar.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Charminar",
+    "photoCredit": {
+      "author": "DidierTais",
+      "source": "https://commons.wikimedia.org/wiki/File:Charminar_Hyderabad_1.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-golconda-fort",
+    "slug": "golconda-fort",
+    "name": "Golconda Fort",
+    "state": "Telangana",
+    "latitude": 17.383056,
+    "longitude": 78.401111,
+    "tagline": "A fortified hill overlooking Hyderabad",
+    "overview": "Walk the fort’s gateways and ascent for views across the masonry, ramparts, and city.",
+    "coverImage": "/media/destinations/golconda-fort.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Golconda",
+    "photoCredit": {
+      "author": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Golconda_Fort_005.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-ramappa-temple",
+    "slug": "ramappa-temple",
+    "name": "Ramappa Temple",
+    "state": "Telangana",
+    "latitude": 18.259167,
+    "longitude": 79.943333,
+    "tagline": "A Kakatiya temple by a lake",
+    "overview": "The sculpted pillars and carved stone brackets reveal the craftsmanship of the Kakatiya period.",
+    "coverImage": "/media/destinations/ramappa-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ramappa_Temple",
+    "photoCredit": {
+      "author": "Nirav Lad",
+      "source": "https://commons.wikimedia.org/wiki/File:Ramappa_Temple_(Human_Scale).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-borra-caves",
+    "slug": "borra-caves",
+    "name": "Borra Caves",
+    "state": "Andhra Pradesh",
+    "latitude": 18.166667,
+    "longitude": 83,
+    "tagline": "Limestone chambers in the Ananthagiri hills",
+    "overview": "Follow the visitor route into the caverns, looking for stalactites and other formations along the lit path.",
+    "coverImage": "/media/destinations/borra-caves.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Borra_Caves",
+    "photoCredit": {
+      "author": "Apy Seth",
+      "source": "https://commons.wikimedia.org/wiki/File:Borra_caves,_Viskhapatnam.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-tirumala-venkateswara-temple",
+    "slug": "tirumala-venkateswara-temple",
+    "name": "Tirumala Venkateswara Temple",
+    "state": "Andhra Pradesh",
+    "latitude": 13.68325,
+    "longitude": 79.347194,
+    "tagline": "Pilgrimage in the Seshachalam Hills",
+    "overview": "The hilltop temple is a major pilgrimage destination. Check official arrangements before planning a visit.",
+    "coverImage": "/media/destinations/tirumala-venkateswara-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Venkateswara_Temple%2C_Tirumala",
+    "photoCredit": {
+      "author": "Nikhilb239",
+      "source": "https://commons.wikimedia.org/wiki/File:Tirumala_090615.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-gandikota",
+    "slug": "gandikota",
+    "name": "Gandikota",
+    "state": "Andhra Pradesh",
+    "latitude": 14.814722,
+    "longitude": 78.286667,
+    "tagline": "A fort above the Pennar gorge",
+    "overview": "Walk the fortified settlement and see the gorge from designated overlooks above the river.",
+    "coverImage": "/media/destinations/gandikota.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Gandikota",
+    "photoCredit": {
+      "author": "Sudhakarbichali",
+      "source": "https://commons.wikimedia.org/wiki/File:Indian_Grand_Canyon_Sudhakar_Bichali.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-konark-sun-temple",
+    "slug": "konark-sun-temple",
+    "name": "Konark Sun Temple",
+    "state": "Odisha",
+    "latitude": 19.8875,
+    "longitude": 86.094722,
+    "tagline": "A stone chariot on the Odisha coast",
+    "overview": "Look for carved wheels, horses, and panels in the surviving complex of the temple to Surya.",
+    "coverImage": "/media/destinations/konark-sun-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Konark_Sun_Temple",
+    "photoCredit": {
+      "author": "Subham9423",
+      "source": "https://commons.wikimedia.org/wiki/File:Konarka_Temple.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-puri",
+    "slug": "puri",
+    "name": "Puri",
+    "state": "Odisha",
+    "latitude": 19.804722,
+    "longitude": 85.818333,
+    "tagline": "Pilgrimage and a long Bay of Bengal shore",
+    "overview": "Pair the town’s pilgrimage streets with time on the coast, checking temple access rules before visiting.",
+    "coverImage": "/media/destinations/puri.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Jagannath_Temple%2C_Puri",
+    "photoCredit": {
+      "author": "Prachites",
+      "source": "https://commons.wikimedia.org/wiki/File:Shri_Jagannath_temple.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-chilika-lake",
+    "slug": "chilika-lake",
+    "name": "Chilika Lake",
+    "state": "Odisha",
+    "latitude": 19.716667,
+    "longitude": 85.316667,
+    "tagline": "A brackish lagoon and bird habitat",
+    "overview": "Choose a lake-side base according to the section you want to explore and travel with local boat operators.",
+    "coverImage": "/media/destinations/chilika-lake.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Chilika_Lake",
+    "photoCredit": {
+      "author": "Government of Odisha",
+      "source": "https://commons.wikimedia.org/wiki/File:Birds_eyeview_of_Chilika_Lake.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "dest-udayagiri-and-khandagiri-caves",
+    "slug": "udayagiri-and-khandagiri-caves",
+    "name": "Udayagiri and Khandagiri Caves",
+    "state": "Odisha",
+    "latitude": 20.262831,
+    "longitude": 85.78603,
+    "tagline": "Rock-cut shelters above Bhubaneswar",
+    "overview": "Climb the paths between clusters of excavated shelters and look for inscriptions and sculpted entrances.",
+    "coverImage": "/media/destinations/udayagiri-and-khandagiri-caves.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Udayagiri_and_Khandagiri_caves",
+    "photoCredit": {
+      "author": "Government of Odisha",
+      "source": "https://commons.wikimedia.org/wiki/File:Khandagari_and_Udaygiri_featured_image.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "dest-darjeeling",
+    "slug": "darjeeling",
+    "name": "Darjeeling",
+    "state": "West Bengal",
+    "latitude": 27.0375,
+    "longitude": 88.263056,
+    "tagline": "Tea slopes and Himalayan viewpoints",
+    "overview": "Explore the hill town and its tea landscapes, keeping early starts for a better chance of clear mountain views.",
+    "coverImage": "/media/destinations/darjeeling.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Darjeeling",
+    "photoCredit": {
+      "author": "Arne Hückelheim 2010-09-21 12:41:53 This is a cropped in which the glare has been lessened",
+      "source": "https://commons.wikimedia.org/wiki/File:DarjeelingTrainFruitshop_(2).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-sundarbans-national-park",
+    "slug": "sundarbans-national-park",
+    "name": "Sundarbans National Park",
+    "state": "West Bengal",
+    "latitude": 21.838,
+    "longitude": 88.8852,
+    "tagline": "Mangrove waterways in the Ganges delta",
+    "overview": "Use permitted boat routes to explore the tidal landscape with local guides.",
+    "coverImage": "/media/destinations/sundarbans-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Sundarbans_National_Park",
+    "photoCredit": {
+      "author": "Soumyajit Nandy",
+      "source": "https://commons.wikimedia.org/wiki/File:Sundarban_Tiger.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-victoria-memorial",
+    "slug": "victoria-memorial",
+    "name": "Victoria Memorial",
+    "state": "West Bengal",
+    "latitude": 22.5449,
+    "longitude": 88.3425,
+    "tagline": "A museum and gardens in Kolkata",
+    "overview": "The building’s galleries and grounds make an easy pairing with a walk around the Maidan.",
+    "coverImage": "/media/destinations/victoria-memorial.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Victoria_Memorial%2C_Kolkata",
+    "photoCredit": {
+      "author": "Subhrajyoti07",
+      "source": "https://commons.wikimedia.org/wiki/File:Victoria_Memorial_situated_in_Kolkata.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-bishnupur",
+    "slug": "bishnupur",
+    "name": "Bishnupur",
+    "state": "West Bengal",
+    "latitude": 23.075,
+    "longitude": 87.317,
+    "tagline": "Terracotta temples and craft traditions",
+    "overview": "Walk between brick temples and examine the narrative reliefs that decorate their walls.",
+    "coverImage": "/media/destinations/bishnupur.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Bishnupur_%28West_Bengal%29",
+    "photoCredit": {
+      "author": "Pdhang",
+      "source": "https://commons.wikimedia.org/wiki/File:RadhaShyam.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-mahabodhi-temple",
+    "slug": "mahabodhi-temple",
+    "name": "Mahabodhi Temple",
+    "state": "Bihar",
+    "latitude": 24.696,
+    "longitude": 84.9913,
+    "tagline": "A Buddhist pilgrimage site in Bodh Gaya",
+    "overview": "Visit the temple precinct and Bodhi Tree, then explore the monasteries established nearby.",
+    "coverImage": "/media/destinations/mahabodhi-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Mahabodhi_Temple",
+    "photoCredit": {
+      "author": "Bpilgrim",
+      "source": "https://commons.wikimedia.org/wiki/File:Mahabodhitemple.jpg",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5"
+    }
+  },
+  {
+    "id": "dest-nalanda-mahavihara",
+    "slug": "nalanda-mahavihara",
+    "name": "Nalanda Mahavihara",
+    "state": "Bihar",
+    "latitude": 25.136797,
+    "longitude": 85.443828,
+    "tagline": "Monastic ruins of an early seat of learning",
+    "overview": "Walk the excavated monasteries and temples to see how the residential and teaching spaces were arranged.",
+    "coverImage": "/media/destinations/nalanda-mahavihara.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Nalanda_mahavihara",
+    "photoCredit": {
+      "author": "Odantapuribs",
+      "source": "https://commons.wikimedia.org/wiki/File:Temple_No.-_3,_Nalanda_Archaeological_Site.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-sanchi",
+    "slug": "sanchi",
+    "name": "Sanchi",
+    "state": "Madhya Pradesh",
+    "latitude": 23.479223,
+    "longitude": 77.739683,
+    "tagline": "A hilltop group of Buddhist monuments",
+    "overview": "Start with the Great Stupa’s carved gateways, then walk the paths linking monasteries and smaller stupas.",
+    "coverImage": "/media/destinations/sanchi.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Sanchi_Stupa",
+    "photoCredit": {
+      "author": "Biswarup Ganguly",
+      "source": "https://commons.wikimedia.org/wiki/File:East_Gateway_-_Stupa_1_-_Sanchi_Hill_2013-02-21_4398.JPG",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "dest-khajuraho-group-of-monuments",
+    "slug": "khajuraho-group-of-monuments",
+    "name": "Khajuraho Group of Monuments",
+    "state": "Madhya Pradesh",
+    "latitude": 24.854422,
+    "longitude": 79.921427,
+    "tagline": "Chandela temples and sculpture",
+    "overview": "Allow time for the temple clusters and the details of their sculpted exterior walls.",
+    "coverImage": "/media/destinations/khajuraho-group-of-monuments.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Khajuraho_Group_of_Monuments",
+    "photoCredit": {
+      "author": "PLBechly",
+      "source": "https://commons.wikimedia.org/wiki/File:1_Khajuraho.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-bhimbetka-rock-shelters",
+    "slug": "bhimbetka-rock-shelters",
+    "name": "Bhimbetka Rock Shelters",
+    "state": "Madhya Pradesh",
+    "latitude": 22.938415,
+    "longitude": 77.613085,
+    "tagline": "Sandstone shelters with prehistoric paintings",
+    "overview": "Follow the marked route through shelters and outcrops in the forested foothills.",
+    "coverImage": "/media/destinations/bhimbetka-rock-shelters.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Bhimbetka_rock_shelters",
+    "photoCredit": {
+      "author": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Rock_Shelter_8,_Bhimbetka_02.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-orchha",
+    "slug": "orchha",
+    "name": "Orchha",
+    "state": "Madhya Pradesh",
+    "latitude": 25.35,
+    "longitude": 78.64,
+    "tagline": "Bundela palaces on the Betwa",
+    "overview": "The riverside cenotaphs, fort complex, and temple streets make a compact walking circuit.",
+    "coverImage": "/media/destinations/orchha.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Orchha",
+    "photoCredit": {
+      "author": "Yann ( talk )",
+      "source": "https://commons.wikimedia.org/wiki/File:Chaturbhuj_Temple,_Orchha.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-chitrakote-falls",
+    "slug": "chitrakote-falls",
+    "name": "Chitrakote Falls",
+    "state": "Chhattisgarh",
+    "latitude": 19.206497,
+    "longitude": 81.699978,
+    "tagline": "A broad waterfall on the Indravati",
+    "overview": "The river drops through a wide horseshoe-shaped edge, with very different views at high and low flows.",
+    "coverImage": "/media/destinations/chitrakote-falls.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Chitrakote_Falls",
+    "photoCredit": {
+      "author": "Iamg at English Wikipedia",
+      "source": "https://commons.wikimedia.org/wiki/File:Chitrakot_waterfalls.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/"
+    }
+  },
+  {
+    "id": "dest-kanger-valley-national-park",
+    "slug": "kanger-valley-national-park",
+    "name": "Kanger Valley National Park",
+    "state": "Chhattisgarh",
+    "latitude": 18.766667,
+    "longitude": 81.983333,
+    "tagline": "Forested valleys and limestone caves",
+    "overview": "Plan a route around the individual caves, forest walks, and waterfall sites that are open to visitors.",
+    "coverImage": "/media/destinations/kanger-valley-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kanger_Valley_National_Park",
+    "photoCredit": {
+      "author": "VishuN",
+      "source": "https://commons.wikimedia.org/wiki/File:Kanger_valley_National_Park.png",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-hundru-falls",
+    "slug": "hundru-falls",
+    "name": "Hundru Falls",
+    "state": "Jharkhand",
+    "latitude": 23.45,
+    "longitude": 85.65,
+    "tagline": "The Subarnarekha descends the Ranchi plateau",
+    "overview": "Visit this waterfall from Ranchi and use the designated paths and viewpoints on the steep approach.",
+    "coverImage": "/media/destinations/hundru-falls.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Hundru_Falls",
+    "photoCredit": {
+      "author": "Kingshuk Mondal",
+      "source": "https://commons.wikimedia.org/wiki/File:Hundru_Falls,_Jharkhand,_India_4.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "dest-deoghar",
+    "slug": "deoghar",
+    "name": "Deoghar",
+    "state": "Jharkhand",
+    "latitude": 24.48,
+    "longitude": 86.7,
+    "tagline": "A pilgrimage town around Baidyanath Temple",
+    "overview": "Explore the temple quarter and the streets that serve the town’s long-standing pilgrimage routes.",
+    "coverImage": "/media/destinations/deoghar.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Deoghar",
+    "photoCredit": {
+      "author": "Flashthomsom",
+      "source": "https://commons.wikimedia.org/wiki/File:Baba_Baidyanath_Jyotirlinga_Temple.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+    }
+  },
+  {
+    "id": "dest-golden-temple",
+    "slug": "golden-temple",
+    "name": "Golden Temple",
+    "state": "Punjab",
+    "latitude": 31.62,
+    "longitude": 74.876389,
+    "tagline": "A Sikh shrine surrounded by a sacred pool",
+    "overview": "Walk the marble circuit and learn about the community kitchen. Cover your head and follow the site’s guidance.",
+    "coverImage": "/media/destinations/golden-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Golden_Temple",
+    "photoCredit": {
+      "author": "Shagil Kannur",
+      "source": "https://commons.wikimedia.org/wiki/File:The_Golden_Temple_of_Amrithsar_7.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-jallianwala-bagh",
+    "slug": "jallianwala-bagh",
+    "name": "Jallianwala Bagh",
+    "state": "Punjab",
+    "latitude": 31.620521,
+    "longitude": 74.880565,
+    "tagline": "A memorial in the heart of Amritsar",
+    "overview": "The garden memorial commemorates the people killed in the 1919 massacre and is reached through old-city lanes.",
+    "coverImage": "/media/destinations/jallianwala-bagh.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Jallianwala_Bagh",
+    "photoCredit": {
+      "author": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:Jallianwala_Bagh,_Amritsar_01.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-qutb-minar",
+    "slug": "qutb-minar",
+    "name": "Qutb Minar",
+    "state": "Delhi",
+    "latitude": 28.524355,
+    "longitude": 77.185248,
+    "tagline": "A soaring minaret and an early Delhi complex",
+    "overview": "Walk the courtyards and ruined structures around the sandstone tower in Mehrauli.",
+    "coverImage": "/media/destinations/qutb-minar.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Qutb_Minar",
+    "photoCredit": {
+      "author": "Wasir kasab",
+      "source": "https://commons.wikimedia.org/wiki/File:Qutb_Minar_2022.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "dest-sultanpur-national-park",
+    "slug": "sultanpur-national-park",
+    "name": "Sultanpur National Park",
+    "state": "Haryana",
+    "latitude": 28.4623,
+    "longitude": 76.8899,
+    "tagline": "Wetland birding near Gurugram",
+    "overview": "Follow the designated perimeter paths to view waterbirds; conditions and bird numbers vary by season.",
+    "coverImage": "/media/destinations/sultanpur-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Sultanpur_National_Park",
+    "photoCredit": {
+      "author": "Vishalbhatia93",
+      "source": "https://commons.wikimedia.org/wiki/File:Sultanpur_Bird_Sanctuary,_Gurgaon.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-rock-garden-of-chandigarh",
+    "slug": "rock-garden-of-chandigarh",
+    "name": "Rock Garden of Chandigarh",
+    "state": "Chandigarh",
+    "latitude": 30.752,
+    "longitude": 76.807,
+    "tagline": "A sculptural maze made with reused material",
+    "overview": "Paths pass courtyards, figures, and cascades assembled from discarded tiles, ceramics, and other materials.",
+    "coverImage": "/media/destinations/rock-garden-of-chandigarh.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Rock_Garden_of_Chandigarh",
+    "photoCredit": {
+      "author": "Ijon",
+      "source": "https://commons.wikimedia.org/wiki/File:Chandigarh_Rock_Garden_4.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-rishikesh",
+    "slug": "rishikesh",
+    "name": "Rishikesh",
+    "state": "Uttarakhand",
+    "latitude": 30.108333,
+    "longitude": 78.297222,
+    "tagline": "Riverfront walks in the Himalayan foothills",
+    "overview": "Explore walking routes along the Ganges and the neighbourhoods associated with yoga and pilgrimage.",
+    "coverImage": "/media/destinations/rishikesh.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Rishikesh",
+    "photoCredit": {
+      "author": "VK1983",
+      "source": "https://commons.wikimedia.org/wiki/File:Trayambakeshwar_Temple_VK.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-kedarnath-temple",
+    "slug": "kedarnath-temple",
+    "name": "Kedarnath Temple",
+    "state": "Uttarakhand",
+    "latitude": 30.733335,
+    "longitude": 79.066659,
+    "tagline": "A pilgrimage site high in the Garhwal Himalaya",
+    "overview": "The temple is reached by an uphill pilgrimage route in a high mountain valley; the visiting season is limited.",
+    "coverImage": "/media/destinations/kedarnath-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kedarnath_Temple",
+    "photoCredit": {
+      "author": "Shivam Kumar 766",
+      "source": "https://commons.wikimedia.org/wiki/File:Kedarnath_Temple_in_Rainy_season.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-valley-of-flowers-national-park",
+    "slug": "valley-of-flowers-national-park",
+    "name": "Valley of Flowers National Park",
+    "state": "Uttarakhand",
+    "latitude": 30.73,
+    "longitude": 79.6175,
+    "tagline": "An alpine valley known for wildflowers",
+    "overview": "The protected valley is reached on foot, with weather and seasonal trail access central to planning.",
+    "coverImage": "/media/destinations/valley-of-flowers-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Valley_of_Flowers_National_Park",
+    "photoCredit": {
+      "author": "Original: Rohit Sharma Derivative work: UnpetitproleX",
+      "source": "https://commons.wikimedia.org/wiki/File:Valley_of_flowers_national_park,_Uttarakhand,_India_03_(edit).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-nainital",
+    "slug": "nainital",
+    "name": "Nainital",
+    "state": "Uttarakhand",
+    "latitude": 29.391944,
+    "longitude": 79.454167,
+    "tagline": "A Kumaon hill town around a lake",
+    "overview": "Walk between the lake shore, hillside lanes, and viewpoints above this mountain basin.",
+    "coverImage": "/media/destinations/nainital.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Nainital",
+    "photoCredit": {
+      "author": "Skalvanov",
+      "source": "https://commons.wikimedia.org/wiki/File:Nainital_metro.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-shimla",
+    "slug": "shimla",
+    "name": "Shimla",
+    "state": "Himachal Pradesh",
+    "latitude": 31.103333,
+    "longitude": 77.172222,
+    "tagline": "A ridge town with colonial-era architecture",
+    "overview": "Walk between the Ridge and Mall Road, then explore the steeper neighbourhood lanes and wooded trails.",
+    "coverImage": "/media/destinations/shimla.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Shimla",
+    "photoCredit": {
+      "author": "Navneet Sharma",
+      "source": "https://commons.wikimedia.org/wiki/File:Landscape_of_Shimla_,_Himachal_Pradesh.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-manali",
+    "slug": "manali",
+    "name": "Manali",
+    "state": "Himachal Pradesh",
+    "latitude": 32.243177,
+    "longitude": 77.189246,
+    "tagline": "A town above the Beas River",
+    "overview": "Start with the old-town lanes and deodar groves, then explore accessible river and valley viewpoints.",
+    "coverImage": "/media/destinations/manali.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Manali%2C_Himachal_Pradesh",
+    "photoCredit": {
+      "author": "Neerajsinghazm",
+      "source": "https://commons.wikimedia.org/wiki/File:Manali_City.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-mcleod-ganj",
+    "slug": "mcleod-ganj",
+    "name": "McLeod Ganj",
+    "state": "Himachal Pradesh",
+    "latitude": 32.238611,
+    "longitude": 76.323611,
+    "tagline": "Tibetan culture in the Dhauladhar foothills",
+    "overview": "Explore the monastery precinct, food streets, and marked walking routes around the hill town.",
+    "coverImage": "/media/destinations/mcleod-ganj.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/McLeod_Ganj",
+    "photoCredit": {
+      "author": "Rignam Wangkhang",
+      "source": "https://commons.wikimedia.org/wiki/File:McLeod_Ganj_Dharamkot_Dharmsala_Himachal_Pradesh_India_April_2014.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "dest-great-himalayan-national-park",
+    "slug": "great-himalayan-national-park",
+    "name": "Great Himalayan National Park",
+    "state": "Himachal Pradesh",
+    "latitude": 31.733333,
+    "longitude": 77.55,
+    "tagline": "Protected Himalayan forests and valleys",
+    "overview": "Use the designated access points and plan permitted trails according to conditions and experience.",
+    "coverImage": "/media/destinations/great-himalayan-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Great_Himalayan_National_Park",
+    "photoCredit": {
+      "author": "Suresh Karia",
+      "source": "https://commons.wikimedia.org/wiki/File:Himalayn_National_Park_01.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-srinagar",
+    "slug": "srinagar",
+    "name": "Srinagar",
+    "state": "Jammu and Kashmir",
+    "latitude": 34.12,
+    "longitude": 74.87,
+    "tagline": "Lake, gardens, and the old city",
+    "overview": "Combine the Dal Lake waterfront with Mughal gardens and a separate walk through the older city.",
+    "coverImage": "/media/destinations/srinagar.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Dal_Lake",
+    "photoCredit": {
+      "author": "Suhail Skindar Sofi",
+      "source": "https://commons.wikimedia.org/wiki/File:Dal_Lake_Hazratbal_Srinagar.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-gulmarg",
+    "slug": "gulmarg",
+    "name": "Gulmarg",
+    "state": "Jammu and Kashmir",
+    "latitude": 34.05,
+    "longitude": 74.38,
+    "tagline": "A high meadow beneath the Pir Panjal",
+    "overview": "Choose walks or winter activities based on snow and weather conditions, and use designated routes.",
+    "coverImage": "/media/destinations/gulmarg.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Gulmarg",
+    "photoCredit": {
+      "author": "Anurag Kumar",
+      "source": "https://commons.wikimedia.org/wiki/File:Ancient_Temple,_Gulmarg.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-leh",
+    "slug": "leh",
+    "name": "Leh",
+    "state": "Ladakh",
+    "latitude": 34.152867,
+    "longitude": 77.577262,
+    "tagline": "Palace terraces and a high-altitude old town",
+    "overview": "Explore the old lanes below Leh Palace and the town’s hillsides at an unhurried pace.",
+    "coverImage": "/media/destinations/leh.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Leh",
+    "photoCredit": {
+      "author": "Anirvan Shukla",
+      "source": "https://commons.wikimedia.org/wiki/File:Leh_City_seen_from_Shanti_Stupa.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-hemis-monastery",
+    "slug": "hemis-monastery",
+    "name": "Hemis Monastery",
+    "state": "Ladakh",
+    "latitude": 33.912475,
+    "longitude": 77.702833,
+    "tagline": "A monastery tucked in a tributary valley",
+    "overview": "The courtyards and exhibition spaces make this an accessible introduction to Ladakhi monastic heritage.",
+    "coverImage": "/media/destinations/hemis-monastery.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Hemis_Monastery",
+    "photoCredit": {
+      "author": "Bernard Gagnon Canon EOS REBEL T4i",
+      "source": "https://commons.wikimedia.org/wiki/File:Hemis_Monastery_02.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-kaziranga-national-park",
+    "slug": "kaziranga-national-park",
+    "name": "Kaziranga National Park",
+    "state": "Assam",
+    "latitude": 26.666667,
+    "longitude": 93.35,
+    "tagline": "Floodplain grasslands with one-horned rhinos",
+    "overview": "Use regulated routes through grassland and riverine habitats where rhinos and other wildlife live.",
+    "coverImage": "/media/destinations/kaziranga-national-park.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kaziranga_National_Park",
+    "photoCredit": {
+      "author": "Diganta Talukdar",
+      "source": "https://commons.wikimedia.org/wiki/File:Beauty_of_Kaziranga_National_Park.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-majuli",
+    "slug": "majuli",
+    "name": "Majuli",
+    "state": "Assam",
+    "latitude": 27,
+    "longitude": 94.216667,
+    "tagline": "A Brahmaputra island with monastic communities",
+    "overview": "Allow time for river crossings and explore satras, village roads, and riverside landscapes.",
+    "coverImage": "/media/destinations/majuli.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Majuli",
+    "photoCredit": {
+      "author": "Dhrubazaan Photography",
+      "source": "https://commons.wikimedia.org/wiki/File:Doriya_River_of_Majuli.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-kamakhya-temple",
+    "slug": "kamakhya-temple",
+    "name": "Kamakhya Temple",
+    "state": "Assam",
+    "latitude": 26.166426,
+    "longitude": 91.705509,
+    "tagline": "A hilltop shrine overlooking Guwahati",
+    "overview": "Climb or drive to the temple precinct on Nilachal Hill for views and a visit to an important pilgrimage site.",
+    "coverImage": "/media/destinations/kamakhya-temple.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kamakhya_Temple",
+    "photoCredit": {
+      "author": "Devkmaravi",
+      "source": "https://commons.wikimedia.org/wiki/File:Kamakhya_Temple_-_DEV_8829.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-dawki",
+    "slug": "dawki",
+    "name": "Dawki",
+    "state": "Meghalaya",
+    "latitude": 25.183333,
+    "longitude": 92.016667,
+    "tagline": "A clear-water river at the southern border",
+    "overview": "Visit the Umngot River from the town and look across the steep valley at the forested banks.",
+    "coverImage": "/media/destinations/dawki.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Dawki",
+    "photoCredit": {
+      "author": "Vikramjit Kakati",
+      "source": "https://commons.wikimedia.org/wiki/File:Umngot_river,_Dawki.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-tawang-monastery",
+    "slug": "tawang-monastery",
+    "name": "Tawang Monastery",
+    "state": "Arunachal Pradesh",
+    "latitude": 27.586389,
+    "longitude": 91.8575,
+    "tagline": "A monastery overlooking the Tawang valley",
+    "overview": "Explore the monastery courtyard, prayer hall, and viewpoints over the broad mountain valley.",
+    "coverImage": "/media/destinations/tawang-monastery.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Tawang_Monastery",
+    "photoCredit": {
+      "author": "Rumelade",
+      "source": "https://commons.wikimedia.org/wiki/File:TawangMonastery.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-ziro",
+    "slug": "ziro",
+    "name": "Ziro",
+    "state": "Arunachal Pradesh",
+    "latitude": 27.541667,
+    "longitude": 93.816111,
+    "tagline": "Rice fields and Apatani villages",
+    "overview": "Walk valley roads between fields and settlements and learn about local farming traditions with a guide.",
+    "coverImage": "/media/destinations/ziro.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ziro",
+    "photoCredit": {
+      "author": "Arunachal2007",
+      "source": "https://commons.wikimedia.org/wiki/File:A_cross_section_of_luch_green_valley_of_Ziro.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-loktak-lake",
+    "slug": "loktak-lake",
+    "name": "Loktak Lake",
+    "state": "Manipur",
+    "latitude": 24.55,
+    "longitude": 93.783333,
+    "tagline": "A lake known for floating vegetation",
+    "overview": "Use the lakeshore viewpoints and regulated local routes to see the phumdis and surrounding hills.",
+    "coverImage": "/media/destinations/loktak-lake.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Loktak_Lake",
+    "photoCredit": {
+      "author": "Sudiptorana",
+      "source": "https://commons.wikimedia.org/wiki/File:The_Loktak_Lake.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-kisama-heritage-village",
+    "slug": "kisama-heritage-village",
+    "name": "Kisama Heritage Village",
+    "state": "Nagaland",
+    "latitude": 25.616182,
+    "longitude": 94.114627,
+    "tagline": "Architecture and traditions near Kohima",
+    "overview": "Explore the village’s houses and performance spaces when open, with event schedules checked separately.",
+    "coverImage": "/media/destinations/kisama-heritage-village.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Kisama_Heritage_Village",
+    "photoCredit": {
+      "author": "Aravind Manickam",
+      "source": "https://commons.wikimedia.org/wiki/File:Kisama_main_arena_Hornbill_Festival_2019.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-reiek",
+    "slug": "reiek",
+    "name": "Reiek",
+    "state": "Mizoram",
+    "latitude": 23.678,
+    "longitude": 92.603,
+    "tagline": "A ridge high above forested hills",
+    "overview": "Follow marked walking routes near the village for open views over the surrounding hills.",
+    "coverImage": "/media/destinations/reiek.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Reiek",
+    "photoCredit": {
+      "author": "Coolcolney",
+      "source": "https://commons.wikimedia.org/wiki/File:Reiek.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-neermahal",
+    "slug": "neermahal",
+    "name": "Neermahal",
+    "state": "Tripura",
+    "latitude": 23.506665,
+    "longitude": 91.315441,
+    "tagline": "A palace in Rudrasagar Lake",
+    "overview": "See the water palace and its setting from the lake shore or on an available local boat crossing.",
+    "coverImage": "/media/destinations/neermahal.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Neermahal",
+    "photoCredit": {
+      "author": "Kingshuk Mondal",
+      "source": "https://commons.wikimedia.org/wiki/File:Neer_Mahal,_the_water_palace_of_Tripura_02.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "dest-gangtok",
+    "slug": "gangtok",
+    "name": "Gangtok",
+    "state": "Sikkim",
+    "latitude": 27.33,
+    "longitude": 88.62,
+    "tagline": "A hill capital with monastery and ridge walks",
+    "overview": "Explore the town’s ridge streets and use nearby monasteries and viewpoints to see the surrounding valleys.",
+    "coverImage": "/media/destinations/gangtok.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Gangtok",
+    "photoCredit": {
+      "author": "Subhrajyoti07",
+      "source": "https://commons.wikimedia.org/wiki/File:View_of_Gangtok_City_from_Crown_Prince_Tenzing_Kunzang_Namgyal_Walkway.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-pelling",
+    "slug": "pelling",
+    "name": "Pelling",
+    "state": "Sikkim",
+    "latitude": 27.18,
+    "longitude": 88.14,
+    "tagline": "Monastery trails and mountain views",
+    "overview": "Use the town as a base for the Pemayangtse monastery and the nearby ruins of Rabdentse.",
+    "coverImage": "/media/destinations/pelling.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pelling",
+    "photoCredit": {
+      "author": "Santanu Paul",
+      "source": "https://commons.wikimedia.org/wiki/File:Sunrise_over_Kangchenjunga.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "dest-cellular-jail",
+    "slug": "cellular-jail",
+    "name": "Cellular Jail",
+    "state": "Andaman and Nicobar Islands",
+    "latitude": 11.675,
+    "longitude": 92.748,
+    "tagline": "A memorial to colonial-era imprisonment",
+    "overview": "The galleries and surviving wings in Port Blair interpret the stories of prisoners held during British rule.",
+    "coverImage": "/media/destinations/cellular-jail.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Cellular_Jail",
+    "photoCredit": {
+      "author": "Jomesh",
+      "source": "https://commons.wikimedia.org/wiki/File:Front_View_of_Cellular_Jail,_Port_Blair.JPG",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "dest-swaraj-dweep-havelock-island",
+    "slug": "swaraj-dweep-havelock-island",
+    "name": "Swaraj Dweep (Havelock Island)",
+    "state": "Andaman and Nicobar Islands",
+    "latitude": 11.96,
+    "longitude": 93,
+    "tagline": "Forest-backed beaches in the Andaman Sea",
+    "overview": "Explore the shore at Radhanagar and other designated beaches, with boat and water activity access dependent on conditions.",
+    "coverImage": "/media/destinations/swaraj-dweep-havelock-island.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Havelock_Island",
+    "photoCredit": {
+      "author": "Dr. K. Vedhagiri",
+      "source": "https://commons.wikimedia.org/wiki/File:Havelock,_Andaman_%26_Nicobar_Islands.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "dest-agatti-island",
+    "slug": "agatti-island",
+    "name": "Agatti Island",
+    "state": "Lakshadweep",
+    "latitude": 10.85,
+    "longitude": 72.19,
+    "tagline": "A coral island with a shallow lagoon",
+    "overview": "The island’s reef-fringed lagoon and beach walks are its main draws; check entry and transport arrangements before travelling.",
+    "coverImage": "/media/destinations/agatti-island.webp",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Agatti_Island",
+    "photoCredit": {
+      "author": "Julio",
+      "source": "https://commons.wikimedia.org/wiki/File:Agatti_Airstrip.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    }
+  }
+]

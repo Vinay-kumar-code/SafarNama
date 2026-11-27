@@ -14,21 +14,22 @@ export function HomeFeed() {
   const { posts, currentUser, setActiveTab, setActiveDestination } = useApp();
   const { openAuthModal } = useAuth();
   const { destinations, updates } = useCommunity();
-  const { state, setComposerOpen, openComposer } = useSocial();
+  const { state, setComposerOpen, openComposer, isVisible } = useSocial();
   const { snapshot, error } = useServerData();
   const [filter, setFilter] = useState('For you');
   const [placeId, setPlaceId] = useState('');
   const place = destinations.find(item => item.id === placeId);
-  const visiblePosts = posts.filter(post => (!place || post.destinationId === place.id) &&
-    (filter === 'For you' || (filter === 'Following' ? state.following.includes(post.author.id) : post.format === 'quick_tip')));
-  const visibleUpdates = updates.filter(update => (!place || update.destinationId === place.id) &&
+  const visiblePosts = posts.filter(post => isVisible(post) && (!place || post.destinationId === place.id) &&
+    (filter === 'For you' || (filter === 'Following' ? state.following.includes(post.author.id) : filter === 'Saved' ? post.isSaved : post.format === 'quick_tip')));
+  const visibleUpdates = updates.filter(update => !state.mutedAuthors.includes(update.author.id) && (!place || update.destinationId === place.id) &&
     (filter === 'For you' || filter === 'Following' && (state.following.includes(update.author.id) || state.followedPlaces.includes(update.destinationId))));
   const timeline = [
     ...visiblePosts.map(post => ({ date: post.createdAt, component: <PostCard key={`post-${post.id}`} post={post} /> })),
     ...visibleUpdates.map(update => ({ date: update.createdAt, component: <UpdateCard key={`update-${update.id}`} update={update} showDestination /> })),
   ].sort((a, b) => b.date.localeCompare(a.date));
   const featured = destinations.find(item => item.id === 'dest-hampi');
-  const storyPlaces = destinations.filter(item => posts.some(post => post.destinationId === item.id) || updates.some(update => update.destinationId === item.id));
+  const storyPlaces = destinations.filter(item => posts.some(post => post.destinationId === item.id && isVisible(post)) ||
+    updates.some(update => update.destinationId === item.id && !state.mutedAuthors.includes(update.author.id)));
 
   return <div className="sn-home"><div className="sn-feed-column">
     <header className="sn-page-heading"><div><h1>India, through your eyes<span>.</span></h1><p>Travel stories and updates from the places you love.</p></div><button className="sn-icon" aria-label="Search destinations" onClick={() => setActiveTab('explore')}><Search size={22} /></button></header>
@@ -42,12 +43,16 @@ export function HomeFeed() {
       <button aria-label="Write a travel note" onClick={() => openComposer('quick_tip')}><PenLine size={18} /></button>
       <button aria-label="Create a reel" onClick={() => openComposer('reel')}><Clapperboard size={19} /></button>
     </div></div>
-    <div className="sn-feed-tabs" role="group" aria-label="Feed filter">{['For you', 'Following', 'Travel notes'].map(tab => <button aria-pressed={filter === tab} key={tab} className={filter === tab ? 'active' : ''} onClick={() => setFilter(tab)}>{tab}</button>)}</div>
+    <div className="sn-feed-tabs sn-home-filter" role="group" aria-label="Feed filter">{['For you', 'Following', 'Travel notes', 'Saved'].map(tab => <button aria-pressed={filter === tab} key={tab} className={filter === tab ? 'active' : ''} onClick={() => {
+      if (tab === 'Saved') { if (!currentUser.id) { openAuthModal(); return; } setPlaceId(''); }
+      setFilter(tab);
+    }}>{tab}</button>)}</div>
     {place && <div className="sn-filter-summary">From {place.name}<button onClick={() => setPlaceId('')}>Clear filter</button></div>}
     {hasServerStorage && !snapshot ? !error && <p className="sn-loading" role="status">Loading the feed…</p>
       : timeline.length ? <div className="sn-community-timeline">{timeline.map(item => item.component)}</div>
       : place ? <EmptyState title="No matching posts or updates" description={`There’s nothing in this feed for ${place.name} yet.`}
         action={<button className="sn-button secondary" onClick={() => setPlaceId('')}>Show all places</button>} />
+      : filter === 'Saved' ? <EmptyState title="No saved stories to show" description="Bookmark a story to find it here." action={<button className="sn-button secondary" onClick={() => setFilter('For you')}>Browse stories</button>} />
       : filter === 'Following' ? <EmptyState title="Keep up with your favorite places" description={currentUser.id
         ? 'Follow places for local updates, or follow travelers for their stories.' : 'Sign in to follow people and get updates from the places you choose.'}
         action={currentUser.id ? <button className="sn-button secondary" onClick={() => setActiveTab('explore')}>Find places to follow</button>

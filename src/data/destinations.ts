@@ -1,4 +1,5 @@
 import type { DestinationHub } from '../types';
+import indiaDestinations from './indiaDestinations.json' with { type: 'json' };
 
 const SEED_DESTINATIONS: DestinationHub[] = [
   {
@@ -207,7 +208,13 @@ const placeImages: Record<string, string> = {
   'dest-spiti': '/media/spiti.jpg', 'dest-varanasi': '/media/varanasi.jpg',
   'dest-meghalaya': '/media/meghalaya.jpg', 'dest-old-delhi': '/media/delhi.jpg', 'dest-hampi': '/media/hampi.jpg',
 };
-export const DESTINATION_HUBS: DestinationHub[] = SEED_DESTINATIONS.map(place => ({
+export const INDIA_DESTINATIONS: DestinationHub[] = indiaDestinations.map(place => ({
+  ...place, region: place.state, galleryImages: [], bestTimeToVisit: '', estimatedDailyBudgetInr: 0,
+  seasonalWeather: { summer: '', winter: '' }, emergencyContacts: { police: '', medical: '' },
+  connectivityInfo: { jio: '', airtel: '', bsnl: '' }, topSpotsCount: 0, guideCount: 0,
+}));
+
+export const DESTINATION_HUBS: DestinationHub[] = [...SEED_DESTINATIONS.map(place => ({
   ...place, coverImage: placeImages[place.id] || place.coverImage,
   galleryImages: placeImages[place.id] ? [placeImages[place.id]] : place.galleryImages,
-}));
+})), ...INDIA_DESTINATIONS];

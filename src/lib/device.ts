@@ -17,6 +17,7 @@ export const getAndroidAuthRedirect = () => androidAuthRedirect;
 type NativeAction =
   | { action: 'ready' }
   | { action: 'share'; title: string; text: string }
+  | { action: 'copy'; text: string }
   | { action: 'exportItinerary'; filename: string; itinerary: object }
   | { action: 'openAuth'; url: string };
 

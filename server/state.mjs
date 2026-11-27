@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
-import { DESTINATION_HUBS } from '../src/data/destinations.ts';
+import { DESTINATION_HUBS, INDIA_DESTINATIONS } from '../src/data/destinations.ts';
 
 export class InputError extends Error {
   constructor(message, status = 400) {
@@ -34,6 +34,7 @@ export const uuidPattern = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const idPattern = /^(?:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|dest-[a-z0-9-]{1,60})$/i;
 const mediaPrefix = '/media/uploads/';
 const stockMedia = new Set(DESTINATION_HUBS.flatMap(place => [place.coverImage, ...place.galleryImages]));
+const stickers = ['Mountains', 'Beach day', 'Food stop', 'Heritage', 'On the road', 'Hidden gem'];
 const starterPlaces = new Map(DESTINATION_HUBS.map(place => [place.id, place]));
 const roles = ['traveler', 'local_guide', 'business', 'destination_manager'];
 
@@ -94,6 +95,7 @@ export function createState(dataDirectory) {
       data TEXT NOT NULL, PRIMARY KEY(kind,id)
     );
     CREATE INDEX IF NOT EXISTS records_parent ON records(kind,parent);
+    CREATE INDEX IF NOT EXISTS records_owner ON records(owner);
     CREATE TABLE IF NOT EXISTS private (
       owner TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,
       PRIMARY KEY(owner,kind,id)
@@ -113,6 +115,19 @@ export function createState(dataDirectory) {
     INSERT OR IGNORE INTO revisions VALUES (1,0);
   `);
 
+  const seedPlace = db.prepare("INSERT OR IGNORE INTO records (kind,id,owner,data) VALUES ('places',?,'',?)");
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    let imported = 0;
+    for (const place of INDIA_DESTINATIONS) imported += Number(seedPlace.run(place.id, JSON.stringify(place)).changes);
+    if (imported) db.exec('UPDATE revisions SET value=value+1 WHERE id=1');
+    db.exec('COMMIT');
+  } catch (failure) {
+    db.exec('ROLLBACK');
+    db.close();
+    throw failure;
+  }
+
   const find = db.prepare('SELECT * FROM records WHERE kind = ? AND id = ?');
   const put = db.prepare(`INSERT INTO records (kind,id,owner,parent,data) VALUES (?,?,?,?,?)
     ON CONFLICT(kind,id) DO UPDATE SET data=excluded.data,parent=excluded.parent`);
@@ -122,6 +137,7 @@ export function createState(dataDirectory) {
   const putPrivate = db.prepare(`INSERT INTO private VALUES (?,?,?,?) ON CONFLICT(owner,kind,id) DO UPDATE SET data=excluded.data`);
   const removePrivate = db.prepare('DELETE FROM private WHERE owner=? AND kind=? AND id=?');
   const list = db.prepare('SELECT * FROM records WHERE kind=? ORDER BY rowid DESC LIMIT 500');
+  const clearSelections = db.prepare('DELETE FROM private WHERE kind=? AND id=?');
   const readRevision = db.prepare('SELECT value FROM revisions WHERE id=1');
   const getFile = db.prepare('SELECT * FROM media WHERE id=?');
   const refFile = db.prepare('INSERT OR IGNORE INTO media_refs VALUES (?,?,?)');
@@ -173,11 +189,20 @@ export function createState(dataDirectory) {
     const previous = decode(record);
     const createdAt = previous?.createdAt ?? new Date().toISOString();
     if (method === 'DELETE') {
-      ensure(['posts', 'updates', 'listings'].includes(kind), 'This item cannot be deleted here.', 405);
+      ensure(['posts', 'updates', 'listings', 'comments'].includes(kind), 'This item cannot be deleted here.', 405);
       ensure(record, 'Item not found.', 404);
       if (kind === 'updates') ensure(canManage(previous.destinationId, account), 'Only the destination manager can remove this update.', 403);
       else owns(record, account);
-      if (kind === 'posts') db.prepare("DELETE FROM records WHERE kind='comments' AND parent=?").run(id);
+      if (kind === 'comments') {
+        clearSelections.run('commentLikes', id);
+        write(kind, id, owner, record.parent, { ...previous, text: '', deleted: true });
+        return;
+      }
+      if (kind === 'posts') {
+        db.prepare("DELETE FROM private WHERE kind='commentLikes' AND id IN (SELECT id FROM records WHERE kind='comments' AND parent=?)").run(id);
+        db.prepare("DELETE FROM records WHERE kind='comments' AND parent=?").run(id);
+        for (const selection of ['likes', 'saves', 'hiddenPosts']) clearSelections.run(selection, id);
+      }
       remove.run(kind, id);
       return;
     }
@@ -201,6 +226,7 @@ export function createState(dataDirectory) {
         seasonalWeather: { summer: '', winter: '' }, emergencyContacts: { police: '', medical: '' },
         connectivityInfo: { jio: '', airtel: '', bsnl: '' }, topSpotsCount: 0, guideCount: 0, galleryImages: [],
         ...base, id, name, state, latitude, longitude, coverImage,
+        photoCredit: coverImage === base?.coverImage ? base?.photoCredit : undefined,
         slug: base?.slug ?? `place-${id}`, region: str(body.region, 65) || state,
         tagline: str(body.tagline, 120), overview: str(body.overview, 2500, true),
         bestTimeToVisit: str(body.bestTimeToVisit, 180), openingHours: str(body.openingHours, 180),
@@ -215,7 +241,8 @@ export function createState(dataDirectory) {
     if (kind === 'posts') {
       if (record) {
         if (body.format) return;
-        write(kind, id, owner, record.parent, { ...previous, caption: str(body.caption, previous.format === 'quick_tip' ? 500 : 2200, true) },
+        const sticker = body.sticker === undefined ? previous.sticker : body.sticker ? enumValue(body.sticker, stickers) : undefined;
+        write(kind, id, owner, record.parent, { ...previous, sticker, caption: str(body.caption, previous.format === 'quick_tip' ? 500 : 2200, true) },
           [previous.thumbnailUrl, previous.videoUrl, ...(previous.carouselImages ?? [])]);
         return;
       }
@@ -231,6 +258,7 @@ export function createState(dataDirectory) {
       const thumbnailUrl = carouselImages[0] || (format === 'reel' ? place.coverImage : '');
       const post = {
         id, destinationId: place.id, format, createdAt, caption: str(body.caption, format === 'quick_tip' ? 500 : 2200, true),
+        sticker: body.sticker ? enumValue(body.sticker, stickers) : undefined,
         spotName: str(body.spotName, 100) || place.name, state: place.state, region: place.region,
         latitude: place.latitude, longitude: place.longitude, costInInr: number(body.costInInr, 0, 1_000_000, null) ?? undefined,
         howToReach: str(body.howToReach, 500), videoUrl: videoUrl || undefined, thumbnailUrl, carouselImages,
@@ -240,11 +268,27 @@ export function createState(dataDirectory) {
       return;
     }
 
-    if (kind === 'comments' || kind === 'replies') {
+    if (kind === 'comments') {
+      const text = str(body.text, 1000, true);
+      if (previous) {
+        ensure(!previous.deleted, 'This comment was deleted.', 404);
+        write(kind, id, owner, record.parent, { ...previous, text, editedAt: new Date().toISOString() });
+        return;
+      }
+      const postId = idOf(body.postId, uuidPattern);
+      ensure(find.get('posts', postId), 'The original story could not be found.', 404);
+      const replyTo = body.replyTo ? idOf(body.replyTo, uuidPattern) : undefined;
+      if (replyTo) {
+        const root = decode(find.get('comments', replyTo));
+        ensure(root?.postId === postId && !root.replyTo && !root.deleted, 'Reply to an active comment on this story.');
+      }
+      write(kind, id, owner, postId, { id, postId, text, createdAt, replyTo });
+      return;
+    }
+    if (kind === 'replies') {
       const parent = idOf(body[ kind === 'comments' ? 'postId' : 'threadId'], uuidPattern);
       ensure(find.get(kind === 'comments' ? 'posts' : 'questions', parent), 'The original post could not be found.', 404);
-      if (kind === 'comments') write(kind, id, owner, parent, { id, postId: parent, text: str(body.text, 1000, true), createdAt });
-      else write(kind, id, owner, parent, { id, threadId: parent, replyText: str(body.replyText, 1000, true), createdAt });
+      write(kind, id, owner, parent, { id, threadId: parent, replyText: str(body.replyText, 1000, true), createdAt });
       return;
     }
 
@@ -320,15 +364,21 @@ export function createState(dataDirectory) {
         stampedAt: decode(ownerData.get(owner, kind, id))?.stampedAt ?? new Date().toISOString() };
     } else if (kind === 'savedPlaces' || kind === 'followedPlaces') destination(id);
     else if (kind === 'following') idOf(id, uuidPattern);
+    else if (kind === 'mutedAuthors') {
+      ensure(id !== owner && authorById.get(idOf(id, uuidPattern)), 'Author not found.', 404);
+    } else if (kind === 'commentLikes') {
+      const comment = decode(find.get('comments', id));
+      ensure(comment && !comment.deleted, 'Comment not found.', 404);
+    }
     else {
-      const target = { likes: 'posts', saves: 'posts', questionVotes: 'questions', replyVotes: 'replies', helpful: 'reviews' }[kind];
+      const target = { likes: 'posts', saves: 'posts', hiddenPosts: 'posts', questionVotes: 'questions', replyVotes: 'replies', helpful: 'reviews' }[kind];
       ensure(find.get(target, id), 'Item not found.', 404);
     }
     putPrivate.run(owner, kind, id, JSON.stringify(value));
   }
 
   const publicKinds = new Set(['posts', 'places', 'updates', 'listings', 'comments', 'questions', 'replies', 'reviews']);
-  const privateKinds = new Set(['trip', 'profile', 'passport', 'following', 'followedPlaces', 'savedPlaces', 'likes', 'saves', 'questionVotes', 'replyVotes', 'helpful']);
+  const privateKinds = new Set(['trip', 'profile', 'passport', 'following', 'followedPlaces', 'savedPlaces', 'likes', 'saves', 'questionVotes', 'replyVotes', 'helpful', 'commentLikes', 'hiddenPosts', 'mutedAuthors']);
 
   function mutate(scope, kind, id, body, account, method) {
     ensure((scope === 'public' ? publicKinds : privateKinds).has(kind), 'Unknown resource.', 404);
@@ -349,6 +399,7 @@ export function createState(dataDirectory) {
   function snapshot(account) {
     const owner = account?.profile.id;
     const personal = { passport: [], following: [], followedPlaces: [], savedPlaces: [], likes: [], saves: [], questionVotes: [], replyVotes: [], helpful: [],
+      commentLikes: [], hiddenPosts: [], mutedAuthors: [],
       trip: null, tripVersion: 0, trips: [] };
     if (owner) {
       for (const item of db.prepare('SELECT * FROM private WHERE owner=? ORDER BY rowid DESC').all(owner)) {
@@ -377,7 +428,8 @@ export function createState(dataDirectory) {
       places: list.all('places').map(row => ({ place: decode(row), ownerId: row.owner || undefined })),
       posts: list.all('posts').map(row => ({ ...withAuthor(row), likesCount: count('likes',row.id), savesCount: count('saves',row.id) })),
       updates: list.all('updates').map(withAuthor), listings: list.all('listings').map(withAuthor),
-      comments: list.all('comments').map(withAuthor),
+      profiles: db.prepare("SELECT profile FROM authors WHERE EXISTS (SELECT 1 FROM records WHERE owner=authors.id AND kind!='places' AND coalesce(json_extract(data,'$.deleted'),0)=0) ORDER BY rowid DESC LIMIT 1000").all().map(row => JSON.parse(row.profile)),
+      comments: list.all('comments').map(row => ({ ...withAuthor(row), likesCount: count('commentLikes', row.id), isLiked: personal.commentLikes.includes(row.id) })),
       reviews: list.all('reviews').map(row => ({ ...withAuthor(row), helpfulCount: count('helpful',row.id), isHelpful: personal.helpful.includes(row.id) })),
       questions: list.all('questions').map(row => {
         const replies = repliesByQuestion.get(row.id) ?? [];

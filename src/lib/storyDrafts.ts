@@ -9,6 +9,7 @@ export interface StoryDraft {
   spot: string;
   budget: string;
   tip: string;
+  sticker?: string;
 }
 
 export interface StoryDrafts {

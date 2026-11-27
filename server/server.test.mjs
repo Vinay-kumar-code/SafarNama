@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { createApp } from './index.mjs';
+import { INDIA_DESTINATIONS } from '../src/data/destinations.ts';
 
 async function listen(server) {
   server.listen(0, '127.0.0.1');
@@ -21,11 +22,13 @@ function close(server) {
 test('server protects ownership and persists publishing, files, and private account data across restarts', async () => {
   const traveler = randomUUID();
   const business = randomUUID();
+  const admin = randomUUID();
   const auth = createServer((request, response) => {
     const token = request.headers.authorization;
-    const owner = token === 'Bearer traveler' ? traveler : token === 'Bearer business' ? business : null;
+    const owner = token === 'Bearer traveler' ? traveler : token === 'Bearer business' ? business : token === 'Bearer admin' ? admin : null;
     response.writeHead(owner ? 200 : 401, { 'Content-Type': 'application/json' });
-    response.end(JSON.stringify({ id: owner, user_metadata: { full_name: 'Test Author', account_type: owner === business ? 'business' : 'traveler' } }));
+    response.end(JSON.stringify({ id: owner, app_metadata: owner === admin ? { role: 'admin' } : {},
+      user_metadata: { full_name: 'Test Author', account_type: owner === business ? 'business' : 'traveler' } }));
   });
   const dataDir = await mkdtemp(join(tmpdir(), 'safarnama-server-'));
   let app;
@@ -52,6 +55,18 @@ test('server protects ownership and persists publishing, files, and private acco
     const upload = (token, body = png, contentType = 'image/png') =>
       get('/api/media', token, { method: 'POST', body, headers: { 'Content-Type': contentType } });
     assert.equal((await get('/api/health')).status, 200);
+    const imported = (await bootstrap()).places;
+    assert.equal(INDIA_DESTINATIONS.length, 100);
+    assert.equal(imported.length, 100);
+    assert.equal(new Set(imported.map(record => record.place.id)).size, 100);
+    for (const { place } of imported) {
+      assert(place.overview && place.sourceUrl && place.photoCredit?.author && place.photoCredit?.licenseUrl);
+      assert(place.latitude >= 6 && place.latitude <= 37 && place.longitude >= 67 && place.longitude <= 98);
+      const image = await readFile(new URL('../public' + place.coverImage, import.meta.url));
+      assert.equal(image.toString('ascii', 8, 12), 'WEBP');
+    }
+    const seeded = imported.find(record => record.place.id === 'dest-taj-mahal').place;
+    assert.equal((await put('/api/public/places/dest-taj-mahal', { ...seeded, openingHours: 'Edited hours' }, 'admin')).status, 200);
     assert.equal((await get('/api/bootstrap', null, { headers: { Origin: 'https://unrelated.example' } })).status, 403);
     const preflight = await get('/api/bootstrap', null, { method: 'OPTIONS', headers: { Origin: 'https://appassets.androidplatform.net' } });
     assert.equal(preflight.status, 204);
@@ -63,12 +78,14 @@ test('server protects ownership and persists publishing, files, and private acco
     const { url: media } = await uploaded.json();
     assert.equal((await get(media)).status, 404, 'unattached media must be private');
 
-    const post = { format: 'carousel_note', destinationId: 'dest-hampi', caption: 'A day at Hampi', carouselImages: [media],
+    const post = { format: 'carousel_note', destinationId: 'dest-hampi', caption: 'A day at Hampi', sticker: 'Heritage', carouselImages: [media],
       author: { id: business } };
     assert.equal((await put('/api/public/posts/' + postId, post, 'business')).status, 403);
     const published = await put('/api/public/posts/' + postId, post);
     assert.equal(published.status, 200, await published.clone().text());
     assert.equal((await published.json()).posts[0].author.id, traveler, 'ignore a forged author');
+    assert.equal((await bootstrap()).posts[0].sticker, 'Heritage');
+    assert.equal((await put('/api/public/posts/' + postId, { caption: 'A day at Hampi', sticker: 'Plain text' })).status, 400);
     assert.equal((await put('/api/public/posts/' + postId, { caption: 'Changed' }, 'business')).status, 403);
     const range = await get(media, null, { headers: { Range: 'bytes=0-7' } });
     assert.equal(range.status, 206);
@@ -108,7 +125,17 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal((await put(weekendPath, { version: 1, remove: true }, 'business')).status, 409);
     assert.equal((await put('/api/me/trip/' + randomUUID(), { version: 0, trip: weekend })).status, 400);
     const comment = { postId, text: 'Thank you' };
-    assert.equal((await put('/api/public/comments/' + randomUUID(), comment, 'business')).status, 200);
+    const commentId = randomUUID();
+    const commentPath = '/api/public/comments/' + commentId;
+    const childId = randomUUID();
+    assert.equal((await put(commentPath, comment, 'business')).status, 200);
+    assert.equal((await put(commentPath, { text: 'Not the author' })).status, 403);
+    assert.equal((await put(commentPath, { text: 'Thank you! 🏔️' }, 'business')).status, 200);
+    assert.equal((await put('/api/public/comments/' + childId, { postId, replyTo: commentId, text: 'You’re welcome' })).status, 200);
+    assert.equal((await put('/api/public/comments/' + randomUUID(), { postId, replyTo: childId, text: 'Too deep' })).status, 400);
+    assert.equal((await put('/api/me/commentLikes/' + commentId, {})).status, 200);
+    assert.equal((await put('/api/me/hiddenPosts/' + postId, {}, 'business')).status, 200);
+    assert.equal((await put('/api/me/mutedAuthors/' + traveler, {}, 'business')).status, 200);
     const questionId = randomUUID();
     assert.equal((await put('/api/public/questions/' + questionId, { destinationId: placeId, title: 'What are the opening hours?', category: 'Local Culture' })).status, 200);
     const replyId = randomUUID();
@@ -119,7 +146,15 @@ test('server protects ownership and persists publishing, files, and private acco
     const guest = await bootstrap();
     assert.equal(guest.posts[0].likesCount, 1);
     assert.equal(guest.questions[0].replies[0].upvotesCount, 1);
-    assert.equal(guest.comments[0].text, comment.text);
+    const rootComment = guest.comments.find(item => item.id === commentId);
+    assert.equal(rootComment.text, 'Thank you! 🏔️');
+    assert.equal(rootComment.likesCount, 1);
+    assert.equal(rootComment.isLiked, false);
+    assert(rootComment.editedAt);
+    assert.equal(guest.comments.find(item => item.id === childId).replyTo, commentId);
+    assert.deepEqual(guest.account.hiddenPosts, []);
+    assert.deepEqual(guest.account.mutedAuthors, []);
+    assert(!guest.profiles.some(author => author.id === admin));
     assert.equal(guest.reviews[0].rating, 5);
     assert.equal(guest.account.trip, null);
     assert.deepEqual(guest.account.trips, []);
@@ -132,6 +167,9 @@ test('server protects ownership and persists publishing, files, and private acco
     app = await createApp(options);
     url = await listen(app);
     const persisted = await bootstrap('traveler');
+    assert.equal(persisted.places.length, 101);
+    assert.equal(persisted.places.find(record => record.place.id === seeded.id).place.openingHours, 'Edited hours');
+    assert.equal(persisted.comments.find(item => item.id === commentId).isLiked, true);
     assert.equal(persisted.posts[0].id, postId);
     assert.equal(persisted.account.trip.title, trip.title);
     assert.deepEqual(persisted.account.trips.map(item => item.recordId), [weekend.id, 'current']);
@@ -145,6 +183,14 @@ test('server protects ownership and persists publishing, files, and private acco
     assert.equal(persisted.account.passport[0].visitedOn, '2024-04-03');
     assert.deepEqual(persisted.account.followedPlaces, []);
     const businessAccount = (await bootstrap('business')).account;
+    assert.deepEqual(businessAccount.hiddenPosts, [postId]);
+    assert.deepEqual(businessAccount.mutedAuthors, [traveler]);
+    assert.equal((await get(commentPath, 'traveler', { method: 'DELETE' })).status, 403);
+    assert.equal((await get(commentPath, 'business', { method: 'DELETE' })).status, 200);
+    const remaining = (await bootstrap()).comments;
+    assert.equal(remaining.find(item => item.id === commentId).deleted, true);
+    assert.equal(remaining.find(item => item.id === commentId).likesCount, 0);
+    assert.equal(remaining.find(item => item.id === childId).text, 'You’re welcome');
     assert.deepEqual(businessAccount.followedPlaces, [placeId]);
     assert.deepEqual(businessAccount.savedPlaces, []);
     assert.deepEqual(businessAccount.following, []);

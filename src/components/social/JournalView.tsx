@@ -9,6 +9,7 @@ import { EmptyState, ProfileAvatar, TravelImage } from './Primitives';
 import { PostCard } from './PostCard';
 import { PassportView } from './PassportView';
 import { FollowPlace } from '../destinations/CommunityCards';
+import { FeedPreferences } from './CommunitySheets';
 
 const journalTabs = ['My stories', 'Saved stories', 'Saved places', 'Followed places'] as const;
 type JournalTab = typeof journalTabs[number] | 'Passport';
@@ -19,6 +20,7 @@ export function JournalView() {
   const { state, setComposerOpen, passport } = useSocial();
   const { openOnboarding, openAuthModal, profile, signOut } = useAuth();
   const [selectedTab, setTab] = useState<JournalTab>('My stories');
+  const [showPreferences, setShowPreferences] = useState(false);
   const isTraveler = profile?.activeRole === 'traveler';
   const tab = selectedTab === 'Passport' && !isTraveler ? 'My stories' : selectedTab;
   const availableTabs: readonly JournalTab[] = isTraveler ? ['Passport', ...journalTabs] : journalTabs;
@@ -69,7 +71,8 @@ export function JournalView() {
       )}
       {(tab === 'My stories' || tab === 'Saved stories') && (displayed.length ? displayed.map(post => <PostCard post={post} key={post.id} />)
         : <EmptyState title={tab === 'My stories' ? 'Your first story starts here' : 'Save stories you want to revisit'} description={tab === 'My stories' ? 'Share a photo, note, or reel from a place you’ve explored.' : 'Tap the bookmark on a story to find it again.'} action={<button className="sn-button secondary" onClick={() => tab === 'My stories' ? setComposerOpen(true) : setActiveTab('feed')}>{tab === 'My stories' ? 'Share a story' : 'Browse stories'}</button>} />)}
-      <div className="sn-account-footer"><button onClick={signOut}><LogOut size={15} />Sign out</button></div>
+      <div className="sn-account-footer"><button onClick={signOut}><LogOut size={15} />Sign out</button><button type="button" onClick={() => setShowPreferences(true)}>Hidden and muted</button></div>
     </>}
+    {showPreferences && <FeedPreferences onClose={() => setShowPreferences(false)} />}
   </section>;
 }

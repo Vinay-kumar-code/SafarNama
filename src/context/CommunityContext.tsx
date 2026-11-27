@@ -94,6 +94,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       connectivityInfo: { jio: '', airtel: '', bsnl: '' },
       topSpotsCount: 0, guideCount: 0,
       ...previous, ...input, name, state: stateName, overview, id: destinationId,
+      photoCredit: input.coverImage === previous?.coverImage ? previous?.photoCredit : undefined,
       slug: previous?.slug ?? `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${destinationId.slice(0, 8)}`,
       galleryImages: previous?.galleryImages ?? [],
     };
