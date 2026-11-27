@@ -1,0 +1,302 @@
+[
+  {
+    "id": "taj-mahal-view",
+    "destinationId": "dest-taj-mahal",
+    "src": "/media/destinations/gallery/taj-mahal-view.webp",
+    "alt": "Domes and spires on the Taj Mahal in Agra",
+    "credit": {
+      "author": "Biswarup Ganguly",
+      "source": "https://commons.wikimedia.org/wiki/File:Dome_Chhatris_Spires_-_Taj_Mahal_-_Agra_2014-05-14_3805.JPG",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "agra-fort-view",
+    "destinationId": "dest-agra-fort",
+    "src": "/media/destinations/gallery/agra-fort-view.webp",
+    "alt": "The Angoori Bagh courtyard inside Agra Fort",
+    "credit": {
+      "author": "g.kaustav",
+      "source": "https://commons.wikimedia.org/wiki/File:Angoori_Bagh_at_Agra_Fort_-_in_front_of_Shahjahan_Mahal_05.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "jaipur-view",
+    "destinationId": "dest-jaipur",
+    "src": "/media/destinations/gallery/jaipur-view.webp",
+    "alt": "The Albert Hall Museum in Jaipur",
+    "credit": {
+      "author": "Ajit Kumar Majhi",
+      "source": "https://commons.wikimedia.org/wiki/File:Albert_Hall_(_Jaipur_).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "udaipur-view",
+    "destinationId": "dest-udaipur",
+    "src": "/media/destinations/gallery/udaipur-view.webp",
+    "alt": "Udaipur’s Lake Palace at dusk across Lake Pichola",
+    "credit": {
+      "author": "Shiva Shenoy from USA",
+      "source": "https://commons.wikimedia.org/wiki/File:A_dusk_view_of_Lake_Palace_Udaipur_Rajasthan_India.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "jodhpur-view",
+    "destinationId": "dest-jodhpur",
+    "src": "/media/destinations/gallery/jodhpur-view.webp",
+    "alt": "Jaswant Thada’s white marble cenotaph in Jodhpur",
+    "credit": {
+      "author": "Clément Bardot",
+      "source": "https://commons.wikimedia.org/wiki/File:Jaswant_Thada_cenotaph,_Jodhpur.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "jaisalmer-view",
+    "destinationId": "dest-jaisalmer",
+    "src": "/media/destinations/gallery/jaisalmer-view.webp",
+    "alt": "Sunset over the pavilions at Gadisar Lake in Jaisalmer",
+    "credit": {
+      "author": "Terry Presley from Lubbock, United States",
+      "source": "https://commons.wikimedia.org/wiki/File:Gadsisar_Lake_Sunset.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "mumbai-view",
+    "destinationId": "dest-mumbai",
+    "src": "/media/destinations/gallery/mumbai-view.webp",
+    "alt": "Girgaum Chowpatty beach on Mumbai’s Back Bay",
+    "credit": {
+      "author": "Jorge Láscar",
+      "source": "https://commons.wikimedia.org/wiki/File:Chowpatti_Beach_(Girgaum_Chowpatty).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "ellora-caves-view",
+    "destinationId": "dest-ellora-caves",
+    "src": "/media/destinations/gallery/ellora-caves-view.webp",
+    "alt": "The rock-cut Buddhist hall of Cave 10 at Ellora",
+    "credit": {
+      "author": "Shivashanky",
+      "source": "https://commons.wikimedia.org/wiki/File:Ellora_Cave_No._10.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "old-goa-view",
+    "destinationId": "dest-old-goa",
+    "src": "/media/destinations/gallery/old-goa-view.webp",
+    "alt": "The courtyard inside the Basilica of Bom Jesus in Old Goa",
+    "credit": {
+      "author": "Shruti Dada",
+      "source": "https://commons.wikimedia.org/wiki/File:Basilica_of_Bom_Jesus_inside_courtyard.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "palolem-beach-view",
+    "destinationId": "dest-palolem-beach",
+    "src": "/media/destinations/gallery/palolem-beach-view.webp",
+    "alt": "View along the curved shore of Palolem Beach",
+    "credit": {
+      "author": "Mahabalaindia",
+      "source": "https://commons.wikimedia.org/wiki/File:View_of_Palolem_Beach_from_left_end.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "mysuru-view",
+    "destinationId": "dest-mysuru",
+    "src": "/media/destinations/gallery/mysuru-view.webp",
+    "alt": "Mysuru Palace and its arched frontage",
+    "credit": {
+      "author": "Jim Ankan Deka",
+      "source": "https://commons.wikimedia.org/wiki/File:Mysore_Palace,_India_(photo_-_Jim_Ankan_Deka).jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+    }
+  },
+  {
+    "id": "fort-kochi-view",
+    "destinationId": "dest-fort-kochi",
+    "src": "/media/destinations/gallery/fort-kochi-view.webp",
+    "alt": "The waterfront walkway at Fort Kochi Beach",
+    "credit": {
+      "author": "Ranjith Siji",
+      "source": "https://commons.wikimedia.org/wiki/File:Fort_Kochi_Beach_Walk_Way_DSC01048.JPG",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "munnar-view",
+    "destinationId": "dest-munnar",
+    "src": "/media/destinations/gallery/munnar-view.webp",
+    "alt": "Tea-covered hills around Munnar",
+    "credit": {
+      "author": "Ingo Mehling",
+      "source": "https://commons.wikimedia.org/wiki/File:Munnar_-_Tea_Plantations.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "alappuzha-view",
+    "destinationId": "dest-alappuzha",
+    "src": "/media/destinations/gallery/alappuzha-view.webp",
+    "alt": "Houseboats on the Alappuzha backwaters",
+    "credit": {
+      "author": "Mohanrangaphotography",
+      "source": "https://commons.wikimedia.org/wiki/File:Alleppey_Boat_houses.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "ooty-view",
+    "destinationId": "dest-ooty",
+    "src": "/media/destinations/gallery/ooty-view.webp",
+    "alt": "The Government Botanical Garden in Ooty",
+    "credit": {
+      "author": "AmanDshutterbug",
+      "source": "https://commons.wikimedia.org/wiki/File:Government_Botanical_Garden_Ooty_India.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "puducherry-view",
+    "destinationId": "dest-puducherry",
+    "src": "/media/destinations/gallery/puducherry-view.webp",
+    "alt": "Aayi Mandapam in Bharathi Park, Puducherry",
+    "credit": {
+      "author": "Suryathecreator",
+      "source": "https://commons.wikimedia.org/wiki/File:Aayi_mandapam_pondicherry.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "charminar-view",
+    "destinationId": "dest-charminar",
+    "src": "/media/destinations/gallery/charminar-view.webp",
+    "alt": "Charminar illuminated at night in Hyderabad",
+    "credit": {
+      "author": "Rashid Jorvee",
+      "source": "https://commons.wikimedia.org/wiki/File:Charminar_in_Night.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "konark-sun-temple-view",
+    "destinationId": "dest-konark-sun-temple",
+    "src": "/media/destinations/gallery/konark-sun-temple-view.webp",
+    "alt": "An intricately carved chariot wheel at Konark Sun Temple",
+    "credit": {
+      "author": "Andrew Moore from Johannesburg, South Africa",
+      "source": "https://commons.wikimedia.org/wiki/File:24_Chariot_Wheels,_illustrative_intricate_carving_in_one_at_the_Konarka_Sun_Temple.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    }
+  },
+  {
+    "id": "golden-temple-view",
+    "destinationId": "dest-golden-temple",
+    "src": "/media/destinations/gallery/golden-temple-view.webp",
+    "alt": "The Golden Temple complex around its sacred pool in Amritsar",
+    "credit": {
+      "author": "Harvinder Chandigarh",
+      "source": "https://commons.wikimedia.org/wiki/File:Complete_view_of_Golden_Temple_complex_08.jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0"
+    }
+  },
+  {
+    "id": "qutb-minar-view",
+    "destinationId": "dest-qutb-minar",
+    "src": "/media/destinations/gallery/qutb-minar-view.webp",
+    "alt": "The Alai Darwaza gateway beside the Qutb Minar",
+    "credit": {
+      "author": "User: (WT-shared) Jpatokal at wts wikivoyage",
+      "source": "https://commons.wikimedia.org/wiki/File:QutbMinar_AlaiDarzawa.JPG",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  },
+  {
+    "id": "rishikesh-view",
+    "destinationId": "dest-rishikesh",
+    "src": "/media/destinations/gallery/rishikesh-view.webp",
+    "alt": "Ram Jhula suspension bridge over the Ganges in Rishikesh",
+    "credit": {
+      "author": "Asis K. Chatterjee",
+      "source": "https://commons.wikimedia.org/wiki/File:Ramjhula_-_bridge_over_the_Ganga.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    }
+  },
+  {
+    "id": "shimla-view",
+    "destinationId": "dest-shimla",
+    "src": "/media/destinations/gallery/shimla-view.webp",
+    "alt": "Christ Church on the Ridge in Shimla",
+    "credit": {
+      "author": "ShashankSharma2511",
+      "source": "https://commons.wikimedia.org/wiki/File:Christ_Church,_Shimla.jpg",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0"
+    }
+  },
+  {
+    "id": "leh-view",
+    "destinationId": "dest-leh",
+    "src": "/media/destinations/gallery/leh-view.webp",
+    "alt": "Leh Palace above the old town",
+    "credit": {
+      "author": "marksquared",
+      "source": "https://commons.wikimedia.org/wiki/File:A_view_of_Leh_Palace.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "kaziranga-national-park-view",
+    "destinationId": "dest-kaziranga-national-park",
+    "src": "/media/destinations/gallery/kaziranga-national-park-view.webp",
+    "alt": "A greater one-horned rhinoceros in Kaziranga National Park",
+    "credit": {
+      "author": "Diganta Talukdar",
+      "source": "https://commons.wikimedia.org/wiki/File:Kaziranga_Rhinoceros_unicornis.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    }
+  },
+  {
+    "id": "gangtok-view",
+    "destinationId": "dest-gangtok",
+    "src": "/media/destinations/gallery/gangtok-view.webp",
+    "alt": "The pedestrian street of M.G. Marg in Gangtok",
+    "credit": {
+      "author": "Bernard Gagnon",
+      "source": "https://commons.wikimedia.org/wiki/File:M.G._Marg,_Gangtok_01.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+    }
+  }
+]

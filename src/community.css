@@ -23,6 +23,11 @@
 .sn-place-follow { display: grid; gap: 4px; justify-items: start; min-width: 0; }
 .sn-photo-credit { margin: 4px 0 14px; }
 .sn-photo-credit a { text-decoration: underline; }
+.sn-place-gallery-single:has(figure) { grid-template-columns: minmax(0, 1fr); }
+.sn-place-gallery figure { margin: 0; min-width: 0; }
+.sn-place-gallery figure > :is(img, .sn-image-fallback) { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: contain; background: #f0f1e9; }
+.sn-place-gallery figcaption { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; margin-top: 6px; color: var(--muted); font-size: 12px; }
+.sn-place-gallery figcaption a { text-decoration: underline; }
 .sn-home-filter { gap: clamp(12px, 4vw, 24px); overflow-x: auto; }
 .sn-home-filter > button { flex-shrink: 0; white-space: nowrap; }
 .sn-social-input { display: grid; gap: 6px; min-width: 0; }

@@ -39,6 +39,7 @@ export function PlaceSheet({ destination, onClose }: { destination: DestinationH
   const managerId = findManager(place.id) ?? placeUpdates[0]?.author.id;
   const saved = state.savedPlaces.includes(place.id);
   const visited = passport.some(visit => visit.destinationId === place.id);
+  const galleryImages = place.galleryImages;
 
   return <Modal title={place.name} onClose={onClose} className="sn-place-modal">
     <div className={`sn-place-hero ${place.coverImage ? '' : 'sn-place-no-photo'}`}>
@@ -82,7 +83,16 @@ export function PlaceSheet({ destination, onClose }: { destination: DestinationH
         </div>}
         {placeUpdates[0] && <div className="sn-secondary-stack"><div className="sn-row-heading"><h3>Latest update</h3><button className="sn-community-link" onClick={() => setTab('Updates')}>See all</button></div><UpdateCard update={placeUpdates[0]} /></div>}
         {place.culturalEtiquette && <section className="sn-culture-note"><HeartHandshake size={22} /><div><h3>Local customs</h3><p>{place.culturalEtiquette}</p></div></section>}
-        {place.galleryImages.length > 0 && <div className="sn-place-gallery">{place.galleryImages.slice(0, 3).map((src, index) => <TravelImage key={src} src={src} alt={`${place.name}, view ${index + 1}`} />)}</div>}
+        {galleryImages.length > 0 && <div className={`sn-place-gallery${galleryImages.length === 1 ? ' sn-place-gallery-single' : ''}`}>
+          {galleryImages.map((src, index) => {
+            const photo = place.galleryPhotos?.find(item => item.src === src);
+            if (!photo) return <TravelImage key={src} src={src} alt={`${place.name}, view ${index + 1}`} />;
+            return <figure key={src}>
+              <TravelImage src={src} alt={photo.alt} />
+              <figcaption><span>{photo.alt}</span><a href={`/media/gallery-credits.html#${photo.id}`} target="_blank" rel="noopener noreferrer">Photo credit</a></figcaption>
+            </figure>;
+          })}
+        </div>}
       </>}
       {tab === 'Updates' && <>
         {!state.followedPlaces.includes(place.id) && <p className="sn-secondary-body sn-place-update-note">Follow this place to see its updates under Following on Home.</p>}

@@ -1,4 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DESTINATION_HUBS, INDIA_DESTINATIONS } from '../src/data/destinations.ts';
 
@@ -84,7 +85,7 @@ function date(value) {
   return result;
 }
 
-export function createState(dataDirectory) {
+export function createState(dataDirectory, assetDirectory) {
   const db = new DatabaseSync(join(dataDirectory, 'safarnama.sqlite'));
   db.exec(`
     PRAGMA foreign_keys = ON;
@@ -105,6 +106,7 @@ export function createState(dataDirectory) {
     CREATE TABLE IF NOT EXISTS media (
       id TEXT PRIMARY KEY, owner TEXT NOT NULL, mime TEXT NOT NULL, bytes INTEGER NOT NULL, created INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS destination_photos (path TEXT PRIMARY KEY, webp BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS media_refs (
       kind TEXT NOT NULL, record_id TEXT NOT NULL, media_id TEXT NOT NULL REFERENCES media(id),
       PRIMARY KEY(kind,record_id,media_id),
@@ -116,10 +118,44 @@ export function createState(dataDirectory) {
   `);
 
   const seedPlace = db.prepare("INSERT OR IGNORE INTO records (kind,id,owner,data) VALUES ('places',?,'',?)");
+  const readPlace = db.prepare("SELECT data FROM records WHERE kind='places' AND id=?");
+  const updatePlace = db.prepare("UPDATE records SET data=? WHERE kind='places' AND id=?");
+  const hasPhoto = db.prepare('SELECT 1 FROM destination_photos WHERE path=?');
+  const seedPhoto = db.prepare('INSERT INTO destination_photos (path,webp) VALUES (?,?)');
+  const readPhoto = db.prepare('SELECT webp FROM destination_photos WHERE path=?');
   db.exec('BEGIN IMMEDIATE');
   try {
     let imported = 0;
-    for (const place of INDIA_DESTINATIONS) imported += Number(seedPlace.run(place.id, JSON.stringify(place)).changes);
+    for (const place of INDIA_DESTINATIONS) {
+      const added = seedPlace.run(place.id, JSON.stringify(place)).changes;
+      imported += Number(added);
+      if (!place.galleryPhotos?.length) continue;
+      for (const photo of place.galleryPhotos) {
+        if (hasPhoto.get(photo.src)) continue;
+        let bytes;
+        try { bytes = readFileSync(join(assetDirectory, photo.src.slice(1))); }
+        catch (error) {
+          if (error.code !== 'ENOENT') throw error;
+          // The development backend can run before Vite has built dist.
+          bytes = readFileSync(new URL('../public' + photo.src, import.meta.url));
+        }
+        if (bytes.toString('ascii', 0, 4) !== 'RIFF' || bytes.toString('ascii', 8, 12) !== 'WEBP') {
+          throw new Error(`Invalid bundled destination photo: ${photo.src}`);
+        }
+        seedPhoto.run(photo.src, bytes);
+        imported++;
+      }
+      if (added) continue;
+      const previous = JSON.parse(readPlace.get(place.id).data);
+      const newPaths = place.galleryImages.filter(path => !previous.galleryImages?.includes(path));
+      const newPhotos = place.galleryPhotos.filter(photo => !previous.galleryPhotos?.some(saved => saved.src === photo.src));
+      if (newPaths.length || newPhotos.length) {
+        previous.galleryImages = [...(previous.galleryImages ?? []), ...newPaths];
+        previous.galleryPhotos = [...(previous.galleryPhotos ?? []), ...newPhotos];
+        updatePlace.run(JSON.stringify(previous), place.id);
+        imported++;
+      }
+    }
     if (imported) db.exec('UPDATE revisions SET value=value+1 WHERE id=1');
     db.exec('COMMIT');
   } catch (failure) {
@@ -441,6 +477,7 @@ export function createState(dataDirectory) {
 
   return {
     mutate, snapshot, close: () => db.close(),
+    destinationPhoto: path => readPhoto.get(path)?.webp,
     hasMedia: id => Boolean(getFile.get(id)),
     addMedia: (id, owner, mime, bytes) => db.prepare('INSERT INTO media VALUES (?,?,?,?,?)').run(id, owner, mime, bytes, Date.now()),
     media: id => db.prepare('SELECT * FROM media WHERE id=? AND EXISTS(SELECT 1 FROM media_refs WHERE media_id=?)').get(id,id),

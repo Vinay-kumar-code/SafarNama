@@ -78,7 +78,7 @@ export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, or
   const dist = resolve(distDir);
   const uploads = join(dataDir, 'uploads');
   await mkdir(uploads, { recursive: true });
-  const state = createState(dataDir);
+  const state = createState(dataDir, dist);
 
   async function signedIn(request, required) {
     const token = request.headers.authorization;
@@ -201,6 +201,13 @@ export async function createApp({ dataDir, distDir, supabaseUrl, supabaseKey, or
       if (api) throw new InputError('Resource not found.', 404);
       if (method !== 'GET' && method !== 'HEAD') throw new InputError('Method not allowed.', 405);
 
+      if (pathname.startsWith('/media/destinations/gallery/')) {
+        const photo = state.destinationPhoto(pathname);
+        if (!photo) throw new InputError('Photo not found.', 404);
+        response.writeHead(200, { 'Content-Type': 'image/webp', 'Content-Length': photo.byteLength, 'Cache-Control': 'public, max-age=3600' });
+        response.end(method === 'GET' ? photo : undefined);
+        return;
+      }
       if (mediaPath) {
         const id = pathname.slice('/media/uploads/'.length);
         const item = uuidPattern.test(id) ? state.media(id) : null;

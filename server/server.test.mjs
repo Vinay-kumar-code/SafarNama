@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
+import { DatabaseSync } from 'node:sqlite';
 import { createApp } from './index.mjs';
 import { INDIA_DESTINATIONS } from '../src/data/destinations.ts';
 
@@ -18,6 +19,60 @@ async function listen(server) {
 function close(server) {
   return new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
 }
+
+test('imports 25 gallery photos into SQLite without overwriting existing guide data', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'safarnama-gallery-'));
+  const selected = INDIA_DESTINATIONS.filter(place => place.galleryPhotos?.length);
+  const owner = randomUUID();
+  const existing = { ...selected[0], galleryPhotos: undefined, galleryImages: ['/media/previous-photo.webp'], overview: 'Previously edited guide' };
+  const db = new DatabaseSync(join(dataDir, 'safarnama.sqlite'));
+  try {
+    db.exec("CREATE TABLE records (kind TEXT NOT NULL, id TEXT NOT NULL, owner TEXT NOT NULL, parent TEXT NOT NULL DEFAULT '', data TEXT NOT NULL, PRIMARY KEY(kind,id))");
+    db.prepare("INSERT INTO records (kind,id,owner,data) VALUES ('places',?,?,?)").run(existing.id, owner, JSON.stringify(existing));
+  } finally { db.close(); }
+
+  const options = { dataDir, distDir: join(dataDir, 'empty-dist'), supabaseUrl: 'https://auth.example.test', supabaseKey: 'test-key' };
+  let app;
+  try {
+    app = await createApp(options);
+    const url = await listen(app);
+    const snapshot = await (await fetch(url + '/api/bootstrap')).json();
+    const photos = snapshot.places.flatMap(({ place }) => (place.galleryPhotos ?? []).map(photo => ({ place, photo })));
+    assert.equal(selected.length, 25);
+    assert.equal(photos.length, 25);
+    assert.equal(new Set(photos.map(({ photo }) => photo.src)).size, 25);
+    const edited = snapshot.places.find(record => record.place.id === existing.id);
+    assert.equal(edited.ownerId, owner);
+    assert.equal(edited.place.overview, existing.overview);
+    assert.deepEqual(edited.place.galleryImages, [existing.galleryImages[0], selected[0].galleryPhotos[0].src]);
+
+    for (const { place, photo } of photos) {
+      assert(place.galleryImages.includes(photo.src));
+      assert(photo.alt && photo.credit.author && photo.credit.licenseUrl);
+      const response = await fetch(url + photo.src);
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('content-type'), 'image/webp');
+      assert.deepEqual(Buffer.from(await response.arrayBuffer()), await readFile(new URL('../public' + photo.src, import.meta.url)));
+    }
+    const head = await fetch(url + photos[0].photo.src, { method: 'HEAD' });
+    assert.equal(head.status, 200);
+    assert(Number(head.headers.get('content-length')) > 0);
+    assert.equal((await head.arrayBuffer()).byteLength, 0);
+    assert.equal((await fetch(url + '/media/destinations/gallery/missing.webp')).status, 404);
+
+    await close(app);
+    app = await createApp(options);
+    const second = await (await fetch(await listen(app) + '/api/bootstrap')).json();
+    assert.equal(second.revision, snapshot.revision, 'a restart must not rewrite the catalogue');
+    const persisted = new DatabaseSync(join(dataDir, 'safarnama.sqlite'), { readOnly: true });
+    try { assert.equal(persisted.prepare('SELECT count(*) AS total FROM destination_photos').get().total, 25); }
+    finally { persisted.close(); }
+  } finally {
+    if (app?.listening) await close(app);
+    assert.equal(dirname(resolve(dataDir)), resolve(tmpdir()));
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
 
 test('server protects ownership and persists publishing, files, and private account data across restarts', async () => {
   const traveler = randomUUID();

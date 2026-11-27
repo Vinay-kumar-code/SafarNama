@@ -17,7 +17,7 @@ ENV NODE_ENV=production PORT=3000 DATA_DIR=/app/data
 RUN mkdir -p /app/data && touch /app/data/.keep && chown -R node:node /app/data
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node server ./server
-COPY --chown=node:node src/data/destinations.ts src/data/indiaDestinations.json ./src/data/
+COPY --chown=node:node src/data/destinations.ts src/data/indiaDestinations.json src/data/destinationGallery.json ./src/data/
 USER node
 EXPOSE 3000
 CMD ["node", "server/index.mjs"]

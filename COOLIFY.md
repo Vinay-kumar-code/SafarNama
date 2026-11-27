@@ -36,7 +36,7 @@ SafarNama runs as one Docker Compose application. The service serves the React w
 
 ## 4. Protect the 60 GB of disk space
 
-The first startup with the expanded catalogue adds the 100 new guides to SQLite on the mounted `/app/data` volume. Later restarts keep any edits already saved to those guides. The guide photographs are bundled with the website and APK.
+The first startup with the expanded catalogue adds the 100 guides to SQLite on the mounted `/app/data` volume. Later restarts keep any edits already saved to those guides. The 25 additional gallery photographs are imported into SQLite and served from the site's own domain. The APK also bundles the photographs for offline viewing.
 
 - Check the Docker volume is on the filesystem with the reported free space. The default 5 GiB reserve blocks uploads near capacity. Docker images, logs, SQLite files, and backups also consume disk. The reserve is not a storage quota or backup.
 - Uploads support JPG, PNG, WebP, and GIF up to 8 MiB per image, and MP4 or WebM up to 60 MiB per video. Photos and videos are stored in their uploaded form. Media abandoned during a failed publication is cleaned up after its grace period. Only linked media is served.

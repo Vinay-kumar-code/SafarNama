@@ -98,6 +98,15 @@ export interface Post {
   createdAt: string;
 }
 
+export interface PhotoCredit { author: string; source: string; license: string; licenseUrl: string }
+
+export interface DestinationGalleryPhoto {
+  id: string;
+  src: string;
+  alt: string;
+  credit: PhotoCredit;
+}
+
 export interface DestinationHub {
   id: string;
   slug: string;
@@ -107,6 +116,7 @@ export interface DestinationHub {
   tagline: string;
   coverImage: string;
   galleryImages: string[];
+  galleryPhotos?: DestinationGalleryPhoto[];
   latitude: number;
   longitude: number;
   overview: string;
@@ -138,7 +148,7 @@ export interface DestinationHub {
   reviewsCount?: number;
   openingHours?: string;
   sourceUrl?: string;
-  photoCredit?: { author: string; source: string; license: string; licenseUrl: string };
+  photoCredit?: PhotoCredit;
 }
 
 export interface DestinationUpdate {
